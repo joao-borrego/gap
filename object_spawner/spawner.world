@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<sdf version="1.4">
+  <world name="default">
+    <plugin name="object_spawner" filename="libobject_spawner.so"/>
+  </world>
+</sdf>

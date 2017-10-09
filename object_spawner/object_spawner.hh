@@ -21,9 +21,15 @@
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
 
+/* Custom messages */
+#include "object_spawner_request.pb.h"
+
 #define OBJECT_SPAWNER_TOPIC "~/gazebo-utils/object_spawner"
 
 namespace gazebo {
+
+    typedef const boost::shared_ptr<const object_spawner_msgs::msgs::ObjectSpawnerRequest>
+        ObjectSpawnerRequestPtr;
 
     class ObjectSpawnerPlugin : public WorldPlugin
     {
@@ -66,7 +72,7 @@ namespace gazebo {
              * 
              * @param      _msg  The message
              */
-            void onMsg(ConstVector3dPtr &_msg);
+            void onMsg(ObjectSpawnerRequestPtr &_msg);
 
             /**
              * @brief      Prints live objects in the world

@@ -79,12 +79,14 @@ namespace gazebo
 
     /* Private methods */
 
-    void ObjectSpawnerPlugin::onMsg(ConstVector3dPtr &_msg){
+    void ObjectSpawnerPlugin::onMsg(ObjectSpawnerRequestPtr &_msg){
         
+        std::cout << "Received " << _msg->operation() << ": " << _msg->description() << std::endl;
+
         /* Spawns a sphere */
         std::string sphere_name = "sphere_" + std::to_string(this->sphere_counter);
         ObjectSpawnerPlugin::spawnSphere(sphere_name, 1.0, 0.5, 0.4, 9.0);
-        ObjectSpawnerPlugin::printLiveObjs();
+        //ObjectSpawnerPlugin::printLiveObjs();
         this->sphere_counter++;
 
     }

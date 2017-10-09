@@ -2,6 +2,9 @@
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
 
+/* Custom messages */
+#include "object_spawner_request.pb.h"
+
 /**
  * Gazebo's API has changed between major releases. These changes are
  * accounted for with #if..#endif blocks in this file.
@@ -35,20 +38,18 @@ int main(int _argc, char **_argv)
 
     /* Publish to the object spawner topic */
     gazebo::transport::PublisherPtr pub =
-    node->Advertise<gazebo::msgs::Vector3d>("~/gazebo-utils/object_spawner");
+        node->Advertise<object_spawner_msgs::msgs::ObjectSpawnerRequest>
+        ("~/gazebo-utils/object_spawner");
 
     /* Wait for a subscriber to connect to this publisher */
     pub->WaitForConnection();
 
-    /* Create a a vector3 message (placeholder message) */
-    /* TODO - create custom messages */
-    gazebo::msgs::Vector3d msg;
+    /* Create a custom message (placeholder message) */
+    object_spawner_msgs::msgs::ObjectSpawnerRequest msg;
 
-    #if GAZEBO_MAJOR_VERSION < 6
-    gazebo::msgs::Set(&msg, gazebo::math::Vector3(0, 0, 0));
-    #else
-    gazebo::msgs::Set(&msg, ignition::math::Vector3d(0, 0, 0));
-    #endif
+    /* Fill the contents of the message */
+    msg.set_operation(0);
+    msg.set_description("Hello!");
 
     /* Send the message */
     pub->Publish(msg);

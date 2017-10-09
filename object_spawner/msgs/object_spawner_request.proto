@@ -1,0 +1,7 @@
+package object_spawner_msgs.msgs;
+
+message ObjectSpawnerRequest
+{
+    required int32  operation   = 1;
+    required string description = 2;
+}

@@ -11,3 +11,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GAZEBO_CXX_FLAGS}")
 
 add_library(object_spawner SHARED object_spawner.cc)
 target_link_libraries(object_spawner ${GAZEBO_LIBRARIES})
+
+# Build client app
+add_executable(spawner_client spawner_client.cc)
+
+# Gazebo compatibility issues
+if (${gazebo_VERSION_MAJOR} LESS 6)
+  # These two
+  include(FindBoost)
+  find_package(Boost ${MIN_BOOST_VERSION} REQUIRED system filesystem regex)
+  target_link_libraries(spawner_client ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+else()
+  target_link_libraries(spawner_client ${GAZEBO_LIBRARIES})
+endif()

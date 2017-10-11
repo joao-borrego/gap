@@ -49,16 +49,25 @@ int main(int _argc, char **_argv)
         gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
         gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
         gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
+
         /* Assign values to fields */
+
+        /* Pose */
         pos->set_x((rand()%500 - 250) / 20.0);
         pos->set_y((rand()%500 - 250) / 20.0);
         pos->set_z((rand()%50) / 20.0);
         ori->set_x(0.0);
         ori->set_y(0.0);
-        ori->set_z(0.0); 
+        ori->set_z(0.0);
         ori->set_w(0.0);
+        /* Mass */
         msg.set_mass(rand()%5 + 1.0);
+        /* Sphere/cylinder radius */
         msg.set_radius((rand()%20 + 1.0) / 5.0);
+        /* Material script */
+        msg.set_texture_uri("file://media/materials/scripts/gazebo.material");
+        msg.set_texture_name("Gazebo/Orange");
+
         /* Associate dynamic fields */
         pose->set_allocated_position(pos);
         pose->set_allocated_orientation(ori);

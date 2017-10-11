@@ -16,7 +16,8 @@ message SpawnRequest
     optional string             name = 2;
     optional gazebo.msgs.Pose   pose = 3;
     optional double             mass = 4;
-    optional string             texture = 5;
-    optional double             radius = 6;
-    optional double             height = 7;
+    optional string             texture_uri = 5;
+    optional string             texture_name = 6;
+    optional double             radius = 7;
+    optional double             height = 8;
 }

@@ -12,6 +12,7 @@
 #include <sstream>          // stringstream
 #include <list>             // list of live objects 
 #include <string>           // strings
+#include <regex>            // regular expressions
 #include <gazebo/gazebo.hh> // gazebo
 
 #include "gazebo/physics/physics.hh"
@@ -84,12 +85,14 @@ namespace gazebo {
             /**
              * @brief      { function_description }
              *
-             * @param[in]  model_name  The model name
-             * @param[in]  radius      The radius
-             * @param[in]  mass        The mass
-             * @param[in]  px          { parameter_description }
-             * @param[in]  py          { parameter_description }
-             * @param[in]  pz          { parameter_description }
+             * @param[in]  model_name    The model name
+             * @param[in]  radius        The radius
+             * @param[in]  mass          The mass
+             * @param[in]  px            { parameter_description }
+             * @param[in]  py            { parameter_description }
+             * @param[in]  pz            { parameter_description }
+             * @param[in]  texture_uri   The texture uri
+             * @param[in]  texture_name  The texture name
              */
             void spawnSphere(
                 const std::string &model_name,
@@ -97,6 +100,8 @@ namespace gazebo {
                 const double mass,
                 const double px,
                 const double py,
-                const double pz);
+                const double pz,
+                const std::string &texture_uri,
+                const std::string &texture_name);
     };
 }

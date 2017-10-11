@@ -11,45 +11,6 @@
 
 namespace gazebo
 {
-    std::string getSphereSDF(double radius,
-        double px=0, double py=0, double pz=0,
-        double rr=0, double rp=0, double ry=0){
-        std::stringstream sphere_sdf;
-        sphere_sdf <<
-        "<sdf version ='1.4'>\
-          <model name ='sphere'>\
-            <pose>" <<
-            std::fixed << std::setprecision(5) << px <<
-            std::fixed << std::setprecision(5) << py <<
-            std::fixed << std::setprecision(5) << pz <<
-            std::fixed << std::setprecision(5) << rr <<
-            std::fixed << std::setprecision(5) << rp <<
-            std::fixed << std::setprecision(5) << ry << 
-            "</pose>\
-            <link name ='link'>\
-              <pose>0 0 " <<
-              std::fixed << std::setprecision(5) << radius <<
-              " 0 0 0</pose>\
-              <collision name ='collision'>\
-                <geometry>\
-                  <sphere><radius>" <<
-                  std::fixed << std::setprecision(5) << radius <<
-                  "</radius></sphere>\
-                </geometry>\
-              </collision>\
-              <visual name ='visual'>\
-                <geometry>\
-                  <sphere><radius>" <<
-                  std::fixed << std::setprecision(5) << radius <<
-                  "</radius></sphere>\
-                </geometry>\
-              </visual>\
-            </link>\
-          </model>\
-        </sdf>";
-        return sphere_sdf.str();
-    }
-
     ObjectSpawnerPlugin::ObjectSpawnerPlugin() : WorldPlugin(){
         std::cout << "[PLUGIN] Loaded object spawner." << std::endl;
     }
@@ -60,35 +21,75 @@ namespace gazebo
 
         /* Subscriber setup */
         this->node = transport::NodePtr(new transport::Node());
+
         #if GAZEBO_MAJOR_VERSION < 8
         this->node->Init(this->world->GetName());
         #else
         this->node->Init(this->world->Name());
         #endif
 
-        /* Create a topic name */
+        /* Create a topic for listening to requests */
         std::string topic_name = OBJECT_SPAWNER_TOPIC;
         /* Subcribe to the topic */
         this->sub = this->node->Subscribe(topic_name,
             &ObjectSpawnerPlugin::onMsg, this);
 
+        /* Setup publisher for the factory topic */
+        this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
+        
         /* Example parameter passing */
+        /*
         if (_sdf->HasElement("param1"))
             double param = _sdf->Get<double>("param");
+        */
     }
 
     /* Private methods */
 
-    void ObjectSpawnerPlugin::onMsg(ObjectSpawnerRequestPtr &_msg){
+    void ObjectSpawnerPlugin::onMsg(SpawnRequestPtr &_msg){
         
-        std::cout << "Received " << _msg->operation() << ": " << _msg->description() << std::endl;
+        switch(_msg->type()){
+            case object_spawner_msgs::msgs::SpawnRequest::SPHERE : {
 
-        /* Spawns a sphere */
-        std::string sphere_name = "sphere_" + std::to_string(this->sphere_counter);
-        ObjectSpawnerPlugin::spawnSphere(sphere_name, 1.0, 0.5, 0.4, 9.0);
-        //ObjectSpawnerPlugin::printLiveObjs();
-        this->sphere_counter++;
+                /* DEBUG */
+                std::cout << "[INFO] Spawning sphere" << std::endl;
+                
+                std::string name = _msg->has_name()?
+                    _msg->name() : "plugin_sphere_" + std::to_string(this->sphere_counter++);
 
+                double x, y, z;
+                x = y = z = 0.0;
+
+                if (_msg->has_pose()){
+                    msgs::Vector3d pos = _msg->pose().position();
+                    x = pos.x();
+                    y = pos.y();
+                    z = pos.z();
+                }
+
+                double radius = _msg->has_radius()?
+                    _msg->radius() : 1.0;
+                double mass = _msg->has_mass()?
+                    _msg->mass() : 2.0;
+
+                spawnSphere(name, radius, mass, x, y, z);
+                break;
+            }
+            case object_spawner_msgs::msgs::SpawnRequest::CYLINDER : {
+                std::cout << "[INFO] Spawning cylinder" << std::endl;
+                break;
+            }
+            case object_spawner_msgs::msgs::SpawnRequest::CUBE : {
+                std::cout << "[INFO] Spawning cube" << std::endl;
+                break;
+            }
+            case object_spawner_msgs::msgs::SpawnRequest::REMOVE : {
+                std::cout << "[INFO] Removing object" << std::endl;
+                break;
+            }
+            default:
+                break;
+        }
     }
 
     void ObjectSpawnerPlugin::printLiveObjs(){
@@ -108,16 +109,31 @@ namespace gazebo
 
     void ObjectSpawnerPlugin::spawnSphere(
         const std::string &model_name,
-        double radius,
-        double px,
-        double py,
-        double pz){
+        const double radius,
+        const double mass,
+        const double px,
+        const double py,
+        const double pz){
 
-        sdf::SDF sphereSDF;
-        sphereSDF.SetFromString(getSphereSDF(radius,px,py,pz));
-        sdf::ElementPtr model = sphereSDF.Root()->GetElement("model");
-        model->GetAttribute("name")->SetFromString(model_name);
-        this->world->InsertModelSDF(sphereSDF);
+        msgs::Model model;
+        model.set_name(model_name);
+        msgs::Set(model.mutable_pose(), ignition::math::Pose3d(px, py, pz, 0, 0, 0));
+        
+        msgs::AddSphereLink(model, mass, radius);
+        
+        //visual_msg.mutable_material(material);
+        //visual.set_material(material);
+        //model.set_visual(visual);
+
+        std::ostringstream new_model_str;
+        new_model_str << "<sdf version='" << SDF_VERSION << "'>"
+        << msgs::ModelToSDF(model)->ToString("")
+        << "</sdf>";
+
+        /* Send the model to the gazebo server */
+        msgs::Factory msg;
+        msg.set_sdf(new_model_str.str());
+        this->factory_pub->Publish(msg);
     }
 
     GZ_REGISTER_WORLD_PLUGIN(ObjectSpawnerPlugin)

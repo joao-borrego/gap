@@ -28,8 +28,8 @@
 
 namespace gazebo {
 
-    typedef const boost::shared_ptr<const object_spawner_msgs::msgs::ObjectSpawnerRequest>
-        ObjectSpawnerRequestPtr;
+    typedef const boost::shared_ptr<const object_spawner_msgs::msgs::SpawnRequest>
+        SpawnRequestPtr;
 
     class ObjectSpawnerPlugin : public WorldPlugin
     {
@@ -44,6 +44,8 @@ namespace gazebo {
             transport::NodePtr node;
             /* @brief A subscriber to a named topic */
             transport::SubscriberPtr sub;
+            /* @brief A publisher to the factory topic */
+            transport::PublisherPtr factory_pub;
 
             /* DEBUG - aux counter */
             int sphere_counter = 0;
@@ -68,11 +70,11 @@ namespace gazebo {
         private:
 
             /**
-             * @brief      Callback function for when messages are received
-             * 
+             * @brief      { function_description }
+             *
              * @param      _msg  The message
              */
-            void onMsg(ObjectSpawnerRequestPtr &_msg);
+            void onMsg(SpawnRequestPtr &_msg);
 
             /**
              * @brief      Prints live objects in the world
@@ -80,19 +82,21 @@ namespace gazebo {
             void printLiveObjs();
 
             /**
-             * @brief      Spawns a sphere
+             * @brief      { function_description }
              *
              * @param[in]  model_name  The model name
              * @param[in]  radius      The radius
-             * @param[in]  px          Position in x
-             * @param[in]  py          Position in y
-             * @param[in]  pz          Position in z
+             * @param[in]  mass        The mass
+             * @param[in]  px          { parameter_description }
+             * @param[in]  py          { parameter_description }
+             * @param[in]  pz          { parameter_description }
              */
             void spawnSphere(
                 const std::string &model_name,
-                double radius,
-                double px,
-                double py,
-                double pz);
+                const double radius,
+                const double mass,
+                const double px,
+                const double py,
+                const double pz);
     };
 }

@@ -8,8 +8,13 @@ foreach(ITR ${GAZEBO_INCLUDE_DIRS})
 endforeach()
 
 set (msgs
+  # Custom messages
   object_spawner_request.proto
-# ${PROTOBUF_IMPORT_DIRS}/vector2d.proto
+  # Pose messages
+  ${PROTOBUF_IMPORT_DIRS}/pose.proto
+  ${PROTOBUF_IMPORT_DIRS}/vector3d.proto
+  ${PROTOBUF_IMPORT_DIRS}/quaternion.proto
+  #
   ${PROTOBUF_IMPORT_DIRS}/header.proto
   ${PROTOBUF_IMPORT_DIRS}/time.proto
 )

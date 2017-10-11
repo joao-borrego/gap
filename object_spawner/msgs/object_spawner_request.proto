@@ -1,7 +1,22 @@
 package object_spawner_msgs.msgs;
 
-message ObjectSpawnerRequest
+import "pose.proto";
+
+message SpawnRequest
 {
-    required int32  operation   = 1;
-    required string description = 2;
+    /* @brief Type of spawned object */
+    enum Type{
+        CYLINDER    = 0;
+        SPHERE      = 1;
+        CUBE        = 2;
+        REMOVE      = 3;
+    }
+
+    required Type               type = 1;
+    optional string             name = 2;
+    optional gazebo.msgs.Pose   pose = 3;
+    optional double             mass = 4;
+    optional string             texture = 5;
+    optional double             radius = 6;
+    optional double             height = 7;
 }

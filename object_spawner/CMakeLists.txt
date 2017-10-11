@@ -13,13 +13,29 @@ include_directories(
   ${SDF_INCLUDE_DIRS}
   ${CMAKE_CURRENT_BINARY_DIR}/msgs
   )
-link_directories(${GAZEBO_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR}/msgs)
+link_directories(
+    ${GAZEBO_LIBRARY_DIRS}
+    ${CMAKE_CURRENT_BINARY_DIR}/msgs)
 add_subdirectory(msgs)
 
-add_executable (spawner_client spawner_client.cc)
-target_link_libraries(spawner_client object_spawner_msgs ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(spawner_client object_spawner_msgs)
+# Spawner client
+add_executable (
+    spawner_client
+    spawner_client.cc)
+target_link_libraries(
+    spawner_client
+    object_spawner_msgs
+    ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
+add_dependencies(
+    spawner_client
+    object_spawner_msgs)
 
+# Spawner gazebo server plugin
 add_library(object_spawner SHARED object_spawner.cc )
-target_link_libraries(object_spawner object_spawner_msgs ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(object_spawner object_spawner_msgs)
+target_link_libraries(
+    object_spawner
+    object_spawner_msgs
+    ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
+add_dependencies(
+    object_spawner
+    object_spawner_msgs)

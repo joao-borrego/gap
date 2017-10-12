@@ -2,8 +2,6 @@
 <sdf version="1.4">
   <world name="default">
 
-    <gui/>
-    
     <plugin name="object_spawner" filename="libobject_spawner.so"/>
 
     <include>

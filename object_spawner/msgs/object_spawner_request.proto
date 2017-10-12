@@ -1,23 +1,46 @@
 package object_spawner_msgs.msgs;
 
 import "pose.proto";
+import "vector3d.proto";
 
 message SpawnRequest
 {
-    /* @brief Type of spawned object */
+    /* @brief Type of request */
     enum Type{
-        CYLINDER    = 0;
-        SPHERE      = 1;
-        CUBE        = 2;
-        REMOVE      = 3;
+        /* @brief Spawn model in simulation */
+        SPAWN   = 1;        
+        /* @brief Remove model from simulation */
+        REMOVE  = 2;
     }
 
-    required Type               type = 1;
-    optional string             name = 2;
-    optional gazebo.msgs.Pose   pose = 3;
-    optional double             mass = 4;
-    optional string             texture_uri = 5;
-    optional string             texture_name = 6;
-    optional double             radius = 7;
-    optional double             height = 8;
+    enum ModelType{
+        /* @brief Spawn sphere in simulation */
+        SPHERE      = 1;
+        /* @brief Spawn cylinder in simulation */
+        CYLINDER    = 2;
+        /* @brief Spawn cube in simulation */
+        BOX        = 3;
+        /* TODO: Custom model from sdf? */
+    }
+
+    /* @brief Type of request */
+    required Type                   type = 1;
+    /* @brief Model type for spawn */
+    required ModelType              model_type = 2;
+    /* @brief Model name */
+    optional string                 name = 3;
+    /* @brief Model pose */
+    optional gazebo.msgs.Pose       pose = 4;
+    /* @brief Model mass */
+    optional double                 mass = 5;
+    /* @brief Material script uri */
+    optional string                 texture_uri = 6;
+    /* @brief Material script name */
+    optional string                 texture_name = 7;
+    /* @brief radius of a cylinder or a sphere */
+    optional double                 radius = 8;
+    /* @brief Length of a cylinder */
+    optional double                 length = 9;
+    /* @brief Dimensions of a box */
+    optional gazebo.msgs.Vector3d   box_size = 10;
 }

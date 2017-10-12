@@ -1,8 +1,6 @@
 /**
- * @file
- * @brief
- *
- *
+ * @file object_spawner.cc 
+ * @brief Custom factory plugin for gazebo with own interface
  *
  * @author João Borrego
  */
@@ -36,75 +34,110 @@ namespace gazebo
 
         /* Setup publisher for the factory topic */
         this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
-
-        /* Example parameter passing */
-        /*
-        if (_sdf->HasElement("param1"))
-            double param = _sdf->Get<double>("param");
-        */
+    
+        /* Setup regular expression used for texture replacement */
+        this->script_reg = std::regex("<script>[\\s\\S]*?<\\/script>");
     }
 
     /* Private methods */
 
     void ObjectSpawnerPlugin::onMsg(SpawnRequestPtr &_msg){
 
-        switch(_msg->type()){
-            case object_spawner_msgs::msgs::SpawnRequest::SPHERE : {
+        int type;
+        int model_type;
+        std::string name;
+        ignition::math::Vector3d pos(0,0,0);
+        ignition::math::Quaterniond ori(0,0,0,0);
+        double mass;
+        std::string texture_uri;
+        std::string texture_name;
+        double radius;
+        double length;
+        ignition::math::Vector3d box_size(0,0,0);
+        
+        std::string sdf_string;
 
-                /* DEBUG */
-                std::cout << "[INFO] Spawning sphere" << std::endl;
+        type = (_msg->type())? (_msg->type()) : -1;
+        model_type = (_msg->model_type())? (_msg->model_type()) : -1;
 
-                std::string name = _msg->has_name()?
+        if(type == SPAWN){
+            
+            /* Extract parameters from message */
+            if (_msg->has_pose()){
+                pos = msgs::ConvertIgn(_msg->pose().position());
+                ori = msgs::ConvertIgn(_msg->pose().orientation());
+            }
+            if (_msg->has_mass()){
+                mass = _msg->mass();
+            }
+
+            if (model_type == SPHERE){
+            
+                name = _msg->has_name()?
                     _msg->name() : "plugin_sphere_" + std::to_string(this->sphere_counter++);
-
-                double x, y, z;
-                x = y = z = 0.0;
-
-                if (_msg->has_pose()){
-                    msgs::Vector3d pos = _msg->pose().position();
-                    x = pos.x();
-                    y = pos.y();
-                    z = pos.z();
-                }
-
-                double radius = _msg->has_radius()?
+                radius = _msg->has_radius()?
                     _msg->radius() : 1.0;
-                double mass = _msg->has_mass()?
-                    _msg->mass() : 2.0;
-                std::string texture_uri = _msg->has_texture_uri()?
+
+                sdf_string = genSphere(name, mass, radius, pos, ori);
+            
+            } else if (model_type == CYLINDER){
+                
+                name = _msg->has_name()?
+                    _msg->name() : "plugin_cylinder_" + std::to_string(this->cylinder_counter++);
+                radius = _msg->has_radius()?
+                    _msg->radius() : 1.0;
+                length = _msg->has_length()?
+                    _msg->length() : 1.0;
+
+                sdf_string = genCylinder(name, mass, radius, length, pos, ori);
+            
+            } else if (model_type == BOX){
+                
+                name = _msg->has_name()?
+                    _msg->name() : "plugin_box_" + std::to_string(this->box_counter++);
+                if (_msg->has_box_size())
+                    box_size = msgs::ConvertIgn(_msg->box_size());
+
+                sdf_string = genBox(name, mass, box_size, pos, ori);
+            }
+
+            /* If a spawn message was requested */
+            if (!sdf_string.empty()){
+
+                /* Enclose in sdf xml tags */
+                std::ostringstream model_str;
+                model_str << "<sdf version='" << SDF_VERSION << "'>"
+                << sdf_string << "</sdf>";
+                
+                /* Change material script in string */
+                texture_uri = _msg->has_texture_uri()?
                     _msg->texture_uri() : "file://media/materials/scripts/gazebo.material";
-                std::string texture_name = _msg->has_texture_name()?
+                texture_name = _msg->has_texture_name()?
                     _msg->texture_name() : "Gazebo/White";
 
-                spawnSphere(name, radius, mass, x, y, z, texture_uri, texture_name);
-                break;
+                std::string texture_str =
+                "<script><uri>" + texture_uri + "</uri>" +
+                "<name>" + texture_name + "</name></script>";
+
+                const std::string new_model_str = std::regex_replace(
+                    model_str.str(), this->script_reg, texture_str);
+                
+                /* Send the model to the gazebo server */
+                msgs::Factory msg;
+                msg.set_sdf(new_model_str);
+                this->factory_pub->Publish(msg);
             }
-            case object_spawner_msgs::msgs::SpawnRequest::CYLINDER : {
-                std::cout << "[INFO] Spawning cylinder" << std::endl;
-                std::cout << "[INFO] Not implemented yet" << std::endl;
-                break;
-            }
-            case object_spawner_msgs::msgs::SpawnRequest::CUBE : {
-                std::cout << "[INFO] Spawning cube" << std::endl;
-                std::cout << "[INFO] Not implemented yet" << std::endl;
-                break;
-            }
-            case object_spawner_msgs::msgs::SpawnRequest::REMOVE : {
-                std::cout << "[INFO] Removing object" << std::endl;
-                std::cout << "[INFO] Not implemented yet" << std::endl;
-                break;
-            }
-            default:
-                break;
+
+        } else if (type == REMOVE){
+
+            // TODO
         }
     }
 
     void ObjectSpawnerPlugin::printLiveObjs(){
+
         std::cout << "[PLUGIN] Printing live object list" << std::endl;
-        /*
-        for (auto v : this->live_objs)
-            std::cout << v << std::endl;
-        */
+
         int model_count = this->world->GetModelCount();
         std::cout << model_count << std::endl;
 
@@ -114,41 +147,54 @@ namespace gazebo
         }
     }
 
-    void ObjectSpawnerPlugin::spawnSphere(
+    const std::string ObjectSpawnerPlugin::genSphere(
         const std::string &model_name,
-        const double radius,
         const double mass,
-        const double px,
-        const double py,
-        const double pz,
-        const std::string &texture_uri,
-        const std::string &texture_name){
+        const double radius,
+        const ignition::math::Vector3d position,
+        const ignition::math::Quaterniond orientation){
 
         msgs::Model model;
         model.set_name(model_name);
-        msgs::Set(model.mutable_pose(), ignition::math::Pose3d(px, py, pz, 0, 0, 0));
-
+        msgs::Set(model.mutable_pose(),
+            ignition::math::Pose3d(position, orientation));
         msgs::AddSphereLink(model, mass, radius);
 
-        std::ostringstream model_str;
-        model_str << "<sdf version='" << SDF_VERSION << "'>"
-        << msgs::ModelToSDF(model)->ToString("")
-        << "</sdf>";
-
-        /* Change material script in string */
-        std::string texture_str =
-        "<script><uri>" + texture_uri + "</uri>" +
-        "<name>" + texture_name + "</name></script>";
-        std::regex reg("<script>[\\s\\S]*?<\\/script>");
-
-        const std::string new_model_str = std::regex_replace(
-            model_str.str(), reg, texture_str);
-
-        /* Send the model to the gazebo server */
-        msgs::Factory msg;
-        msg.set_sdf(new_model_str);
-        this->factory_pub->Publish(msg);
+        return msgs::ModelToSDF(model)->ToString("");
     }
+
+    const std::string ObjectSpawnerPlugin::genCylinder(
+        const std::string &model_name,
+        const double mass,
+        const double radius,
+        const double length,
+        const ignition::math::Vector3d position,
+        const ignition::math::Quaterniond orientation){
+        
+        msgs::Model model;
+        model.set_name(model_name);
+        msgs::Set(model.mutable_pose(),
+            ignition::math::Pose3d(position, orientation));
+        msgs::AddCylinderLink(model, mass, radius, length);
+
+        return msgs::ModelToSDF(model)->ToString("");
+    };
+
+    const std::string ObjectSpawnerPlugin::genBox(
+        const std::string &model_name,
+        const double mass,
+        const ignition::math::Vector3d size,
+        const ignition::math::Vector3d position,
+        const ignition::math::Quaterniond orientation){
+        
+        msgs::Model model;
+        model.set_name(model_name);
+        msgs::Set(model.mutable_pose(),
+            ignition::math::Pose3d(position, orientation));
+        msgs::AddBoxLink(model, mass, size);
+
+        return msgs::ModelToSDF(model)->ToString("");
+    };
 
     GZ_REGISTER_WORLD_PLUGIN(ObjectSpawnerPlugin)
 }

@@ -44,11 +44,13 @@ int main(int _argc, char **_argv)
         object_spawner_msgs::msgs::SpawnRequest msg;
 
         /* Fill the contents of the message */
-        msg.set_type(SPAWN_SPHERE);
+        msg.set_type(SPAWN);
+        msg.set_model_type(BOX);
         /* External optional fields have to be allocated */
         gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
         gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
         gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
+        gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
 
         /* Assign values to fields */
 
@@ -64,14 +66,22 @@ int main(int _argc, char **_argv)
         msg.set_mass(rand()%5 + 1.0);
         /* Sphere/cylinder radius */
         msg.set_radius((rand()%20 + 1.0) / 5.0);
+        /* Cylinder length */
+        msg.set_length((rand()%20 + 5.0) / 3.0);
+        /* Box size */
+        size->set_x((rand()%20 + 5.0) / 3.0);
+        size->set_y((rand()%20 + 5.0) / 3.0);
+        size->set_z((rand()%20 + 5.0) / 3.0);
         /* Material script */
-        msg.set_texture_uri("file://media/materials/scripts/gazebo.material");
-        msg.set_texture_name("Gazebo/Orange");
+        msg.set_texture_uri("model://cylinder/materials/scripts</uri>\
+            <uri>model://cylinder/materials/textures");
+        msg.set_texture_name("Cylinder/Diffuse");
 
         /* Associate dynamic fields */
         pose->set_allocated_position(pos);
         pose->set_allocated_orientation(ori);
         msg.set_allocated_pose(pose);
+        msg.set_allocated_box_size(size);
 
         /* Send the message */
         pub->Publish(msg);

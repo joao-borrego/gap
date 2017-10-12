@@ -32,3 +32,52 @@ cd ~/workspace/gazebo-utils/object-spawner/ &&
 export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build &&
 gzserver spawner.world --verbose
 ```
+
+#### Custom textures
+
+In order to use custom textures, the recommended procedure is as follows:
+
+Create a folder media in `~/workspace/gazebo-utils/object-spawner/`.
+The textures have to respect the following file structure:
+
+``` ├
+media/
+   └╴model_name/
+      └╴materials/
+         └╴scripts/
+            └╴model_name.material
+         └╴textures/
+            └╴img.png
+```
+
+The sdf model itself is not needed, but the contents of `model_name.material` should resemble:
+
+```
+material Model/Texture
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture img.png
+        filtering anistropic
+        max_anisotropy 16
+      }
+    }
+  }
+}
+
+```
+
+Finally, but **VERY IMPORTANTLY** export the media directory so gazebo can find it:
+```
+cd ~/workspace/gazebo-utils/object-spawner/media &&
+export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:`pwd`
+```
+
+#### Debug
+
+Make sure a message is shown when gazebo is loaded indicating the plugin was initialized.
+It might be the case that the environment variables were not correctly exported.

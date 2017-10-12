@@ -30,7 +30,10 @@ make
 ```
 cd ~/workspace/gazebo-utils/object-spawner/ &&
 export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build &&
-gzserver spawner.world --verbose
+# Server and plugin
+gazebo spawner.world
+# Client
+./build/spawner_client
 ```
 
 #### Custom textures

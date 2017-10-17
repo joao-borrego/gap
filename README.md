@@ -40,23 +40,22 @@ gazebo spawner.world
 
 In order to use custom textures, the recommended procedure is as follows:
 
-Create a folder media in `~/workspace/gazebo-utils/object-spawner/`.
+Create a folder media in `~/workspace/gazebo-utils/`.
 The textures have to respect the following file structure:
 
 ``` ├
 media/
-   └╴model_name/
-      └╴materials/
-         └╴scripts/
-            └╴model_name.material
-         └╴textures/
-            └╴img.png
+  └╴materials/
+    └╴scripts/
+      └╴scipt_name.material
+    └╴textures/
+      └╴img.png
 ```
 
-The sdf model itself is not needed, but the contents of `model_name.material` should resemble:
+The sdf model itself is not needed, but the contents of `script_name.material` should resemble:
 
 ```
-material Model/Texture
+material Material/Name
 {
   technique
   {
@@ -76,9 +75,13 @@ material Model/Texture
 
 Finally, but **VERY IMPORTANTLY** export the media directory so gazebo can find it:
 ```
-cd ~/workspace/gazebo-utils/object-spawner/media &&
-export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:`pwd`
+cd ~/workspace/gazebo-utils &&
+source setup.sh
 ```
+
+### Texture generator
+
+TODO
 
 #### Debug
 

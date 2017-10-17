@@ -54,6 +54,8 @@ namespace gazebo
         double radius;
         double length;
         ignition::math::Vector3d box_size(0,0,0);
+
+        bool override_material = true;
         
         std::string sdf_string;
 
@@ -99,6 +101,12 @@ namespace gazebo
                     box_size = msgs::ConvertIgn(_msg->box_size());
 
                 sdf_string = genBox(name, mass, box_size, pos, ori);
+            
+            } else if (model_type == CUSTOM){
+
+                sdf_string = _msg->has_sdf()?
+                    _msg->sdf() : "";
+                override_material = false;
             }
 
             /* If a spawn message was requested */
@@ -109,19 +117,27 @@ namespace gazebo
                 model_str << "<sdf version='" << SDF_VERSION << "'>"
                 << sdf_string << "</sdf>";
                 
-                /* Change material script in string */
-                texture_uri = _msg->has_texture_uri()?
-                    _msg->texture_uri() : "file://media/materials/scripts/gazebo.material";
-                texture_name = _msg->has_texture_name()?
-                    _msg->texture_name() : "Gazebo/White";
+                std::string new_model_str;
 
-                std::string texture_str =
-                "<script><uri>" + texture_uri + "</uri>" +
-                "<name>" + texture_name + "</name></script>";
+                if (override_material){
 
-                const std::string new_model_str = std::regex_replace(
-                    model_str.str(), this->script_reg, texture_str);
+                    /* Change material script in string */
+                    texture_uri = _msg->has_texture_uri()?
+                        _msg->texture_uri() : "file://media/materials/scripts/gazebo.material";
+                    texture_name = _msg->has_texture_name()?
+                        _msg->texture_name() : "Gazebo/White";
+
+                    std::string texture_str =
+                    "<script><uri>" + texture_uri + "</uri>" +
+                    "<name>" + texture_name + "</name></script>";
+
+                    new_model_str = std::regex_replace(
+                        model_str.str(), this->script_reg, texture_str);
                 
+                } else {
+                    new_model_str = model_str.str();
+                } 
+
                 /* Send the model to the gazebo server */
                 msgs::Factory msg;
                 msg.set_sdf(new_model_str);
@@ -130,21 +146,25 @@ namespace gazebo
 
         } else if (type == REMOVE){
 
-            // TODO
+            clearWorld();
         }
     }
 
     void ObjectSpawnerPlugin::printLiveObjs(){
 
-        std::cout << "[PLUGIN] Printing live object list" << std::endl;
+        std::cout << "[PLUGIN] Printing live objects" << std::endl;
 
         int model_count = this->world->GetModelCount();
-        std::cout << model_count << std::endl;
 
         for (int idx = 0; idx < model_count; idx++){
             physics::ModelPtr model = this->world->GetModel(idx);
             std::cout << model->GetName() << std::endl;
         }
+    }
+
+    void ObjectSpawnerPlugin::clearWorld(){
+
+        this->world->Clear();
     }
 
     const std::string ObjectSpawnerPlugin::genSphere(

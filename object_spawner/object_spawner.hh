@@ -13,6 +13,9 @@
 #include <regex>            // regular expressions
 #include <gazebo/gazebo.hh> // gazebo
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include "gazebo/physics/physics.hh"
 #include "gazebo/common/common.hh"
 #include "gazebo/gazebo.hh"
@@ -38,6 +41,8 @@
 #define CYLINDER    object_spawner_msgs::msgs::SpawnRequest::CYLINDER
 /** @brief Spawn box object */
 #define BOX         object_spawner_msgs::msgs::SpawnRequest::BOX
+/** @brief Spawn custom object */
+#define CUSTOM      object_spawner_msgs::msgs::SpawnRequest::CUSTOM
 
 namespace gazebo {
 
@@ -97,6 +102,11 @@ namespace gazebo {
              * @brief      Prints live objects in the world
              */
             void printLiveObjs();
+
+            /**
+             * @brief      Deleters every entity in the world
+             */
+            void clearWorld();
 
             /**
              * @brief      Generates SDF string for sphere object

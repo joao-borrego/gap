@@ -20,7 +20,8 @@ message SpawnRequest
         CYLINDER    = 2;
         /* @brief Spawn cube in simulation */
         BOX        = 3;
-        /* TODO: Custom model from sdf? */
+        /* @brief Spawn custom object from sdf string */
+        CUSTOM     = 4;
     }
 
     /* @brief Type of request */
@@ -43,4 +44,6 @@ message SpawnRequest
     optional double                 length = 9;
     /* @brief Dimensions of a box */
     optional gazebo.msgs.Vector3d   box_size = 10;
+    /* @brief Custom object sdf string */
+    optional string                 sdf = 11;
 }

@@ -101,6 +101,9 @@ int main(int _argc, char **_argv)
              msg.set_model_type(SPHERE);
         }
 
+        if (input_stream.str() == "remove")
+            msg.set_type(REMOVE);
+
         /* External optional fields have to be allocated */
         gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
         gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();

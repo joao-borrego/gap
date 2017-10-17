@@ -82,11 +82,13 @@ int main()
         if (block_size % 2 == 0)
             block_size++;
 
-        cv::Scalar color1 = cv::Scalar(rand()%255, rand()%255, rand()%255);
-        cv::Scalar color2 = cv::Scalar(rand()%255, rand()%255, rand()%255);
-        cv::Scalar color3 = cv::Scalar(rand()%255, rand()%255, rand()%255);
+        cv::Scalar chess_color_1 = cv::Scalar(rand()%255, rand()%255, rand()%255);
+        cv::Scalar chess_color_2 = cv::Scalar(rand()%255, rand()%255, rand()%255);
+        cv::Scalar flat_color = cv::Scalar(rand()%255, rand()%255, rand()%255);
+        cv::Scalar gradient_color_1 = cv::Scalar(rand()%255, rand()%255, rand()%255);
+        cv::Scalar gradient_color_2 = cv::Scalar(rand()%255, rand()%255, rand()%255);
 
-        cv::Mat chess_board = pattern_generation.getChessTexture(color1, color2, block_size, squares);
+        cv::Mat chess_board = pattern_generation.getChessTexture(chess_color_1, chess_color_2, block_size, squares);
         
         /* Reset string stream values */
         material_name.str(std::string());
@@ -108,7 +110,7 @@ int main()
 
         /* Generate flat texture */
 
-        cv::Mat flat_texture = pattern_generation.getFlatTexture(color3,img_size);
+        cv::Mat flat_texture = pattern_generation.getFlatTexture(flat_color,img_size);
         
         material_name.str(std::string());
         img_filename.str(std::string());
@@ -128,7 +130,7 @@ int main()
 
         /* Generate gradient texture */
 
-        cv::Mat gradient_texture = pattern_generation.getGradientTexture(color1, color2, img_size, false);
+        cv::Mat gradient_texture = pattern_generation.getGradientTexture(gradient_color_1, gradient_color_2, img_size, false);
                         
         material_name.str(std::string());
         img_filename.str(std::string());

@@ -19,7 +19,7 @@ void changeTexture(
         (std::istreambuf_iterator<char>()));
 
     std::stringstream new_material;
-    new_material << "material Model/" << material_id;
+    new_material << "material Plugin/" << material_id;
 
     std::stringstream new_texture;
     new_texture << "texture " << texture_file.c_str();
@@ -47,12 +47,10 @@ int main(int _argc, char **_argv)
 {
 
     std::vector<std::string> textures;
-    std::string textures_path(TEXTURES_DIR);
-    std::string texture_script_file(SCRIPT_FILE);
 
     /* Create a vector with the name of every texture in the textures dir */
-    for (auto &p : fs::directory_iterator(textures_path)){
-        std::string aux(fs::basename(p) + fs::extension(p));
+    for (auto &p : fs::directory_iterator(SCRIPTS_DIR)){
+        std::string aux(fs::basename(p));
         textures.push_back(aux.c_str());
     }
 
@@ -134,11 +132,14 @@ int main(int _argc, char **_argv)
         int idx = rand() % textures.size();
 
         std::string texture = textures.at(idx);
-        changeTexture(SCRIPT_FILE, idx, texture);
-
-        msg.set_texture_uri(TEXTURE_URI);
+        std::stringstream texture_uri;
         std::stringstream texture_name;
-        texture_name << "Model/" << idx;
+
+        texture_uri << "file://materials/scripts/" << texture << ".material"
+        << "</uri><uri>file://materials/textures/";
+        texture_name << "Plugin/" << texture;
+
+        msg.set_texture_uri(texture_uri.str());
         msg.set_texture_name(texture_name.str());
 
         /* Associate dynamic fields */

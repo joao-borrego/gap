@@ -36,11 +36,8 @@
 
 #define OBJECT_SPAWNER_TOPIC "~/gazebo-utils/object_spawner"
 
-#define MODEL_NAME "model"
-#define MODEL_DIR "../../media/" MODEL_NAME
-#define TEXTURES_DIR MODEL_DIR "/materials/textures/"
-#define SCRIPT_DIR MODEL_DIR "/materials/scripts/"
-#define SCRIPT_FILE SCRIPT_DIR MODEL_NAME ".material"
+#define MEDIA_DIR "../../media/"
+#define TEXTURES_DIR MEDIA_DIR "materials/textures/"
+#define SCRIPTS_DIR MEDIA_DIR "materials/scripts/"
 
-#define TEXTURE_URI "model://model/materials/scripts</uri>\
-                    <uri>model://model/materials/textures"
+#define TEXTURE_URI "file://materials/scripts/plugin.material"

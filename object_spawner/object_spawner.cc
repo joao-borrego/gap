@@ -107,6 +107,11 @@ namespace gazebo
                 sdf_string = _msg->has_sdf()?
                     _msg->sdf() : "";
                 override_material = false;
+            
+            } else if (model_type == GROUND){
+
+                this->world->InsertModelFile("model://ground_plane");
+
             }
 
             /* If a spawn message was requested */

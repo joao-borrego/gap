@@ -28,11 +28,20 @@
 /* @brief Command prompt */
 #define PROMPT "> "
 
-#define SPAWN object_spawner_msgs::msgs::SpawnRequest::SPAWN
-#define REMOVE object_spawner_msgs::msgs::SpawnRequest::REMOVE
-#define SPHERE object_spawner_msgs::msgs::SpawnRequest::SPHERE
-#define CYLINDER object_spawner_msgs::msgs::SpawnRequest::CYLINDER
-#define BOX object_spawner_msgs::msgs::SpawnRequest::BOX
+/** @brief Spawn object request */
+#define SPAWN       object_spawner_msgs::msgs::SpawnRequest::SPAWN
+/** @brief Remove object request */
+#define REMOVE      object_spawner_msgs::msgs::SpawnRequest::REMOVE
+/** @brief Spawn sphere object */
+#define SPHERE      object_spawner_msgs::msgs::SpawnRequest::SPHERE
+/** @brief Spawn cylinder object */
+#define CYLINDER    object_spawner_msgs::msgs::SpawnRequest::CYLINDER
+/** @brief Spawn box object */
+#define BOX         object_spawner_msgs::msgs::SpawnRequest::BOX
+/** @brief Spawn custom object */
+#define CUSTOM      object_spawner_msgs::msgs::SpawnRequest::CUSTOM
+/* @brief Spawn ground plane */
+#define GROUND      object_spawner_msgs::msgs::SpawnRequest::GROUND
 
 #define OBJECT_SPAWNER_TOPIC "~/gazebo-utils/object_spawner"
 

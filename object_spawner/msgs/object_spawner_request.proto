@@ -22,6 +22,8 @@ message SpawnRequest
         BOX        = 3;
         /* @brief Spawn custom object from sdf string */
         CUSTOM     = 4;
+        /* @brief Spawn ground plane */
+        GROUND     = 5;
     }
 
     /* @brief Type of request */

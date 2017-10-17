@@ -103,6 +103,8 @@ int main(int _argc, char **_argv)
 
         if (input_stream.str() == "remove")
             msg.set_type(REMOVE);
+        else if (input_stream.str() == "ground")
+            msg.set_model_type(GROUND);
 
         /* External optional fields have to be allocated */
         gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();

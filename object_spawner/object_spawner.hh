@@ -43,6 +43,8 @@
 #define BOX         object_spawner_msgs::msgs::SpawnRequest::BOX
 /** @brief Spawn custom object */
 #define CUSTOM      object_spawner_msgs::msgs::SpawnRequest::CUSTOM
+/* @brief Spawn ground plane */
+#define GROUND      object_spawner_msgs::msgs::SpawnRequest::GROUND
 
 namespace gazebo {
 

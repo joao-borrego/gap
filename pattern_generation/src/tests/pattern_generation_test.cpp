@@ -21,7 +21,7 @@
 /* Show image GUI */
 #define SHOW_IMGS false
 /* Number of images per class of texture */
-#define IMGS_PER_CLASS 100
+#define IMGS_PER_CLASS 1000
 /* Generate .material script */
 #define GENERATE_SCRIPT true
 
@@ -47,7 +47,7 @@ void genScript(const std::string material_name){
         << std::endl << "      }"
         << std::endl << "    }"
         << std::endl << "  }"
-        << std::endl <<" }";
+        << std::endl << "}";
 
         file_path << SCRIPTS_DIR << material_name << MATERIAL_EXT; 
 

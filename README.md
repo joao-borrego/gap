@@ -45,18 +45,17 @@ The textures have to respect the following file structure:
 
 ``` ├
 media/
-   └╴model_name/
-      └╴materials/
-         └╴scripts/
-            └╴model_name.material
-         └╴textures/
-            └╴img.png
+  └╴materials/
+    └╴scripts/
+      └╴scipt_name.material
+    └╴textures/
+      └╴img.png
 ```
 
-The sdf model itself is not needed, but the contents of `model_name.material` should resemble:
+The sdf model itself is not needed, but the contents of `script_name.material` should resemble:
 
 ```
-material Model/Texture
+material Material/Name
 {
   technique
   {
@@ -77,9 +76,7 @@ material Model/Texture
 Finally, but **VERY IMPORTANTLY** export the media directory so gazebo can find it:
 ```
 cd ~/workspace/gazebo-utils &&
-version=7 &&
-source /usr/share/gazebo-$version/setup.sh &&
-export GAZEBO_RESOURCE_PATH=${GAZEBO_RESOURCE_PATH}:`pwd`/media
+source setup.sh
 ```
 
 ### Texture generator

@@ -76,8 +76,10 @@ material Model/Texture
 
 Finally, but **VERY IMPORTANTLY** export the media directory so gazebo can find it:
 ```
-cd ~/workspace/gazebo-utils/media &&
-export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:`pwd`
+cd ~/workspace/gazebo-utils &&
+version=7 &&
+source /usr/share/gazebo-$version/setup.sh &&
+export GAZEBO_RESOURCE_PATH=${GAZEBO_RESOURCE_PATH}:`pwd`/media
 ```
 
 ### Texture generator

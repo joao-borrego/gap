@@ -1,5 +1,10 @@
 #include "pattern_generation/PatternGeneration.h"
 
+cv::Scalar PatternGeneration::getRandomColor()
+{
+    return cv::Scalar( rand()%255, rand()%255, rand()%255);
+}
+
 
 cv::Mat PatternGeneration::getChessTexture(const cv::Scalar & color1, const cv::Scalar & color2, int blockSize, int squares)
 {
@@ -41,7 +46,6 @@ cv::Mat PatternGeneration::getGradientTexture(const cv::Scalar & color1, const c
         {
             cv::Vec3b val;
 
-            cv::Scalar color=gradient_step;
             val[0] = color1[0]-y*gradient_step[0]/imageSize; val[1] = color1[1]-y*gradient_step[1]/imageSize; val[2] =color1[2]-y*gradient_step[2]/imageSize;
             for(int x = 0; x < imageSize; x++)
                 gradient.at<cv::Vec3b>(y,x) = val;
@@ -53,7 +57,6 @@ cv::Mat PatternGeneration::getGradientTexture(const cv::Scalar & color1, const c
         {
             cv::Vec3b val;
 
-            cv::Scalar color=gradient_step;
             val[0] = color1[0]-x*gradient_step[0]/imageSize; val[1] = color1[1]-x*gradient_step[1]/imageSize; val[2] =color1[2]-x*gradient_step[2]/imageSize;
             for(int y = 0; y < imageSize; y++)
                 gradient.at<cv::Vec3b>(y,x) = val;

@@ -82,14 +82,28 @@ int main()
         if (block_size % 2 == 0)
             block_size++;
 
-        cv::Scalar chess_color_1 = cv::Scalar(rand()%255, rand()%255, rand()%255);
-        cv::Scalar chess_color_2 = cv::Scalar(rand()%255, rand()%255, rand()%255);
-        cv::Scalar flat_color = cv::Scalar(rand()%255, rand()%255, rand()%255);
-        cv::Scalar gradient_color_1 = cv::Scalar(rand()%255, rand()%255, rand()%255);
-        cv::Scalar gradient_color_2 = cv::Scalar(rand()%255, rand()%255, rand()%255);
+        /*if(HSV==domain_)
+        {
+            cv::applyColorMap(color, HSV, CV_HSV2RGB);
+
+        }
+        else if(HSL==domain_){
+            cv::applyColorMap(color, HSV, CV_HLS2RGB);
+
+        }*/
+
+        cv::Scalar chess_color_1 = pattern_generation.getRandomColor();
+        cv::Scalar chess_color_2 = pattern_generation.getRandomColor();
+        cv::Scalar flat_color = pattern_generation.getRandomColor();
+        cv::Scalar gradient_color_1 = pattern_generation.getRandomColor();
+        cv::Scalar gradient_color_2 = pattern_generation.getRandomColor();
 
         cv::Mat chess_board = pattern_generation.getChessTexture(chess_color_1, chess_color_2, block_size, squares);
         
+        // Convert to HSV
+        cv::applyColorMap(chess_board, chess_board, cv::COLORMAP_HSV);
+
+
         /* Reset string stream values */
         material_name.str(std::string());
         img_filename.str(std::string());

@@ -30,8 +30,10 @@
 
 /** @brief Spawn object request */
 #define SPAWN       object_spawner_msgs::msgs::SpawnRequest::SPAWN
-/** @brief Remove object request */
-#define REMOVE      object_spawner_msgs::msgs::SpawnRequest::REMOVE
+/** @brief Move object request */
+#define MOVE        object_spawner_msgs::msgs::SpawnRequest::MOVE
+/** @brief Remove all entities from the world request */
+#define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
 /** @brief Spawn sphere object */
 #define SPHERE      object_spawner_msgs::msgs::SpawnRequest::SPHERE
 /** @brief Spawn cylinder object */
@@ -40,6 +42,8 @@
 #define BOX         object_spawner_msgs::msgs::SpawnRequest::BOX
 /** @brief Spawn custom object */
 #define CUSTOM      object_spawner_msgs::msgs::SpawnRequest::CUSTOM
+/* @brief Spawn a model included in gazebo model path */
+#define MODEL      object_spawner_msgs::msgs::SpawnRequest::MODEL
 /* @brief Spawn ground plane */
 #define GROUND      object_spawner_msgs::msgs::SpawnRequest::GROUND
 

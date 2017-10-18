@@ -101,10 +101,18 @@ int main(int _argc, char **_argv)
              msg.set_model_type(SPHERE);
         }
 
-        if (input_stream.str() == "remove")
-            msg.set_type(REMOVE);
-        else if (input_stream.str() == "ground")
+        std::string command = input_stream.str();
+        if (command == "clear"){
+            msg.set_type(CLEAR);
+        } else if (command == "ground"){
             msg.set_model_type(GROUND);
+        } else if (command == "model"){
+            msg.set_model_type(MODEL);
+            msg.set_name("kinect");
+        } else if (command == "move"){
+            msg.set_type(MOVE);
+            msg.set_name("kinect");
+        }
 
         /* External optional fields have to be allocated */
         gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();

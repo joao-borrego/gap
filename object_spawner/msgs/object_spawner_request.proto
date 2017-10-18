@@ -8,9 +8,11 @@ message SpawnRequest
     /* @brief Type of request */
     enum Type{
         /* @brief Spawn model in simulation */
-        SPAWN   = 1;        
-        /* @brief Remove model from simulation */
-        REMOVE  = 2;
+        SPAWN   = 1;
+        /* @brief Move a model in simulation */
+        MOVE    = 2;
+        /* @brief Remove all entities from the world */
+        CLEAR   = 3;
     }
 
     enum ModelType{
@@ -22,8 +24,10 @@ message SpawnRequest
         BOX        = 3;
         /* @brief Spawn custom object from sdf string */
         CUSTOM     = 4;
+        /* @brief Spawn a model included in gazebo model path */
+        MODEL      = 5;
         /* @brief Spawn ground plane */
-        GROUND     = 5;
+        GROUND     = 6;
     }
 
     /* @brief Type of request */

@@ -1,4 +1,4 @@
-#include "PerlinNoise.h"
+#include "pattern_generation/PerlinNoise.h"
 #include <cmath>
 #include <random>
 #include <algorithm>
@@ -92,14 +92,4 @@ double PerlinNoise::grad(int hash, double x, double y, double z) {
 		   v = h < 4 ? y : h == 12 || h == 14 ? x : z;
 	return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
 }
-© 2017 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Help
-Contact GitHub
-API
-Training
-Shop
 

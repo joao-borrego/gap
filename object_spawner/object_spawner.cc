@@ -108,10 +108,16 @@ namespace gazebo
                     _msg->sdf() : "";
                 override_material = false;
             
+            } else if (model_type == MODEL){
+
+                if (_msg->has_name()){
+                    name = "model://" + _msg->name();
+                    this->world->InsertModelFile(name);                
+                }
+
             } else if (model_type == GROUND){
 
                 this->world->InsertModelFile("model://ground_plane");
-
             }
 
             /* If a spawn message was requested */
@@ -149,7 +155,17 @@ namespace gazebo
                 this->factory_pub->Publish(msg);
             }
 
-        } else if (type == REMOVE){
+        } else if (type == MOVE) {
+
+            if (_msg->has_name() && _msg->has_pose()){
+                
+                msgs::Pose m_pose = _msg->pose();
+                ignition::math::Pose3d pose = msgs::ConvertIgn(m_pose);
+                physics::ModelPtr model = this->world->GetModel(_msg->name());
+                model-> SetWorldPose(pose);
+            }
+
+        } else if (type == CLEAR){
 
             clearWorld();
         }

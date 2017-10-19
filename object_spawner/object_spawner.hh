@@ -33,8 +33,10 @@
 
 /** @brief Spawn object request */
 #define SPAWN       object_spawner_msgs::msgs::SpawnRequest::SPAWN
-/** @brief Remove object request */
-#define REMOVE      object_spawner_msgs::msgs::SpawnRequest::REMOVE
+/** @brief Move object request */
+#define MOVE        object_spawner_msgs::msgs::SpawnRequest::MOVE
+/** @brief Remove all entities from the world request */
+#define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
 /** @brief Spawn sphere object */
 #define SPHERE      object_spawner_msgs::msgs::SpawnRequest::SPHERE
 /** @brief Spawn cylinder object */
@@ -43,6 +45,8 @@
 #define BOX         object_spawner_msgs::msgs::SpawnRequest::BOX
 /** @brief Spawn custom object */
 #define CUSTOM      object_spawner_msgs::msgs::SpawnRequest::CUSTOM
+/* @brief Spawn a model included in gazebo model path */
+#define MODEL      object_spawner_msgs::msgs::SpawnRequest::MODEL
 /* @brief Spawn ground plane */
 #define GROUND      object_spawner_msgs::msgs::SpawnRequest::GROUND
 
@@ -85,8 +89,8 @@ namespace gazebo {
             /**
              * @brief      Plugin setup executed on gazebo server launch
              *
-             * @param[in]  _world  The world pointer
-             * @param[in]  _sdf    The sdf parameters
+             * @param      _world  The world pointer
+             * @param      _sdf    The sdf parameters
              */
             void Load(physics::WorldPtr _world, sdf::ElementPtr _sdf);
 
@@ -113,11 +117,11 @@ namespace gazebo {
             /**
              * @brief      Generates SDF string for sphere object
              *
-             * @param[in]  model_name   The model name
-             * @param[in]  mass         The mass
-             * @param[in]  radius       The radius
-             * @param[in]  position     The position
-             * @param[in]  orientation  The orientation
+             * @param      model_name   The model name
+             * @param      mass         The mass
+             * @param      radius       The radius
+             * @param      position     The position
+             * @param      orientation  The orientation
              *
              * @return     The sphere SDF string
              */
@@ -131,12 +135,12 @@ namespace gazebo {
             /**
              * @brief      Generates SDF string for cylinder object
              *
-             * @param[in]  model_name   The model name
-             * @param[in]  mass         The mass
-             * @param[in]  radius       The radius
-             * @param[in]  length       The length
-             * @param[in]  position     The position
-             * @param[in]  orientation  The orientation
+             * @param      model_name   The model name
+             * @param      mass         The mass
+             * @param      radius       The radius
+             * @param      length       The length
+             * @param      position     The position
+             * @param      orientation  The orientation
              *
              * @return     The cylinder SDF string
              */
@@ -151,11 +155,11 @@ namespace gazebo {
             /**
              * @brief      Generates SDF string for box object
              *
-             * @param[in]  model_name   The model name
-             * @param[in]  mass         The mass
-             * @param[in]  size         The box dimensions
-             * @param[in]  position     The position
-             * @param[in]  orientation  The orientation
+             * @param      model_name   The model name
+             * @param      mass         The mass
+             * @param      size         The box dimensions
+             * @param      position     The position
+             * @param      orientation  The orientation
              *
              * @return     The box SDF string
              */

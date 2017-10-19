@@ -18,7 +18,7 @@ include_directories(
 
 include_directories(include)
 # Spawner gazebo server plugin
-add_library(pattern_generation SHARED src/PatternGeneration.cpp )
+add_library(pattern_generation SHARED src/PatternGeneration.cpp src/PerlinNoise.cpp)
 target_link_libraries(
     pattern_generation
     ${Boost_LIBRARIES} ${OpenCV_LIBS})

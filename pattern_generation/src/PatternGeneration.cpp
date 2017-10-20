@@ -1,10 +1,21 @@
 #include "pattern_generation/PatternGeneration.h"
 
-cv::Scalar PatternGeneration::getRandomColor()
+PatternGeneration::PatternGeneration(){}
+
+void PatternGeneration::seedRandom()
 {
-    return cv::Scalar( rand()%255, rand()%255, rand()%255);
+    srand(time(NULL));
+    seeded = true;
 }
 
+cv::Scalar PatternGeneration::getRandomColor()
+{
+    if (!seeded){
+        seedRandom();
+    }
+
+    return cv::Scalar( rand()%255, rand()%255, rand()%255);
+}
 
 cv::Mat PatternGeneration::getChessTexture(const cv::Scalar & color1, const cv::Scalar & color2, int blockSize, int squares)
 {
@@ -24,8 +35,6 @@ cv::Mat PatternGeneration::getChessTexture(const cv::Scalar & color1, const cv::
 
     return chessBoard;
 }
-
-
 
 cv::Mat PatternGeneration::getFlatTexture(const cv::Scalar & color, const int & imageSize)
 {
@@ -74,13 +83,12 @@ cv::Mat PatternGeneration::getPerlinNoiseTexture(const int & imageSize, const bo
     PerlinNoise pn(seed);
 
     // Visit every pixel of the image and assign a color generated with Perlin noise
-    for(unsigned int i = 0; i < imageSize; ++i) {     // y
-            for(unsigned int j = 0; j < imageSize; ++j) {  // x
+    for(int i = 0; i < imageSize; ++i) {     // y
+            for(int j = 0; j < imageSize; ++j) {  // x
                 double x = (double)j/((double)imageSize);
                 double y = (double)i/((double)imageSize);
 
                 cv::Vec3d val;
-
 
                 // Wood like structure
 
@@ -97,8 +105,9 @@ cv::Mat PatternGeneration::getPerlinNoiseTexture(const int & imageSize, const bo
                     val[2] = 20.0 * pn.noise(x, y, ((double) rand() / (RAND_MAX)));
                     val[2] = val[2] - floor(val[2]);
                     val[2] = floor(255 * val[2]);
-                } else
-                {
+
+                } else {
+
                     val[0] = 20 * pn.noise(x, y, z1);
                     val[0] = val[0] - floor(val[0]);
                     val[0] = floor(255 * val[0]);
@@ -117,7 +126,6 @@ cv::Mat PatternGeneration::getPerlinNoiseTexture(const int & imageSize, const bo
                 // Map the values to the [0, 255] interval, for simplicity we use
                 // tones of grey
                 image.at<cv::Vec3b>(i,j)=val;
-
             }
         }
     return image;

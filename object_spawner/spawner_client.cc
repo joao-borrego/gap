@@ -106,6 +106,11 @@ int main(int _argc, char **_argv)
             msg.set_type(CLEAR);
         } else if (command == "ground"){
             msg.set_model_type(GROUND);
+        } else if (command == "custom"){
+            msg.set_model_type(CUSTOM);
+            std::ifstream infile { "../../models/custom_ground.sdf" };
+            std::string model_sdf { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
+            msg.set_sdf(model_sdf);
         } else if (command == "model"){
             msg.set_model_type(MODEL);
             msg.set_name("kinect");

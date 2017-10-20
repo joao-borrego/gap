@@ -54,13 +54,11 @@ namespace gazebo
         double radius;
         double length;
         ignition::math::Vector3d box_size(0,0,0);
-
-        bool override_material = true;
         
         std::string sdf_string;
 
-        type = (_msg->type())? (_msg->type()) : -1;
-        model_type = (_msg->model_type())? (_msg->model_type()) : -1;
+        type = (_msg->has_type())? (_msg->type()) : -1;
+        model_type = (_msg->has_model_type())? (_msg->model_type()) : -1;
 
         if(type == SPAWN){
             
@@ -106,7 +104,6 @@ namespace gazebo
 
                 sdf_string = _msg->has_sdf()?
                     _msg->sdf() : "";
-                override_material = false;
             
             } else if (model_type == MODEL){
 
@@ -123,20 +120,23 @@ namespace gazebo
             /* If a spawn message was requested */
             if (!sdf_string.empty()){
 
-                /* Enclose in sdf xml tags */
                 std::ostringstream model_str;
-                model_str << "<sdf version='" << SDF_VERSION << "'>"
-                << sdf_string << "</sdf>";
-                
+                    
+                if (model_type != CUSTOM) {
+                    /* Enclose in sdf xml tags */
+                    model_str << "<sdf version='" << SDF_VERSION << "'>"
+                    << sdf_string << "</sdf>";
+                } else {
+                    model_str << sdf_string;
+                }
+
                 std::string new_model_str;
 
-                if (override_material){
+                if (_msg->has_texture_uri() && _msg->has_texture_name()){
 
                     /* Change material script in string */
-                    texture_uri = _msg->has_texture_uri()?
-                        _msg->texture_uri() : "file://media/materials/scripts/gazebo.material";
-                    texture_name = _msg->has_texture_name()?
-                        _msg->texture_name() : "Gazebo/White";
+                    texture_uri = _msg->texture_uri();
+                    texture_name = _msg->texture_name();
 
                     std::string texture_str =
                     "<script><uri>" + texture_uri + "</uri>" +

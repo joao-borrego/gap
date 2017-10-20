@@ -11,7 +11,7 @@
 // I ADDED AN EXTRA METHOD THAT GENERATES A NEW PERMUTATION VECTOR (THIS IS NOT PRESENT IN THE ORIGINAL IMPLEMENTATION)
 
 // Initialize with the reference values for the permutation vector
-PerlinNoise::PerlinNoise() {
+/*PerlinNoise::PerlinNoise() {
 	
 	// Initialize the permutation vector with the reference values
 	p = {
@@ -29,17 +29,18 @@ PerlinNoise::PerlinNoise() {
 		138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180 };
 	// Duplicate the permutation vector
 	p.insert(p.end(), p.begin(), p.end());
-}
+}*/
 
 // Generate a new permutation vector based on the value of seed
-PerlinNoise::PerlinNoise(unsigned int seed) {
+PerlinNoise::PerlinNoise() {
 	p.resize(256);
 
 	// Fill p with values from 0 to 255
 	std::iota(p.begin(), p.end(), 0);
 
-	// Initialize a random engine with seed
-	std::default_random_engine engine(seed);
+    // Initialize a random engine
+    std::random_device rd;
+    std::mt19937 engine(rd());
 
 	// Suffle  using the above random engine
 	std::shuffle(p.begin(), p.end(), engine);

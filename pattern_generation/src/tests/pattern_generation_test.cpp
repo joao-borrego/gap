@@ -19,7 +19,7 @@
 #define MATERIAL_EXT ".material"
 
 /* Show image GUI */
-#define SHOW_IMGS false
+#define SHOW_IMGS true
 
 /* Generate .material script */
 #define GENERATE_SCRIPT true
@@ -71,12 +71,14 @@ int main(int argc, char **argv)
     /* root directory */
     std::string media_dir = std::string(argv[2]);
 
-    std::string TEXTURES_DIR =media_dir+ "textures/";
-    std::string SCRIPTS_DIR =media_dir+ "scripts/";
+    std::string TEXTURES_DIR=media_dir+"textures/";
+    std::string SCRIPTS_DIR=media_dir+"scripts/";
 
-    /* Initialize random seed */
-    srand(time(NULL));
-    
+    /* Initialize random device */
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<int> dist;
+
     /* Pattern generator object instance */   
     PatternGeneration pattern_generation;
 
@@ -91,7 +93,7 @@ int main(int argc, char **argv)
     {
         /* Generate square texture */
 
-        squares = rand() % 20 + 8;     // v2 in the range 1 to 100
+        squares = dist(mt) % 20 + 8;     // v2 in the range 1 to 100
         block_size = img_size / squares;
         if (block_size % 2 == 0)
             block_size++;
@@ -177,11 +179,11 @@ int main(int argc, char **argv)
             cv::imshow("Gradient texture", gradient_texture);
 
         /* Generate perlin noise texture */
-        double z1=((double) rand() / (RAND_MAX));
-        double z2=((double) rand() / (RAND_MAX));
-        double z3=((double) rand() / (RAND_MAX));
+        double z1=((double) dist(mt) / (RAND_MAX));
+        double z2=((double) dist(mt) / (RAND_MAX));
+        double z3=((double) dist(mt) / (RAND_MAX));
         srand(time(0));
-        int randomval = rand() % 2;
+        int randomval = dist(mt) % 2;
 
         cv::Mat perlin_texture = pattern_generation.getPerlinNoiseTexture(img_size,randomval,z1,z2,z3);
 

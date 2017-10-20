@@ -3,8 +3,9 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <iostream>
+#include <random>
 #include "pattern_generation/PerlinNoise.h"
-
+#include <memory>
 #define RGB 0
 #define HSV 1
 #define HSL 2
@@ -12,9 +13,7 @@
 class PatternGeneration
 {
 	private:
-
-		/* @brief Whether the random generator has been seeded */
-		bool seeded = false;
+                std::shared_ptr<std::uniform_int_distribution<int> > dist;
 
 	public:
         

@@ -40,7 +40,7 @@ int main(int _argc, char **_argv)
         /* Create a custom message (placeholder message) */
         camera_utils_msgs::msgs::CameraRequest msg;
 
-        msg.set_type(TOGGLE_STATE);
+        msg.set_type(CAPTURE);
 
         /* Send the message */
         pub->Publish(msg);

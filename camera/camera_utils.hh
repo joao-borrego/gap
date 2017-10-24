@@ -19,6 +19,9 @@
 /** Topic monitored for incoming commands */
 #define CAMERA_UTILS_TOPIC "~/gazebo-utils/camera_utils_plugin"
 
+/** Request to capture a frame and save it to disk */
+#define CAPTURE camera_utils_msgs::msgs::CameraRequest::CAPTURE
+
 namespace gazebo{
 
     typedef const boost::shared_ptr<const camera_utils_msgs::msgs::CameraRequest>
@@ -29,11 +32,26 @@ namespace gazebo{
         /* Private attributes */
         private:
 
+            /** A pointer to the camera object */
+            rendering::CameraPtr camera;
+
             /** A node used for transport */
             transport::NodePtr node;
 
             /** A subscriber to a named topic */
             transport::SubscriberPtr sub;
+
+            /** Directory for saving output */
+            std::string output_dir;
+
+            /** Saved frames counter */
+            int saved_counter = 0;
+
+            /** Image format */
+            std::string img_fmt; 
+
+            /** Image output file extension */
+            std::string img_ext = ".png";
 
         /* Public methods */
         public:

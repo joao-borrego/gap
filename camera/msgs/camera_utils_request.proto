@@ -4,16 +4,16 @@ message CameraRequest
 {
     /** Type of request */
     enum Type{
-        /** Toggle camera state */
-        TOGGLE_STATE    = 1;
-        /** Save given number of frames */
-        CAPTURE         = 2;
-        /** Change save directory */
-        DIR             = 3;
+        /** Acquire frame and save it to disk */
+        CAPTURE         = 1;
+        /** Change output directory */
+        DIR             = 2;
     }
 
     /** Type of request */
-    required Type   type   = 1;
-    /** Number of frames to be acquired */
-    optional int32  frames = 2;
+    required Type   type        = 1;
+    /** Name of the file corresponding to the acquired frame */
+    optional string file_name   = 2;
+    /** Path to the output folder */
+    optional string output_dir  = 3;
 }

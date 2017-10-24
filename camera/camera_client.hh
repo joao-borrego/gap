@@ -19,8 +19,8 @@
 #include <gazebo/gazebo_client.hh>
 #endif
 
-/** Request to toggle the state of a camera */
-#define TOGGLE_STATE       camera_utils_msgs::msgs::CameraRequest::TOGGLE_STATE
+/** Request to capture a frame and save it to disk */
+#define CAPTURE camera_utils_msgs::msgs::CameraRequest::CAPTURE
 
 /** Command prompt */
 #define PROMPT "> "

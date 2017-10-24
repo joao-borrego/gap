@@ -16,6 +16,9 @@ namespace gazebo {
         this->node = transport::NodePtr(new transport::Node());
         this->node->Init("default");
 
+        if (!node)
+            std::cout << "MAJOR ERROR\n";
+
         /* Create a topic for listening to requests */
         std::string topic_name = CAMERA_UTILS_TOPIC;
         /* Subcribe to the topic */
@@ -24,7 +27,7 @@ namespace gazebo {
     }
 
     void CameraUtils::onMsg(CameraRequestPtr &_msg){
-
+        std::cout << "[PLUGIN] Incoming camera request.\n";
     }
 
     void CameraUtils::OnNewFrame(
@@ -48,6 +51,5 @@ namespace gazebo {
             this->saveCount++;
         }
         */
-        gzmsg << "[PLUGIN] Loaded camera tools.\n";
     }
 }

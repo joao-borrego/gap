@@ -51,8 +51,6 @@ namespace gazebo{
              */
             void Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf);
 
-            void onMsg(CameraRequestPtr &_msg);
-
             /**
              * @brief      { function_description }
              *
@@ -68,5 +66,15 @@ namespace gazebo{
                 unsigned int _height,
                 unsigned int _depth,
                 const std::string &_format);
+        
+        /* Private methods */
+        private:
+
+            /**
+             * @brief      { function_description }
+             *
+             * @param      _msg  The message
+             */
+            void onMsg(CameraRequestPtr &_msg);
     };
 }

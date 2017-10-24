@@ -17,7 +17,7 @@ link_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/msgs)
 add_subdirectory(msgs)
 
-# Gazebo generic camera plugin
+# Gazebo generic camera utils plugin
 add_library(camera_utils SHARED camera_utils.cc )
 target_link_libraries(
     camera_utils
@@ -26,4 +26,16 @@ target_link_libraries(
     CameraPlugin)
 add_dependencies(
     camera_utils
+    camera_utils_msgs)
+
+# Camera utils plugin client
+add_executable (
+    camera_client
+    camera_client.cc)
+target_link_libraries(
+    camera_client
+    camera_utils_msgs
+    ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
+add_dependencies(
+    camera_client
     camera_utils_msgs)

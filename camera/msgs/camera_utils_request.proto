@@ -1,0 +1,19 @@
+package camera_utils_msgs.msgs;
+
+message CameraRequest
+{
+    /** Type of request */
+    enum Type{
+        /** Toggle camera state */
+        TOGGLE_STATE    = 1;
+        /** Save given number of frames */
+        CAPTURE         = 2;
+        /** Change save directory */
+        DIR             = 3;
+    }
+
+    /** Type of request */
+    required Type   type   = 1;
+    /** Number of frames to be acquired */
+    optional int32  frames = 2;
+}

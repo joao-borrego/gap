@@ -1,7 +1,7 @@
 /**
  * @file object_spawner.hh 
- * @brief headers for custom factory plugin for gazebo with own interface
- *
+ * @brief Object spawner headers
+ *  
  * @author João Borrego
  */
 

@@ -34,3 +34,8 @@ add_subdirectory(object_spawner)
 add_subdirectory(camera)
 # Pattern generation tool
 add_subdirectory(pattern_generation)
+
+# Examples
+
+# Generate objects and capture picture
+add_subdirectory(capture_example)

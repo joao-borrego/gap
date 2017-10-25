@@ -1,89 +1,57 @@
 # gazebo-utils
-Set of tools to interact with gazebo simulator
+Set of tools to interact with Gazebo simulator
 
-### Object spawner
+This project comprises a set of tools for Gazebo which provide an interface to interact
+programatically with the simulator.
+These tools communicate directly with Gazebo server, not depending on any ROS modules.
+It includes:
 
-This utility allows models to be added and removed programatically during simulation execution.
+- [Object spawner plugin], that allows you to spawn boxes, spheres and cylinders, as well as custom models either by
+a uri reference or directly with an sdf string. Furthermore, it allows a model to be rendered with custom textures.
 
-#### Dependencies
+- [Camera plugin], which creates an interface to capture frames at specific instants.
 
-Of course, you must have Gazebo installed.
+- [Pattern generation tool], which can randomly generate a high number of different types of textures,
+that are ready to be rendered in Gazebo.
 
-Protobuf (Google's Protocol Buffers) compiler is needed to compile custom messages.
+### Dependencies
+
+The code has been tested in Gazebo 7.8.1 running on Ubuntu 16.04.
+
+Gazebo internal message passing relies on Protobuf, which is why the compiler needs to be installed in order
+to generate the tools' custom messages.
 
 ```
 sudo apt install protobuf-compiler
 ```
 
-#### Compilation
+The pattern generation tool depends on OpenCV.
 
-Clone the repository to your workspace directory.
+### Compilation
+
+Clone the repository to your workspace directory and build from source.
 
 ```
-cd ~/workspace/gazebo-utils/object-spawner/build &&
+cd ~/workspace/gazebo-utils/ &&
+mkdir build &&
+cd build &&
 cmake ../ &&
 make
 ```
 
-#### Executing
+Alternatively you can build each plugin/tool individually in a similar fashion.
 
-```
-cd ~/workspace/gazebo-utils/object-spawner/ &&
-export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build &&
-# Server and plugin
-gazebo spawner.world
-# Client
-./build/spawner_client
-```
+### Initialization
 
-#### Custom textures
+Make sure you properly initialise the required environment variables.
+We provide a simple script for this:
 
-In order to use custom textures, the recommended procedure is as follows:
-
-Create a folder media in `~/workspace/gazebo-utils/`.
-The textures have to respect the following file structure:
-
-``` ├
-media/
-  └╴materials/
-    └╴scripts/
-      └╴scipt_name.material
-    └╴textures/
-      └╴img.png
-```
-
-The sdf model itself is not needed, but the contents of `script_name.material` should resemble:
-
-```
-material Material/Name
-{
-  technique
-  {
-    pass
-    {
-      texture_unit
-      {
-        texture img.png
-        filtering anistropic
-        max_anisotropy 16
-      }
-    }
-  }
-}
-
-```
-
-Finally, but **VERY IMPORTANTLY** export the media directory so gazebo can find it:
 ```
 cd ~/workspace/gazebo-utils &&
 source setup.sh
 ```
 
-### Texture generator
 
-TODO
-
-#### Debug
-
-Make sure a message is shown when gazebo is loaded indicating the plugin was initialized.
-It might be the case that the environment variables were not correctly exported.
+[Object spawner plugin]: object_spawner
+[Camera plugin]: camera
+[Pattern generation tool]: pattern_generation

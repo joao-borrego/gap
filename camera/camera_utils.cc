@@ -55,12 +55,17 @@ namespace gazebo {
         if (_sdf->HasElement("world")){
             world_name = _sdf->Get<std::string>("world");
         } else {
-            world_name = "default";
+            world_name = DEFAULT_WORLD;
         }
         if (_sdf->HasElement("output_dir")){
             this->output_dir = _sdf->Get<std::string>("output_dir"); 
         } else {
-            this->output_dir = "/tmp/gazebo_camera/";
+            this->output_dir = DEFAULT_OUTPUT_DIR;
+        }
+        if (_sdf->HasElement("extension")){
+            this->extension = _sdf->Get<std::string>("extension"); 
+        } else {
+            this->extension = DEFAULT_EXTENSION;
         }
 
         /* Subscriber setup */
@@ -72,6 +77,10 @@ namespace gazebo {
         /* Subcribe to the topic */
         this->dataPtr->sub = this->dataPtr->node->Subscribe(topic_name,
             &CameraUtils::onMsg, this);
+
+        /* Create output directory */
+        boost::filesystem::path dir(output_dir);
+        boost::filesystem::create_directories(dir);
     }
 
     void CameraUtils::onMsg(CameraRequestPtr &_msg){
@@ -81,9 +90,9 @@ namespace gazebo {
         if (_msg->type() == CAPTURE){
 
             if (_msg->has_file_name()){
-                file_name = _msg->file_name();
+                file_name = _msg->file_name() + extension;
             } else {
-                file_name = "tmp_" + std::to_string(saved_counter++) + img_ext;
+                file_name = "tmp_" + std::to_string(saved_counter++) + extension;
             }
             this->parentSensor->SaveFrame(output_dir + file_name);
             std::cout << "Saving frame as [" << output_dir << file_name << "]\n";

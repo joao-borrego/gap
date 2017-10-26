@@ -24,7 +24,6 @@ int main(int _argc, char **_argv)
     /* TODO - Process options */
 
     const int scenes = 10;
-    const std::string output_dir = "tmp/";
     const std::string materials_dir = "media/materials";
     const std::string scripts_dir = "media/materials/scripts";
 
@@ -81,15 +80,15 @@ int main(int _argc, char **_argv)
         }
 
         /* Make sure the server has updated */
-        sleep(6);
+        sleep(4);
 
         /* Capture the scene and save it to a file */
         captureScene(pub_camera);
 
-        sleep(1);
-
         /* Clear the scene */
         clearWorld(pub_spawner);
+
+        sleep(2);
 
     }
 

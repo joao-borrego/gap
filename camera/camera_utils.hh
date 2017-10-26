@@ -9,12 +9,15 @@
  * @author João Borrego
  */
 
+/* Strings */
 #include <string>
-
+/* Gazebo */
 #include "gazebo/common/Plugin.hh"
 #include "gazebo/sensors/CameraSensor.hh"
 #include "gazebo/rendering/Camera.hh"
 #include "gazebo/util/system.hh"
+/* To create directories */
+#include <boost/filesystem.hpp>
 
 /* Custom messages */
 #include "camera_utils_request.pb.h"
@@ -24,6 +27,12 @@
 
 /** Request to capture a frame and save it to disk */
 #define CAPTURE camera_utils_msgs::msgs::CameraRequest::CAPTURE
+
+/* Default parameters */
+
+#define DEFAULT_WORLD       (const std::string) "default"
+#define DEFAULT_OUTPUT_DIR  (const std::string) "/tmp/camera_utils_output/"
+#define DEFAULT_EXTENSION   (const std::string) ".png"
 
 namespace gazebo{
 
@@ -57,7 +66,7 @@ namespace gazebo{
             /** Image format */
             std::string format;
             /** Exported image extension */
-            const std::string img_ext = ".png";
+            std::string extension;
 
         /* Public methods */
         public:

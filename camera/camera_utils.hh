@@ -9,9 +9,15 @@
  * @author João Borrego
  */
 
-/* Gazebo libraries */
-#include "gazebo/gazebo.hh"
-#include "gazebo/plugins/CameraPlugin.hh"
+/* Strings */
+#include <string>
+/* Gazebo */
+#include "gazebo/common/Plugin.hh"
+#include "gazebo/sensors/CameraSensor.hh"
+#include "gazebo/rendering/Camera.hh"
+#include "gazebo/util/system.hh"
+/* To create directories */
+#include <boost/filesystem.hpp>
 
 /* Custom messages */
 #include "camera_utils_request.pb.h"
@@ -22,36 +28,45 @@
 /** Request to capture a frame and save it to disk */
 #define CAPTURE camera_utils_msgs::msgs::CameraRequest::CAPTURE
 
+/* Default parameters */
+
+#define DEFAULT_WORLD       (const std::string) "default"
+#define DEFAULT_OUTPUT_DIR  (const std::string) "/tmp/camera_utils_output/"
+#define DEFAULT_EXTENSION   (const std::string) ".png"
+
 namespace gazebo{
 
     typedef const boost::shared_ptr<const camera_utils_msgs::msgs::CameraRequest>
         CameraRequestPtr;
 
-    class CameraUtils : public CameraPlugin {
+    // Forward declaration of private data class
+    class CameraUtilsPrivate;
+
+    class CameraUtils : public SensorPlugin {
 
         /* Private attributes */
         private:
 
-            /** A pointer to the camera object */
-            rendering::CameraPtr camera;
-
-            /** A node used for transport */
-            transport::NodePtr node;
-
-            /** A subscriber to a named topic */
-            transport::SubscriberPtr sub;
-
+            /** Class with private attributes */
+            std::unique_ptr<CameraUtilsPrivate> dataPtr;
             /** Directory for saving output */
             std::string output_dir;
-
             /** Saved frames counter */
-            int saved_counter = 0;
+            int saved_counter = 0;            
 
+        /* Protected attributes */
+        protected:
+
+            /** Pointer to camera sensor */
+            sensors::CameraSensorPtr parentSensor;
+            /** Pointer to camera boject */
+            rendering::CameraPtr camera;
+            /** Image dimensions */
+            unsigned int width, height, depth;
             /** Image format */
-            std::string img_fmt; 
-
-            /** Image output file extension */
-            std::string img_ext = ".png";
+            std::string format;
+            /** Exported image extension */
+            std::string extension;
 
         /* Public methods */
         public:
@@ -62,28 +77,17 @@ namespace gazebo{
             CameraUtils();
 
             /**
+             * @brief      Destroys the object.
+             */
+            virtual ~CameraUtils();
+
+            /**
              * @brief      Loads the object
              *
              * @param[in]  _parent  The parent
              * @param[in]  _sdf     The sdf
              */
-            void Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf);
-
-            /**
-             * @brief      { function_description }
-             *
-             * @param[in]  _image   The image
-             * @param[in]  _width   The width
-             * @param[in]  _height  The height
-             * @param[in]  _depth   The depth
-             * @param[in]  _format  The format
-             */
-            void OnNewFrame(
-                const unsigned char *_image,
-                unsigned int _width,
-                unsigned int _height,
-                unsigned int _depth,
-                const std::string &_format);
+            virtual void Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf);
         
         /* Private methods */
         private:

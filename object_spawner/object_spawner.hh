@@ -37,6 +37,8 @@
 #define MOVE        object_spawner_msgs::msgs::SpawnRequest::MOVE
 /** @brief Remove all entities from the world request */
 #define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
+/** @brief Toggle physics simulation request */
+#define TOGGLE      object_spawner_msgs::msgs::SpawnRequest::TOGGLE
 /** @brief Spawn sphere object */
 #define SPHERE      object_spawner_msgs::msgs::SpawnRequest::SPHERE
 /** @brief Spawn cylinder object */

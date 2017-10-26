@@ -92,13 +92,13 @@ int main(int _argc, char **_argv)
         int model_aux = rand() % 3;
         
         if(model_aux == 0){
-             msg.set_model_type(CYLINDER);
+            msg.set_model_type(CYLINDER);
         }
         else if(model_aux == 1){
-             msg.set_model_type(BOX);
+            msg.set_model_type(BOX);
         }
         else if(model_aux == 2){
-             msg.set_model_type(SPHERE);
+            msg.set_model_type(SPHERE);
         }
 
         std::string command = input_stream.str();

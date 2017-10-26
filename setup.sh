@@ -9,9 +9,7 @@ export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build/object_spawner
 export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build/camera
 # Export location of custom resources
 export GAZEBO_RESOURCE_PATH=${GAZEBO_RESOURCE_PATH}:`pwd`/media
-# Export location of custome models
+# Export location of custom models
 export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:`pwd`/models
-# Export gazebo-utils location
-export GAZEBO_UTILS_PATH=`pwd`
 
 echo "gazebo-utils was successfully initialised."

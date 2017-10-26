@@ -13,6 +13,8 @@ message SpawnRequest
         MOVE    = 2;
         /* @brief Remove all entities from the world */
         CLEAR   = 3;
+        /* @brief Pause or resume physics simulation */
+        TOGGLE  = 4;
     }
 
     enum ModelType{
@@ -33,7 +35,7 @@ message SpawnRequest
     /* @brief Type of request */
     required Type                   type = 1;
     /* @brief Model type for spawn */
-    required ModelType              model_type = 2;
+    optional ModelType              model_type = 2;
     /* @brief Model name */
     optional string                 name = 3;
     /* @brief Model pose */

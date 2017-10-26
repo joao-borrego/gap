@@ -13,6 +13,8 @@ message SpawnRequest
         MOVE    = 2;
         /* @brief Remove all entities from the world */
         CLEAR   = 3;
+        /* @brief Pause or resume physics simulation */
+        TOGGLE  = 4;
     }
 
     enum ModelType{

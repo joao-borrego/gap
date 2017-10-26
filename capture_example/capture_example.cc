@@ -23,7 +23,7 @@ int main(int _argc, char **_argv)
 
     /* TODO - Process options */
 
-    const int scenes = 1;
+    const int scenes = 10;
     const std::string output_dir = "tmp/";
     const std::string materials_dir = "media/materials";
     const std::string scripts_dir = "media/materials/scripts";
@@ -61,6 +61,9 @@ int main(int _argc, char **_argv)
         textures.push_back(aux.c_str());
     }
 
+    /* Disable physics */
+    //togglePhysics(pub_spawner);
+    
     /* Main loop */
 
     for (int i = 0; i < scenes; i++){
@@ -69,22 +72,24 @@ int main(int _argc, char **_argv)
         spawnModelFromFile(pub_spawner, "models/custom_ground.sdf");
         spawnModelFromFile(pub_spawner, "models/custom_camera.sdf");
         /* Wait for a subscriber to connect */
-        pub_camera->WaitForConnection();
+        //pub_camera->WaitForConnection();
 
         /* Spawn random objects */
-        int num_objects = rand() % 7;
+        int num_objects = rand() % 7 + 3;
         for (int j = 0; j < num_objects; j++){
             spawnRandomObject(pub_spawner, textures);
         }
 
         /* Make sure the server has updated */
-        sleep(2);
+        sleep(6);
 
         /* Capture the scene and save it to a file */
         captureScene(pub_camera);
-        
+
+        sleep(1);
+
         /* Clear the scene */
-        //clearWorld(pub_spawner);
+        clearWorld(pub_spawner);
 
     }
 
@@ -185,6 +190,12 @@ void clearWorld(gazebo::transport::PublisherPtr pub){
 
     object_spawner_msgs::msgs::SpawnRequest msg;
     msg.set_type(CLEAR);
+    pub->Publish(msg);
+}
+
+void togglePhysics(gazebo::transport::PublisherPtr pub){
+    object_spawner_msgs::msgs::SpawnRequest msg;
+    msg.set_type(TOGGLE);
     pub->Publish(msg);
 }
 

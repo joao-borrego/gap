@@ -44,6 +44,8 @@
 #define MOVE        object_spawner_msgs::msgs::SpawnRequest::MOVE
 /** Remove all entities from the world request */
 #define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
+/** @brief Toggle physics simulation request */
+#define TOGGLE      object_spawner_msgs::msgs::SpawnRequest::TOGGLE
 /** Spawn sphere object */
 #define SPHERE      object_spawner_msgs::msgs::SpawnRequest::SPHERE
 /** Spawn cylinder object */
@@ -79,5 +81,7 @@ void spawnRandomObject(
     std::vector<std::string> textures);
 
 void clearWorld(gazebo::transport::PublisherPtr pub);
+
+void togglePhysics(gazebo::transport::PublisherPtr pub);
 
 void captureScene(gazebo::transport::PublisherPtr pub);

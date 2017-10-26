@@ -4,17 +4,54 @@ namespace gazebo {
 
     /* Register this plugin with the simulator */
     GZ_REGISTER_SENSOR_PLUGIN(CameraUtils)
-    
-    CameraUtils::CameraUtils() : CameraPlugin(){
+
+    /**
+     * @brief      Class for private camera utils plugin data.
+     */
+    class CameraUtilsPrivate
+    {
+        public: 
+
+            /** Gazebo transport node */
+            public: transport::NodePtr node;
+            /** Camera utils topic subscriber */
+            public: transport::SubscriberPtr sub;
+    };
+
+    CameraUtils::CameraUtils()
+        : SensorPlugin(), dataPtr(new CameraUtilsPrivate){
+        
         std::cout << "[PLUGIN] Loaded camera tools.\n";
     }
 
-    void CameraUtils::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf){
-        CameraPlugin::Load(_parent, _sdf);
+    CameraUtils::~CameraUtils(){
+        std::cout << "[PLUGIN] Unloaded camera tools.\n";
+        this->parentSensor.reset();
+        this->camera.reset();
+        this->dataPtr->sub.reset();
+        this->dataPtr->node->Fini();
+    }
+
+    void CameraUtils::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf){
         
+         
+        if (!_sensor)
+            gzerr << "Invalid sensor pointer.\n";
+
+        /* Camera sensor */
+        this->parentSensor =
+            std::dynamic_pointer_cast<sensors::CameraSensor>(_sensor);
+        this->camera = this->parentSensor->Camera();
+        this->width = this->camera->ImageWidth();
+        this->height = this->camera->ImageHeight();
+        this->depth = this->camera->ImageDepth();
+        this->format = this->camera->ImageFormat();
+        this->parentSensor->SetActive(true);
+        
+        /* Plugin parameters */
+
         std::string world_name;
 
-        /* Plugin parameters */
         if (_sdf->HasElement("world")){
             world_name = _sdf->Get<std::string>("world");
         } else {
@@ -26,23 +63,19 @@ namespace gazebo {
             this->output_dir = "/tmp/gazebo_camera/";
         }
 
-        /* Initialize attributes */
-        this->camera = this->parentSensor->Camera();
-        this->img_fmt = this->camera->ImageFormat();
-
         /* Subscriber setup */
-        this->node = transport::NodePtr(new transport::Node());
-        this->node->Init(world_name);
+        this->dataPtr->node = transport::NodePtr(new transport::Node());
+        this->dataPtr->node->Init(world_name);
 
         /* Create a topic for listening to requests */
         std::string topic_name = CAMERA_UTILS_TOPIC;
         /* Subcribe to the topic */
-        this->sub = this->node->Subscribe(topic_name,
+        this->dataPtr->sub = this->dataPtr->node->Subscribe(topic_name,
             &CameraUtils::onMsg, this);
     }
 
     void CameraUtils::onMsg(CameraRequestPtr &_msg){
-
+        
         std::string file_name;
 
         if (_msg->type() == CAPTURE){
@@ -55,28 +88,6 @@ namespace gazebo {
             this->parentSensor->SaveFrame(output_dir + file_name);
             std::cout << "Saving frame as [" << output_dir << file_name << "]\n";
         }
-    }
-
-    void CameraUtils::OnNewFrame(
-        const unsigned char *_image,
-        unsigned int _width,
-        unsigned int _height,
-        unsigned int _depth,
-        const std::string &_format){
-
-        /*
-        char tmp[1024];
-        snprintf(tmp, sizeof(tmp), "/tmp/%s-%04d.jpg",
-                this->parentSensor->GetCamera()->GetName().c_str(), this->saveCount);
-
-        if (this->saveCount < 10)
-        {
-            this->parentSensor->GetCamera()->SaveFrame(
-                    _image, _width, _height, _depth, _format, tmp);
-            gzmsg << "Saving frame [" << this->saveCount
-                        << "] as [" << tmp << "]\n";
-            this->saveCount++;
-        }
-        */
+        
     }
 }

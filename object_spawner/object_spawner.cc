@@ -168,6 +168,10 @@ namespace gazebo
         } else if (type == CLEAR){
 
             clearWorld();
+        
+        } else if (type == TOGGLE){
+            bool state = this->world->GetEnablePhysicsEngine();
+            this->world->EnablePhysicsEngine(!state);
         }
     }
 

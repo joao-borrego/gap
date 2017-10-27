@@ -74,7 +74,10 @@
 
 void spawnModelFromFile(
     gazebo::transport::PublisherPtr pub,
-    const std::string model_path);
+    const std::string model_path,
+    const bool use_custom_pose,
+    const bool use_custom_textures,
+    std::vector<std::string> textures = std::vector<std::string>());
 
 void spawnRandomObject(
     gazebo::transport::PublisherPtr pub,

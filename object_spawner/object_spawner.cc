@@ -36,7 +36,9 @@ namespace gazebo
         this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
     
         /* Setup regular expression used for texture replacement */
-        this->script_reg = std::regex("<script>[\\s\\S]*?<\\/script>");
+        this->script_reg = std::regex(REGEX_XML_SCRIPT);
+        /* Setup regular expression used for pose replacement */
+        this->pose_reg = std::regex(REGEX_XML_POSE);
     }
 
     /* Private methods */
@@ -126,8 +128,29 @@ namespace gazebo
                     /* Enclose in sdf xml tags */
                     model_str << "<sdf version='" << SDF_VERSION << "'>"
                     << sdf_string << "</sdf>";
+                
                 } else {
-                    model_str << sdf_string;
+                    
+                    /* Regex to modify pose string in custom model */
+                    if (_msg->has_pose()){
+
+                        ignition::math::Vector3d rpy = ori.Euler();
+
+                        std::ostringstream pose_xml;
+                        pose_xml << 
+                            "<pose>" << 
+                            pos.X() << " " << pos.Y() << " " << pos.Z() << " " <<
+                            rpy.X() << " " << rpy.Y() << " " << rpy.Z() <<
+                            "</pose>";
+
+                        std::string new_model_str = std::regex_replace(
+                            sdf_string, this->pose_reg, pose_xml.str());
+                        
+                        model_str << new_model_str;
+                    
+                    } else {
+                        model_str << sdf_string;
+                    }
                 }
 
                 std::string new_model_str;

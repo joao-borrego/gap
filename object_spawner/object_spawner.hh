@@ -52,6 +52,13 @@
 /* @brief Spawn ground plane */
 #define GROUND      object_spawner_msgs::msgs::SpawnRequest::GROUND
 
+/* Regex patterns */
+
+/** Matches string enclosed in <script> XML tags */
+#define REGEX_XML_SCRIPT (const std::string) "<script>[\\s\\S]*?<\\/script>"
+/** Matches string enclosed in <pose> XML tags */
+#define REGEX_XML_POSE   (const std::string) "<pose>[\\s\\S]*?<\\/pose>"
+
 namespace gazebo {
 
     typedef const boost::shared_ptr<const object_spawner_msgs::msgs::SpawnRequest>
@@ -73,7 +80,9 @@ namespace gazebo {
             /* @brief A publisher to the factory topic */
             transport::PublisherPtr factory_pub;
 
+            /* Regex patterns */
             std::regex script_reg;
+            std::regex pose_reg;
 
             /* Counters for automatic naming */
             int sphere_counter = 0;

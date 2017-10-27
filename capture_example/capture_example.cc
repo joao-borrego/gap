@@ -18,20 +18,30 @@ namespace fs = boost::filesystem;
  *
  * @return     0
  */
-int main(int _argc, char **_argv)
+int main(int argc, char **argv)
 {
 
     /* TODO - Process options */
+    if(argc<3)
+    {
+        std::cout << "invalid number of arguments"<< std::endl;
+        exit(-1);
+    }
 
-    const int scenes = 10;
-    const std::string materials_dir = "media/materials";
-    const std::string scripts_dir = "media/materials/scripts";
+    std::string media_dir = std::string(argv[1]);
+    unsigned int scenes = atoi(argv[2]);
+
+    std::string materials_dir = media_dir+"/materials";
+    std::string scripts_dir = media_dir+"/materials/scripts";
+
+    std::cout << scripts_dir << std::endl;
+    std::cout << scenes << std::endl;
 
     /* Load gazebo as a client */
     #if GAZEBO_MAJOR_VERSION < 6
-    gazebo::setupClient(_argc, _argv);
+    gazebo::setupClient(argc, argv);
     #else
-    gazebo::client::setup(_argc, _argv);
+    gazebo::client::setup(argc, argv);
     #endif
 
     /* Create the communication node */
@@ -80,12 +90,12 @@ int main(int _argc, char **_argv)
         }
 
         /* Make sure the server has updated */
-        sleep(4);
+        sleep(1);
 
         /* Capture the scene and save it to a file */
         captureScene(pub_camera);
 
-        sleep(2);
+        sleep(1);
 
         /* Clear the scene */
         clearWorld(pub_spawner);

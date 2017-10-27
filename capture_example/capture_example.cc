@@ -71,7 +71,7 @@ int main(int _argc, char **_argv)
         spawnModelFromFile(pub_spawner, "models/custom_ground.sdf");
         spawnModelFromFile(pub_spawner, "models/custom_camera.sdf");
         /* Wait for a subscriber to connect */
-        //pub_camera->WaitForConnection();
+        pub_camera->WaitForConnection();
 
         /* Spawn random objects */
         int num_objects = rand() % 7 + 3;
@@ -84,6 +84,8 @@ int main(int _argc, char **_argv)
 
         /* Capture the scene and save it to a file */
         captureScene(pub_camera);
+
+        sleep(2);
 
         /* Clear the scene */
         clearWorld(pub_spawner);

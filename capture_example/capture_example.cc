@@ -73,6 +73,10 @@ int main(int argc, char **argv)
     /* Disable physics */
     //togglePhysics(pub_spawner);
     
+
+
+
+     ignition::math::Quaternion<double> camera_orientation(0, M_PI*0.5, 0.0);
     /* Main loop */
 
     for (int i = 0; i < scenes; i++){
@@ -80,8 +84,10 @@ int main(int argc, char **argv)
         /* Spawn ground and camera */
         spawnModelFromFile(
             pub_spawner, "models/custom_ground.sdf", false, true, textures);
+
+
         spawnModelFromFile(
-            pub_spawner, "models/custom_camera.sdf", true, false);
+            pub_spawner, "models/custom_camera.sdf", true, false, textures, 0,0,3,camera_orientation);
         /* Wait for a subscriber to connect */
         pub_camera->WaitForConnection();
 
@@ -121,7 +127,11 @@ void spawnModelFromFile(
     const std::string model_path,
     const bool use_custom_pose,
     const bool use_custom_textures,
-    std::vector<std::string> textures){
+    std::vector<std::string> textures,
+    const double & px, 
+    const double & py,
+    const double & pz,
+    const ignition::math::Quaternion<double> & orientation){
 
     /* Read model sdf string from file */
     std::ifstream infile {model_path};
@@ -131,18 +141,14 @@ void spawnModelFromFile(
     msg.set_type(SPAWN);
     msg.set_model_type(CUSTOM);
     msg.set_sdf(model_sdf);
-    
+
     if (use_custom_pose){
         gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
-        gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
+        gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion(gazebo::msgs::Convert(orientation));
         gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
-        pos->set_x(0.0);
-        pos->set_y(0.0);
-        pos->set_z(0.0);
-        ori->set_x(0.0);
-        ori->set_y(0.0);
-        ori->set_z(0.0);
-        ori->set_w(0.0);
+        pos->set_x(px);
+        pos->set_y(py);
+        pos->set_z(pz);
         pose->set_allocated_position(pos);
         pose->set_allocated_orientation(ori);
         msg.set_allocated_pose(pose);

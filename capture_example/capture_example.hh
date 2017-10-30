@@ -72,12 +72,18 @@
  * Function prototypes
  */
 
+
 void spawnModelFromFile(
     gazebo::transport::PublisherPtr pub,
     const std::string model_path,
     const bool use_custom_pose,
     const bool use_custom_textures,
-    std::vector<std::string> textures = std::vector<std::string>());
+    std::vector<std::string> textures = std::vector<std::string>(),
+    const double & px = 0, 
+    const double & py = 0,
+    const double & pz = 0,
+    const ignition::math::Quaternion<double> & orientation  = ignition::math::Quaternion<double>());
+
 
 void spawnRandomObject(
     gazebo::transport::PublisherPtr pub,

@@ -18,6 +18,18 @@ namespace fs = boost::filesystem;
  *
  * @return     0
  */
+
+double dRand(double fMin, double fMax)
+{
+    /* Initialize random device */
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<int> dist;
+
+    double f = (double)dist(mt) / RAND_MAX;
+    return fMin + f * (fMax - fMin);
+}
+
 int main(int argc, char **argv)
 {
 
@@ -34,8 +46,14 @@ int main(int argc, char **argv)
     std::string materials_dir = media_dir+"/materials";
     std::string scripts_dir = media_dir+"/materials/scripts";
 
-    std::cout << scripts_dir << std::endl;
-    std::cout << scenes << std::endl;
+    //std::cout << scripts_dir << std::endl;
+    //std::cout << scenes << std::endl;
+
+    /* Initialize random device */
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<int> dist;
+
 
     /* Load gazebo as a client */
     #if GAZEBO_MAJOR_VERSION < 6
@@ -59,9 +77,9 @@ int main(int argc, char **argv)
     /* Wait for a subscriber to connect */
     pub_spawner->WaitForConnection();
 
+    /* Disable physics */
+    togglePhysics(pub_spawner);	
 
-    /* TODO - Replace rand by better function */
-    srand(time(NULL));
 
     /* Create a vector with the name of every texture in the textures dir */
     std::vector<std::string> textures;
@@ -70,17 +88,16 @@ int main(int argc, char **argv)
         textures.push_back(aux.c_str());
     }
 
-    /* Disable physics */
-    //togglePhysics(pub_spawner);
-    
-
-
-
-     ignition::math::Quaternion<double> camera_orientation(0, M_PI*0.5, 0.0);
+    ignition::math::Quaternion<double> camera_orientation(0, M_PI*0.5, 0.0);
     /* Main loop */
-
+    int min_objects=5;
+    int max_objects=10;
     for (int i = 0; i < scenes; i++){
+        
+	/* Random object number */
+        int num_objects=dist(mt) % max_objects+min_objects;
 
+        std::cout << "number of objects:" << num_objects << std::endl;
         /* Spawn ground and camera */
         spawnModelFromFile(
             pub_spawner, "models/custom_ground.sdf", false, true, textures);
@@ -89,10 +106,11 @@ int main(int argc, char **argv)
         spawnModelFromFile(
             pub_spawner, "models/custom_camera.sdf", true, false, textures, 0,0,3,camera_orientation);
         /* Wait for a subscriber to connect */
-        pub_camera->WaitForConnection();
 
+        std::cout << "wait for connection" << std::endl;
+        pub_camera->WaitForConnection();
+        std::cout << "done" << std::endl;
         /* Spawn random objects */
-        int num_objects = rand() % 7 + 3;
         for (int j = 0; j < num_objects; j++){
             spawnRandomObject(pub_spawner, textures);
         }
@@ -108,7 +126,7 @@ int main(int argc, char **argv)
         /* Clear the scene */
         clearWorld(pub_spawner);
 
-        sleep(2);
+        sleep(1);
 
     }
 
@@ -155,7 +173,12 @@ void spawnModelFromFile(
     }
 
     if (use_custom_textures){
-        int idx = rand() % textures.size();
+	/* Initialize random device */
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_int_distribution<int> dist;
+        int idx=dist(mt) % textures.size();
+
         std::string texture = textures.at(idx);
         std::stringstream texture_uri;
         std::stringstream texture_name;
@@ -174,11 +197,18 @@ void spawnRandomObject(
     gazebo::transport::PublisherPtr pub,
     std::vector<std::string> textures){
 
+    /* Initialize random device */
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<int> dist;
+
     object_spawner_msgs::msgs::SpawnRequest msg;
     
     msg.set_type(SPAWN);
     
-    int model_aux = rand() % 3;
+
+    int model_aux=dist(mt) % 3;
+
     if (model_aux == 0){
         msg.set_model_type(CYLINDER);
     }
@@ -195,27 +225,68 @@ void spawnRandomObject(
     gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
     gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
 
-    /* Pose */
-    pos->set_x((rand() % 500 - 250) / 200.0);
-    pos->set_y((rand() % 500 - 250) / 200.0);
-    pos->set_z((rand() % 50) / 200.0);
-    ori->set_x(0.0);
+    double grid_cell_size=0.5;
+    /*ori->set_x(0.0);
     ori->set_y(0.0);
     ori->set_z(0.0);
-    ori->set_w(0.0);
+    ori->set_w(1.0);*/
     /* Mass */
-    msg.set_mass(rand() % 5 + 1.0);
+    msg.set_mass(dist(mt) % 5 + 1.0);
     /* Sphere/cylinder radius */
-    msg.set_radius((rand() % 20 + 1.0) / 20.0);
-    /* Cylinder length */
-    msg.set_length((rand() % 20 + 1.0) / 20.0);
+    double radius=dRand(0.1,0.5);
+
+    msg.set_radius(radius);
+
     /* Box size */ 
-    size->set_x((rand() % 20 + 5.0) / 20.0);
-    size->set_y((rand() % 20 + 5.0) / 20.0);
-    size->set_z((rand() % 20 + 5.0) / 20.0);
+    double x_length=dRand(0.1,grid_cell_size);
+    double y_length=dRand(0.1,grid_cell_size);    
+    double z_length=dRand(0.1,grid_cell_size);
+
+    size->set_x(x_length);
+    size->set_y(y_length);
+    size->set_z(z_length);
     
+    /* Cylinder length */
+    msg.set_length(z_length);
+
+    /* Pose */
+    // Create 10 by 10 cell grid
+    int x_cells=10;
+    int y_cells=10;
+
+    ignition::math::Quaternion<double> object_orientation;
+
+	
+    if(dRand(0.5,1)<0.5)
+    {
+       // Horizontal
+       object_orientation=ignition::math::Quaternion<double> (0.0, M_PI*0.5, 0.0);
+       pos->set_z(radius); //height is radius
+    }
+    else
+    {
+       // Vertical
+       object_orientation=ignition::math::Quaternion<double> (0.0, 0.0, 0.0);
+       pos->set_z(z_length*0.5);
+       if(model_aux == 2)
+       {
+           pos->set_z(radius);
+       }
+    }
+
+
+    unsigned int rand_cell_x=dist(mt) % (x_cells);
+    unsigned int rand_cell_y=dist(mt) % (y_cells);
+
+
+    pos->set_x(rand_cell_x*grid_cell_size+0.5*grid_cell_size);
+    pos->set_y(rand_cell_y*grid_cell_size+0.5*grid_cell_size);
+
+    ori=new gazebo::msgs::Quaternion(gazebo::msgs::Convert(object_orientation));
+
+
     /* Material script */
-    int idx = rand() % textures.size();
+    int idx = dist(mt) % textures.size();
 
     std::string texture = textures.at(idx);
     std::stringstream texture_uri;
@@ -257,3 +328,6 @@ void captureScene(gazebo::transport::PublisherPtr pub){
     msg.set_type(CAPTURE);
     pub->Publish(msg);
 }
+
+
+

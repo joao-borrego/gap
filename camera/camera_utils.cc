@@ -16,6 +16,8 @@ namespace gazebo {
             public: transport::NodePtr node;
             /** Camera utils topic subscriber */
             public: transport::SubscriberPtr sub;
+            /** Camera utils topic publisher */
+            public: transport::PublisherPtr pub;
     };
 
     CameraUtils::CameraUtils()
@@ -47,7 +49,7 @@ namespace gazebo {
         this->depth = this->camera->ImageDepth();
         this->format = this->camera->ImageFormat();
         this->parentSensor->SetActive(true);
-        
+
         /* Plugin parameters */
 
         std::string world_name;
@@ -73,10 +75,12 @@ namespace gazebo {
         this->dataPtr->node->Init(world_name);
 
         /* Create a topic for listening to requests */
-        std::string topic_name = CAMERA_UTILS_TOPIC;
+        std::string topic_name = REQUEST_TOPIC;
         /* Subcribe to the topic */
         this->dataPtr->sub = this->dataPtr->node->Subscribe(topic_name,
             &CameraUtils::onMsg, this);
+        /* Setup publisher for the reply topic */
+        this->dataPtr->pub = this->dataPtr->node->Advertise<camera_utils_msgs::msgs::CameraReply>(REPLY_TOPIC);
 
         /* Create output directory */
         boost::filesystem::path dir(output_dir);
@@ -94,9 +98,14 @@ namespace gazebo {
             } else {
                 file_name = "tmp_" + std::to_string(saved_counter++) + extension;
             }
-            this->parentSensor->SaveFrame(output_dir + file_name);
+
+            this->camera->Update();
+            bool success = this->camera->SaveFrame(output_dir + file_name);
             std::cout << "Saving frame as [" << output_dir << file_name << "]\n";
+
+            camera_utils_msgs::msgs::CameraReply msg;
+            msg.set_success(success);
+            this->dataPtr->pub->Publish(msg);
         }
-        
     }
 }

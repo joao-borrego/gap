@@ -26,14 +26,17 @@ namespace gazebo
         this->node->Init(this->world->Name());
         #endif
 
+        /* Setup publisher for the factory topic */
+        this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
+        
         /* Create a topic for listening to requests */
         std::string topic_name = OBJECT_SPAWNER_TOPIC;
+        
         /* Subcribe to the topic */
         this->sub = this->node->Subscribe(topic_name,
             &ObjectSpawnerPlugin::onMsg, this);
-
-        /* Setup publisher for the factory topic */
-        this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
+        /* Setup publisher for the reply topic */
+        this->pub = this->node->Advertise<object_spawner_msgs::msgs::Reply>(REPLY_TOPIC);
     
         /* Setup regular expression used for texture replacement */
         this->script_reg = std::regex(REGEX_XML_SCRIPT);
@@ -193,8 +196,19 @@ namespace gazebo
             clearWorld();
         
         } else if (type == TOGGLE){
-            bool state = this->world->GetEnablePhysicsEngine();
-            this->world->EnablePhysicsEngine(!state);
+            
+            bool state = (_msg->has_physics())?
+                _msg->physics() : !this->world->GetEnablePhysicsEngine();
+            this->world->EnablePhysicsEngine(state);
+
+        } else if (type == STATUS){
+
+            int model_count = this->world->GetModelCount();
+            
+            object_spawner_msgs::msgs::Reply msg;
+            msg.set_type(INFO);
+            msg.set_object_count(model_count);
+            pub->Publish(msg);
         }
     }
 

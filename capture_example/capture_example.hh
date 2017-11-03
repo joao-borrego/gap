@@ -116,7 +116,10 @@ void spawnModelFromFile(
 
 void spawnRandomObject(
     gazebo::transport::PublisherPtr pub,
-    std::vector<std::string> textures);
+    std::vector<std::string> textures,
+    unsigned int & x_cell,
+    unsigned int & y_cell,
+    double & grid_cell_size);
 
 void clearWorld(gazebo::transport::PublisherPtr pub);
 

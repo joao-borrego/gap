@@ -122,8 +122,28 @@ int main(int argc, char **argv)
         pub_camera->WaitForConnection();
 
         /* Spawn random objects */
-        for (int j = 0; j < num_objects; j++){
-            spawnRandomObject(pub_spawner, textures);
+
+        int x_cells=10;
+        int y_cells=10;
+
+        // Create 10 by 10 cell grid
+        std::vector<int> cells_array;
+
+        for (int i=0; i<x_cells*y_cells;++i)
+        {
+	   cells_array.push_back(i);
+        }
+
+        std::mt19937 g(rd());
+ 
+        std::shuffle(cells_array.begin(), cells_array.end(), g);
+ 
+        //std::copy(cells_array.begin(), cells_array.end(), std::ostream_iterator<int>(std::cout, " "));
+        double grid_cell_size=0.5;
+        for (int j = 0; j < num_objects; ++j){
+            unsigned int rand_cell_x=floor(cells_array[j]/x_cells);
+            unsigned int rand_cell_y=floor(cells_array[j]-rand_cell_x*x_cells);
+            spawnRandomObject(pub_spawner, textures, rand_cell_x, rand_cell_y, grid_cell_size);
         }
 
         while (waitForSpawner(num_objects + 2)){
@@ -217,7 +237,10 @@ void spawnModelFromFile(
 
 void spawnRandomObject(
     gazebo::transport::PublisherPtr pub,
-    std::vector<std::string> textures){
+    std::vector<std::string> textures,
+    unsigned int & x_cell,
+    unsigned int & y_cell,
+    double & grid_cell_size){
 
     /* Initialize random device */
     std::random_device rd;
@@ -247,7 +270,7 @@ void spawnRandomObject(
     gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
     gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
 
-    double grid_cell_size=0.5;
+
     /*ori->set_x(0.0);
     ori->set_y(0.0);
     ori->set_z(0.0);
@@ -255,7 +278,7 @@ void spawnRandomObject(
     /* Mass */
     msg.set_mass(dist(mt) % 5 + 1.0);
     /* Sphere/cylinder radius */
-    double radius=dRand(0.1,0.5);
+    double radius=dRand(0.1,grid_cell_size*0.5);
 
     msg.set_radius(radius);
 
@@ -272,21 +295,23 @@ void spawnRandomObject(
     msg.set_length(z_length);
 
     /* Pose */
-    // Create 10 by 10 cell grid
-    int x_cells=10;
-    int y_cells=10;
-
     ignition::math::Quaternion<double> object_orientation;
 
-    
-    if(dRand(0.5,1)<0.5)
+    if(dRand(0.5,1.0)<0.5)
     {
        // Horizontal
-       object_orientation=ignition::math::Quaternion<double> (0.0, M_PI*0.5, 0.0);
+       double yaw=dRand(0.0,M_PI);
+
+
+       object_orientation=ignition::math::Quaternion<double> (0.0, M_PI*0.5, yaw);
        pos->set_z(radius); //height is radius
     }
     else
     {
+
+       double roll=dRand(0.0,M_PI);
+       double pitch=dRand(0.0,M_PI);
+
        // Vertical
        object_orientation=ignition::math::Quaternion<double> (0.0, 0.0, 0.0);
        pos->set_z(z_length*0.5);
@@ -295,14 +320,11 @@ void spawnRandomObject(
            pos->set_z(radius);
        }
     }
+	
 
 
-    unsigned int rand_cell_x=dist(mt) % (x_cells);
-    unsigned int rand_cell_y=dist(mt) % (y_cells);
-
-
-    pos->set_x(rand_cell_x*grid_cell_size+0.5*grid_cell_size);
-    pos->set_y(rand_cell_y*grid_cell_size+0.5*grid_cell_size);
+    pos->set_x(x_cell*grid_cell_size+0.5*grid_cell_size);
+    pos->set_y(y_cell*grid_cell_size+0.5*grid_cell_size);
 
     ori=new gazebo::msgs::Quaternion(gazebo::msgs::Convert(object_orientation));
 

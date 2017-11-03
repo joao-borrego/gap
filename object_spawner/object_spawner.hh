@@ -46,6 +46,8 @@ namespace ObjectSpawnerPlugin{
 #define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
 /** Toggle physics simulation request */
 #define TOGGLE      object_spawner_msgs::msgs::SpawnRequest::TOGGLE
+/** Toggle pause simulation request */
+#define PAUSE       object_spawner_msgs::msgs::SpawnRequest::PAUSE
 /** Request world state information */
 #define STATUS      object_spawner_msgs::msgs::SpawnRequest::STATUS
 /** Spawn sphere object */

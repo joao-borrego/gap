@@ -61,7 +61,13 @@ namespace gazebo{
             /** Directory for saving output */
             std::string output_dir;
             /** Saved frames counter */
-            int saved_counter = 0;            
+            int saved_counter = 0;
+            /** File name for next capture */
+            std::string next_file_name;
+            /** Internal flag for saving on next update */
+            bool save_on_update = false;
+
+            event::ConnectionPtr newFrameConnection;
 
         /* Protected attributes */
         protected:
@@ -97,6 +103,10 @@ namespace gazebo{
              * @param[in]  _sdf     The sdf
              */
             virtual void Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf);
+
+            void OnNewFrame(const unsigned char *_image,
+                unsigned int _width, unsigned int _height,
+                unsigned int _depth, const std::string &_format);
         
         /* Private methods */
         private:

@@ -56,6 +56,8 @@
 #define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
 /** Toggle physics simulation request */
 #define TOGGLE      object_spawner_msgs::msgs::SpawnRequest::TOGGLE
+/** Toggle pause simulation request */
+#define PAUSE       object_spawner_msgs::msgs::SpawnRequest::PAUSE
 /** Request world state information */
 #define STATUS      object_spawner_msgs::msgs::SpawnRequest::STATUS
 /** Spawn sphere object */
@@ -118,7 +120,9 @@ void spawnRandomObject(
 
 void clearWorld(gazebo::transport::PublisherPtr pub);
 
-void disablePhysics(gazebo::transport::PublisherPtr pub);
+void changePhysics(gazebo::transport::PublisherPtr pub, bool enable);
+
+void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable);
 
 void captureScene(gazebo::transport::PublisherPtr pub, int idx);
 

@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     pub_spawner->WaitForConnection();
 
     /* Disable physics */
-    disablePhysics(pub_spawner); 
+    changePhysics(pub_spawner, false);
 
     /* Create a vector with the name of every texture in the textures dir */
     std::vector<std::string> textures;
@@ -130,6 +130,8 @@ int main(int argc, char **argv)
             usleep(1000);
             queryModelCount(pub_spawner);
         }
+        
+        /* Still needed! */
         sleep(1);
 
         /* Capture the scene and save it to a file */
@@ -138,7 +140,6 @@ int main(int argc, char **argv)
         while (waitForCamera()){
             usleep(1000);
         }
-        //sleep(1);
 
         /* Clear the scene */
         clearWorld(pub_spawner);
@@ -337,12 +338,20 @@ void clearWorld(gazebo::transport::PublisherPtr pub){
     pub->Publish(msg);
 }
 
-void disablePhysics(gazebo::transport::PublisherPtr pub){
+void changePhysics(gazebo::transport::PublisherPtr pub, bool enable){
     object_spawner_msgs::msgs::SpawnRequest msg;
     msg.set_type(TOGGLE);
-    msg.set_physics(false);
+    msg.set_state(enable);
     pub->Publish(msg);
 }
+
+void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable){
+    object_spawner_msgs::msgs::SpawnRequest msg;
+    msg.set_type(PAUSE);
+    msg.set_state(enable);
+    pub->Publish(msg);
+}
+
 
 void captureScene(gazebo::transport::PublisherPtr pub, int idx){
 

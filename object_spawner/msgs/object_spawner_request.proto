@@ -15,8 +15,10 @@ message SpawnRequest
         CLEAR   = 3;
         /* @brief Pause or resume physics simulation */
         TOGGLE  = 4;
+        /* @brief Pause or resume world */
+        PAUSE   = 5;
         /* @brief Request world state information */
-        STATUS  = 5;
+        STATUS  = 6;
     }
 
     /* @brief Type of model to be spawned */
@@ -58,5 +60,5 @@ message SpawnRequest
     /* @brief Custom object sdf string */
     optional string                 sdf = 11;
     /* @brief World physics state */
-    optional bool                   physics = 12;                 
+    optional bool                   state = 12;                 
 }

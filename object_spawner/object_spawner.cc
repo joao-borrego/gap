@@ -197,9 +197,15 @@ namespace gazebo
         
         } else if (type == TOGGLE){
             
-            bool state = (_msg->has_physics())?
-                _msg->physics() : !this->world->GetEnablePhysicsEngine();
+            bool state = (_msg->has_state())?
+                _msg->state() : !this->world->GetEnablePhysicsEngine();
             this->world->EnablePhysicsEngine(state);
+
+        } else if (type == PAUSE){
+            
+            bool state = (_msg->has_state())?
+                _msg->state() : !this->world->IsPaused();;
+            this->world->SetPaused(state);
 
         } else if (type == STATUS){
 

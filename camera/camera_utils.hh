@@ -21,23 +21,32 @@
 
 /* Custom messages */
 #include "camera_utils_request.pb.h"
+#include "camera_utils_reply.pb.h"
+
+namespace CameraUtils {
 
 /** Topic monitored for incoming commands */
-#define CAMERA_UTILS_TOPIC "~/gazebo-utils/camera_utils_plugin"
+#define REQUEST_TOPIC   "~/gazebo-utils/camera_utils_plugin"
+/** Topic for replying to commands */
+#define REPLY_TOPIC     "~/gazebo-utils/camera_utils_plugin/reply"
 
 /** Request to capture a frame and save it to disk */
 #define CAPTURE camera_utils_msgs::msgs::CameraRequest::CAPTURE
 
 /* Default parameters */
-
 #define DEFAULT_WORLD       (const std::string) "default"
 #define DEFAULT_OUTPUT_DIR  (const std::string) "/tmp/camera_utils_output/"
 #define DEFAULT_EXTENSION   (const std::string) ".png"
+
+}
 
 namespace gazebo{
 
     typedef const boost::shared_ptr<const camera_utils_msgs::msgs::CameraRequest>
         CameraRequestPtr;
+
+    typedef const boost::shared_ptr<const camera_utils_msgs::msgs::CameraReply>
+        CameraReplyPtr;
 
     // Forward declaration of private data class
     class CameraUtilsPrivate;
@@ -52,7 +61,13 @@ namespace gazebo{
             /** Directory for saving output */
             std::string output_dir;
             /** Saved frames counter */
-            int saved_counter = 0;            
+            int saved_counter = 0;
+            /** File name for next capture */
+            std::string next_file_name;
+            /** Internal flag for saving on next update */
+            bool save_on_update = false;
+
+            event::ConnectionPtr newFrameConnection;
 
         /* Protected attributes */
         protected:
@@ -88,6 +103,10 @@ namespace gazebo{
              * @param[in]  _sdf     The sdf
              */
             virtual void Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf);
+
+            void OnNewFrame(const unsigned char *_image,
+                unsigned int _width, unsigned int _height,
+                unsigned int _depth, const std::string &_format);
         
         /* Private methods */
         private:

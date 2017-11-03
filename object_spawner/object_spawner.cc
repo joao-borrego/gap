@@ -26,17 +26,22 @@ namespace gazebo
         this->node->Init(this->world->Name());
         #endif
 
+        /* Setup publisher for the factory topic */
+        this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
+        
         /* Create a topic for listening to requests */
         std::string topic_name = OBJECT_SPAWNER_TOPIC;
+        
         /* Subcribe to the topic */
         this->sub = this->node->Subscribe(topic_name,
             &ObjectSpawnerPlugin::onMsg, this);
-
-        /* Setup publisher for the factory topic */
-        this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
+        /* Setup publisher for the reply topic */
+        this->pub = this->node->Advertise<object_spawner_msgs::msgs::Reply>(REPLY_TOPIC);
     
         /* Setup regular expression used for texture replacement */
-        this->script_reg = std::regex("<script>[\\s\\S]*?<\\/script>");
+        this->script_reg = std::regex(REGEX_XML_SCRIPT);
+        /* Setup regular expression used for pose replacement */
+        this->pose_reg = std::regex(REGEX_XML_POSE);
     }
 
     /* Private methods */
@@ -126,8 +131,29 @@ namespace gazebo
                     /* Enclose in sdf xml tags */
                     model_str << "<sdf version='" << SDF_VERSION << "'>"
                     << sdf_string << "</sdf>";
+                
                 } else {
-                    model_str << sdf_string;
+                    
+                    /* Regex to modify pose string in custom model */
+                    if (_msg->has_pose()){
+
+                        ignition::math::Vector3d rpy = ori.Euler();
+
+                        std::ostringstream pose_xml;
+                        pose_xml << 
+                            "<pose>" << 
+                            pos.X() << " " << pos.Y() << " " << pos.Z() << " " <<
+                            rpy.X() << " " << rpy.Y() << " " << rpy.Z() <<
+                            "</pose>";
+
+                        std::string new_model_str = std::regex_replace(
+                            sdf_string, this->pose_reg, pose_xml.str());
+                        
+                        model_str << new_model_str;
+                    
+                    } else {
+                        model_str << sdf_string;
+                    }
                 }
 
                 std::string new_model_str;
@@ -170,8 +196,25 @@ namespace gazebo
             clearWorld();
         
         } else if (type == TOGGLE){
-            bool state = this->world->GetEnablePhysicsEngine();
-            this->world->EnablePhysicsEngine(!state);
+            
+            bool state = (_msg->has_state())?
+                _msg->state() : !this->world->GetEnablePhysicsEngine();
+            this->world->EnablePhysicsEngine(state);
+
+        } else if (type == PAUSE){
+            
+            bool state = (_msg->has_state())?
+                _msg->state() : !this->world->IsPaused();;
+            this->world->SetPaused(state);
+
+        } else if (type == STATUS){
+
+            int model_count = this->world->GetModelCount();
+            
+            object_spawner_msgs::msgs::Reply msg;
+            msg.set_type(INFO);
+            msg.set_object_count(model_count);
+            pub->Publish(msg);
         }
     }
 

@@ -8,7 +8,9 @@ foreach(ITR ${GAZEBO_INCLUDE_DIRS})
 endforeach()
 
 set (msgs
+  #Custom messages
   camera_utils_request.proto
+  camera_utils_reply.proto
   ${PROTOBUF_IMPORT_DIRS}/header.proto
   ${PROTOBUF_IMPORT_DIRS}/time.proto
 )

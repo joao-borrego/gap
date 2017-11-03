@@ -15,8 +15,13 @@ message SpawnRequest
         CLEAR   = 3;
         /* @brief Pause or resume physics simulation */
         TOGGLE  = 4;
+        /* @brief Pause or resume world */
+        PAUSE   = 5;
+        /* @brief Request world state information */
+        STATUS  = 6;
     }
 
+    /* @brief Type of model to be spawned */
     enum ModelType{
         /* @brief Spawn sphere in simulation */
         SPHERE      = 1;
@@ -54,4 +59,6 @@ message SpawnRequest
     optional gazebo.msgs.Vector3d   box_size = 10;
     /* @brief Custom object sdf string */
     optional string                 sdf = 11;
+    /* @brief World physics state */
+    optional bool                   state = 12;                 
 }

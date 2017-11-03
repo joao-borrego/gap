@@ -25,32 +25,48 @@
 
 /* Custom messages */
 #include "object_spawner_request.pb.h"
+#include "object_spawner_reply.pb.h"
 
-/** @brief Topic monitored for incoming commands */
+namespace ObjectSpawnerPlugin{
+
+/** Topic monitored for incoming commands */
 #define OBJECT_SPAWNER_TOPIC "~/gazebo-utils/object_spawner"
+/** Topic for publishing replies */
+#define REPLY_TOPIC "~/gazebo-utils/object_spawner/reply"
 
 /* Ease of use macros */
 
-/** @brief Spawn object request */
+/* Request */
+
+/** Spawn object request */
 #define SPAWN       object_spawner_msgs::msgs::SpawnRequest::SPAWN
-/** @brief Move object request */
+/** Move object request */
 #define MOVE        object_spawner_msgs::msgs::SpawnRequest::MOVE
-/** @brief Remove all entities from the world request */
+/** Remove all entities from the world request */
 #define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
-/** @brief Toggle physics simulation request */
+/** Toggle physics simulation request */
 #define TOGGLE      object_spawner_msgs::msgs::SpawnRequest::TOGGLE
-/** @brief Spawn sphere object */
+/** Toggle pause simulation request */
+#define PAUSE       object_spawner_msgs::msgs::SpawnRequest::PAUSE
+/** Request world state information */
+#define STATUS      object_spawner_msgs::msgs::SpawnRequest::STATUS
+/** Spawn sphere object */
 #define SPHERE      object_spawner_msgs::msgs::SpawnRequest::SPHERE
-/** @brief Spawn cylinder object */
+/** Spawn cylinder object */
 #define CYLINDER    object_spawner_msgs::msgs::SpawnRequest::CYLINDER
-/** @brief Spawn box object */
+/** Spawn box object */
 #define BOX         object_spawner_msgs::msgs::SpawnRequest::BOX
-/** @brief Spawn custom object */
+/** Spawn custom object */
 #define CUSTOM      object_spawner_msgs::msgs::SpawnRequest::CUSTOM
-/* @brief Spawn a model included in gazebo model path */
-#define MODEL      object_spawner_msgs::msgs::SpawnRequest::MODEL
-/* @brief Spawn ground plane */
+/** Spawn a model included in gazebo model path */
+#define MODEL       object_spawner_msgs::msgs::SpawnRequest::MODEL
+/** Spawn ground plane */
 #define GROUND      object_spawner_msgs::msgs::SpawnRequest::GROUND
+
+/* Reply */
+
+/** Provid world state information */
+#define INFO        object_spawner_msgs::msgs::Reply::INFO
 
 /* Regex patterns */
 
@@ -59,26 +75,33 @@
 /** Matches string enclosed in <pose> XML tags */
 #define REGEX_XML_POSE   (const std::string) "<pose>[\\s\\S]*?<\\/pose>"
 
+}
+
 namespace gazebo {
 
     typedef const boost::shared_ptr<const object_spawner_msgs::msgs::SpawnRequest>
         SpawnRequestPtr;
+
+    typedef const boost::shared_ptr<const object_spawner_msgs::msgs::Reply>
+        ReplyPtr;
 
     class ObjectSpawnerPlugin : public WorldPlugin {
 
         /* Private attributes */
         private:
 
-            /* @brief A pointer to the world */
+            /** A pointer to the world */
             physics::WorldPtr world;
-            /* @brief Keep track of live objects */
+            /** Keep track of live objects */
             std::list<std::string> live_objs;
-            /* @brief A node used for transport */
+            /** A node used for transport */
             transport::NodePtr node;
-            /* @brief A subscriber to a named topic */
-            transport::SubscriberPtr sub;
-            /* @brief A publisher to the factory topic */
+            /** A publisher to the factory topic */
             transport::PublisherPtr factory_pub;
+            /** A subscriber to the request topic */
+            transport::SubscriberPtr sub;
+            /** A publisher to the reply topic */
+            transport::PublisherPtr pub;
 
             /* Regex patterns */
             std::regex script_reg;

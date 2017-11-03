@@ -16,6 +16,8 @@ namespace gazebo {
             public: transport::NodePtr node;
             /** Camera utils topic subscriber */
             public: transport::SubscriberPtr sub;
+            /** Camera utils topic publisher */
+            public: transport::PublisherPtr pub;
     };
 
     CameraUtils::CameraUtils()
@@ -26,6 +28,7 @@ namespace gazebo {
 
     CameraUtils::~CameraUtils(){
         std::cout << "[PLUGIN] Unloaded camera tools.\n";
+        this->newFrameConnection.reset();
         this->parentSensor.reset();
         this->camera.reset();
         this->dataPtr->sub.reset();
@@ -46,8 +49,7 @@ namespace gazebo {
         this->height = this->camera->ImageHeight();
         this->depth = this->camera->ImageDepth();
         this->format = this->camera->ImageFormat();
-        this->parentSensor->SetActive(true);
-        
+
         /* Plugin parameters */
 
         std::string world_name;
@@ -73,14 +75,23 @@ namespace gazebo {
         this->dataPtr->node->Init(world_name);
 
         /* Create a topic for listening to requests */
-        std::string topic_name = CAMERA_UTILS_TOPIC;
+        std::string topic_name = REQUEST_TOPIC;
         /* Subcribe to the topic */
         this->dataPtr->sub = this->dataPtr->node->Subscribe(topic_name,
             &CameraUtils::onMsg, this);
+        /* Setup publisher for the reply topic */
+        this->dataPtr->pub = this->dataPtr->node->Advertise<camera_utils_msgs::msgs::CameraReply>(REPLY_TOPIC);
 
         /* Create output directory */
         boost::filesystem::path dir(output_dir);
         boost::filesystem::create_directories(dir);
+
+        this->newFrameConnection = this->camera->ConnectNewImageFrame(
+            std::bind(&CameraUtils::OnNewFrame, this,
+            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+            std::placeholders::_4, std::placeholders::_5));
+
+        this->parentSensor->SetActive(true);
     }
 
     void CameraUtils::onMsg(CameraRequestPtr &_msg){
@@ -94,9 +105,29 @@ namespace gazebo {
             } else {
                 file_name = "tmp_" + std::to_string(saved_counter++) + extension;
             }
-            this->parentSensor->SaveFrame(output_dir + file_name);
-            std::cout << "Saving frame as [" << output_dir << file_name << "]\n";
+
+            this->next_file_name = output_dir + file_name;
+            this->save_on_update = true;
         }
-        
+    }
+
+    void CameraUtils::OnNewFrame(const unsigned char * /*_image*/,
+        unsigned int /*_width*/,
+        unsigned int /*_height*/,
+        unsigned int /*_depth*/,
+        const std::string &/*_format*/){
+
+        if (save_on_update){
+
+            save_on_update = false;
+
+            bool success = this->camera->SaveFrame(next_file_name);
+            std::cout << "Saving frame as [" << next_file_name << "]\n";
+
+            camera_utils_msgs::msgs::CameraReply msg;
+            msg.set_success(success);
+            this->dataPtr->pub->Publish(msg);
+        }
+
     }
 }

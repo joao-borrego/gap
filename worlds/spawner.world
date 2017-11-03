@@ -4,13 +4,5 @@
 
     <plugin name="object_spawner" filename="libobject_spawner.so"/>
 
-    <include>
-      <uri>model://ground_plane</uri>
-    </include>
-
-    <include>
-      <uri>model://sun</uri>
-    </include>
-
   </world>
 </sdf>

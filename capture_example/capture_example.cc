@@ -30,6 +30,13 @@ double dRand(double fMin, double fMax)
     return fMin + f * (fMax - fMin);
 }
 
+/** Protect access to object_count */
+std::mutex object_count_mutex;
+int object_count{0};
+/** Protect access to camera success */
+std::mutex camera_success_mutex;
+int camera_success{0};
+
 int main(int argc, char **argv)
 {
 
@@ -66,20 +73,25 @@ int main(int argc, char **argv)
     gazebo::transport::NodePtr node(new gazebo::transport::Node());
     node->Init();
 
-    /* Publish to the object spawner topic */
+    /* Publish to the object spawner request topic */
     gazebo::transport::PublisherPtr pub_spawner =
         node->Advertise<object_spawner_msgs::msgs::SpawnRequest>(OBJECT_SPAWNER_TOPIC);
+
+    /* Subscribe to the object spawner reply topic and link callback function */
+    gazebo::transport::SubscriberPtr sub_spawner = node->Subscribe(OBJECT_SPAWNER_REPLY_TOPIC, updateModelCount);
 
     /* Publish to the camera topic */
     gazebo::transport::PublisherPtr pub_camera =
         node->Advertise<camera_utils_msgs::msgs::CameraRequest>(CAMERA_UTILS_TOPIC);
 
+     /* Subscribe to the camera utils reply topic and link callback function */
+    gazebo::transport::SubscriberPtr sub_camera = node->Subscribe(CAMERA_UTILS_REPLY_TOPIC, updateCameraSuccess);
+
     /* Wait for a subscriber to connect */
     pub_spawner->WaitForConnection();
 
     /* Disable physics */
-    togglePhysics(pub_spawner);	
-
+    changePhysics(pub_spawner, false);
 
     /* Create a vector with the name of every texture in the textures dir */
     std::vector<std::string> textures;
@@ -88,28 +100,27 @@ int main(int argc, char **argv)
         textures.push_back(aux.c_str());
     }
 
-    ignition::math::Quaternion<double> camera_orientation(0, M_PI*0.5, 0.0);
+    ignition::math::Quaternion<double> camera_orientation(0, M_PI/2.0, 0);
+    int min_objects = 5;
+    int max_objects = 10;
+    
     /* Main loop */
-    int min_objects=5;
-    int max_objects=10;
     for (int i = 0; i < scenes; i++){
-        
-	/* Random object number */
-        int num_objects=dist(mt) % max_objects+min_objects;
+    
+        /* Random object number */
+        int num_objects = (dist(mt) % max_objects) + min_objects;
 
-        std::cout << "number of objects:" << num_objects << std::endl;
+        std::cout << "Number of objects:" << num_objects << std::endl;
         /* Spawn ground and camera */
         spawnModelFromFile(
             pub_spawner, "models/custom_ground.sdf", false, true, textures);
 
 
         spawnModelFromFile(
-            pub_spawner, "models/custom_camera.sdf", true, false, textures, 0,0,3,camera_orientation);
-        /* Wait for a subscriber to connect */
-
-        std::cout << "wait for connection" << std::endl;
+            pub_spawner, "models/custom_camera.sdf", true, false,
+            textures, 2.5, 2.5, 3.5, camera_orientation);
         pub_camera->WaitForConnection();
-        std::cout << "done" << std::endl;
+
         /* Spawn random objects */
 
         int x_cells=10;
@@ -135,19 +146,28 @@ int main(int argc, char **argv)
             spawnRandomObject(pub_spawner, textures, rand_cell_x, rand_cell_y, grid_cell_size);
         }
 
-        /* Make sure the server has updated */
+        while (waitForSpawner(num_objects + 2)){
+            usleep(1000);
+            queryModelCount(pub_spawner);
+        }
+        
+        /* Still needed! */
         sleep(1);
 
         /* Capture the scene and save it to a file */
-        captureScene(pub_camera);
-
-        sleep(1);
+        captureScene(pub_camera, i);
+        
+        while (waitForCamera()){
+            usleep(1000);
+        }
 
         /* Clear the scene */
         clearWorld(pub_spawner);
 
-        sleep(1);
-
+        while (waitForSpawner(0)){
+            usleep(1000);
+            queryModelCount(pub_spawner);
+        }
     }
 
     /* Shut down */
@@ -159,6 +179,8 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+/* Spawn objects */
 
 void spawnModelFromFile(
     gazebo::transport::PublisherPtr pub,
@@ -193,10 +215,10 @@ void spawnModelFromFile(
     }
 
     if (use_custom_textures){
-	/* Initialize random device */
-	std::random_device rd;
-	std::mt19937 mt(rd());
-	std::uniform_int_distribution<int> dist;
+    /* Initialize random device */
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<int> dist;
         int idx=dist(mt) % textures.size();
 
         std::string texture = textures.at(idx);
@@ -275,7 +297,6 @@ void spawnRandomObject(
     /* Pose */
     ignition::math::Quaternion<double> object_orientation;
 
-	
     if(dRand(0.5,1.0)<0.5)
     {
        // Horizontal
@@ -339,18 +360,70 @@ void clearWorld(gazebo::transport::PublisherPtr pub){
     pub->Publish(msg);
 }
 
-void togglePhysics(gazebo::transport::PublisherPtr pub){
+void changePhysics(gazebo::transport::PublisherPtr pub, bool enable){
     object_spawner_msgs::msgs::SpawnRequest msg;
     msg.set_type(TOGGLE);
+    msg.set_state(enable);
     pub->Publish(msg);
 }
 
-void captureScene(gazebo::transport::PublisherPtr pub){
+void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable){
+    object_spawner_msgs::msgs::SpawnRequest msg;
+    msg.set_type(PAUSE);
+    msg.set_state(enable);
+    pub->Publish(msg);
+}
+
+
+void captureScene(gazebo::transport::PublisherPtr pub, int idx){
 
     camera_utils_msgs::msgs::CameraRequest msg;
     msg.set_type(CAPTURE);
+    msg.set_file_name(std::to_string(idx));
     pub->Publish(msg);
 }
 
+/* Handle object count */
 
+bool waitForSpawner(int desired_objects){
+    std::lock_guard<std::mutex> lock(object_count_mutex);
+    if (desired_objects == object_count)
+        return false;
+    return true;
+}
 
+void queryModelCount(gazebo::transport::PublisherPtr pub){
+    object_spawner_msgs::msgs::SpawnRequest msg;
+    msg.set_type(STATUS);
+    pub->Publish(msg);
+}
+
+void updateModelCount(SpawnerReplyPtr &_msg){
+    if (_msg->type() == INFO){
+        if (_msg->has_object_count()){
+            std::lock_guard<std::mutex> lock(object_count_mutex);
+            object_count = _msg->object_count();
+        }
+    }
+}
+
+/* Handle camera success */
+
+bool waitForCamera(){
+    std::lock_guard<std::mutex> lock(camera_success_mutex);
+    if (camera_success){
+        camera_success = false;
+        return false;
+    }
+    return true;
+}
+
+void updateCameraSuccess(CameraReplyPtr &_msg){
+    if (_msg->success()){
+        std::lock_guard<std::mutex> lock(camera_success_mutex);
+        camera_success = true;    
+    } else {
+        std::cout << "Camera could not save to file! Exiting..." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}

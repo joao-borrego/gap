@@ -68,8 +68,10 @@ namespace ObjectSpawnerPlugin{
 
 /* Reply */
 
-/** Provid world state information */
+/** Provide world state information */
 #define INFO            object_spawner_msgs::msgs::Reply::INFO
+/** Provide specific object state information */
+#define PROPERTIES      object_spawner_msgs::msgs::Reply::PROPERTIES
 
 /* Regex patterns */
 

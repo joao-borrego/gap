@@ -198,7 +198,7 @@ namespace gazebo
                 msgs::Pose m_pose = _msg->pose();
                 ignition::math::Pose3d pose = msgs::ConvertIgn(m_pose);
                 physics::ModelPtr model = this->world->GetModel(_msg->name());
-                model-> SetWorldPose(pose);
+                model->SetWorldPose(pose);
             }
 
         } else if (type == CLEAR){
@@ -225,12 +225,37 @@ namespace gazebo
 
         } else if (type == STATUS){
 
-            int model_count = this->world->GetModelCount();
-            
             object_spawner_msgs::msgs::Reply msg;
-            msg.set_type(INFO);
-            msg.set_object_count(model_count);
-            pub->Publish(msg);
+            if (_msg->has_name()){
+                physics::ModelPtr model = this->world->GetModel(_msg->name());
+                if (model == NULL){
+                    return;
+                }
+                math::Box bb = model->GetBoundingBox();
+                gazebo::msgs::Vector3d *bb_center_msg = new gazebo::msgs::Vector3d();
+                gazebo::msgs::Vector3d *bb_size_msg = new gazebo::msgs::Vector3d();
+                ignition::math::Vector3d bb_center = bb.GetCenter().Ign();
+                ignition::math::Vector3d bb_size = bb.GetSize().Ign();
+                
+                bb_center_msg->set_x(bb_center.X());
+                bb_center_msg->set_y(bb_center.Y());
+                bb_center_msg->set_z(bb_center.Z());
+                bb_size_msg->set_x(bb_size.X());
+                bb_size_msg->set_y(bb_size.Y());
+                bb_size_msg->set_z(bb_size.Z());
+
+                msg.set_type(PROPERTIES);
+                msg.set_name(_msg->name());
+                msg.set_allocated_bb_center(bb_center_msg);
+                msg.set_allocated_bb_size(bb_size_msg);
+                pub->Publish(msg, true);
+
+            } else {
+                int model_count = this->world->GetModelCount();
+                msg.set_type(INFO);
+                msg.set_object_count(model_count);
+                pub->Publish(msg);
+            }
         }
     }
 

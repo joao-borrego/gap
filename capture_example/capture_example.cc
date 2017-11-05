@@ -78,7 +78,7 @@ int main(int argc, char **argv)
         node->Advertise<object_spawner_msgs::msgs::SpawnRequest>(OBJECT_SPAWNER_TOPIC);
 
     /* Subscribe to the object spawner reply topic and link callback function */
-    gazebo::transport::SubscriberPtr sub_spawner = node->Subscribe(OBJECT_SPAWNER_REPLY_TOPIC, updateModelCount);
+    gazebo::transport::SubscriberPtr sub_spawner = node->Subscribe(OBJECT_SPAWNER_REPLY_TOPIC, onSpawnerResponse);
 
     /* Publish to the camera topic */
     gazebo::transport::PublisherPtr pub_camera =
@@ -163,6 +163,8 @@ int main(int argc, char **argv)
 
         /* Disable physics */
         changePhysics(pub_spawner, true);
+
+        queryModelBoundingBox(pub_spawner, "plugin_camera");
 
         /* Clear the scene */
         clearWorld(pub_spawner);
@@ -385,7 +387,6 @@ void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable){
 
 
 void captureScene(gazebo::transport::PublisherPtr pub, int idx){
-
     camera_utils_msgs::msgs::CameraRequest msg;
     msg.set_type(CAPTURE);
     msg.set_file_name(std::to_string(idx));
@@ -407,11 +408,28 @@ void queryModelCount(gazebo::transport::PublisherPtr pub){
     pub->Publish(msg);
 }
 
-void updateModelCount(SpawnerReplyPtr &_msg){
+void queryModelBoundingBox(
+    gazebo::transport::PublisherPtr pub,
+    const std::string &model_name){
+    object_spawner_msgs::msgs::SpawnRequest msg;
+    msg.set_type(STATUS);
+    msg.set_name(model_name);
+    pub->Publish(msg);
+}
+
+void onSpawnerResponse(SpawnerReplyPtr &_msg){
     if (_msg->type() == INFO){
         if (_msg->has_object_count()){
             std::lock_guard<std::mutex> lock(object_count_mutex);
             object_count = _msg->object_count();
+        }
+    } else if (_msg->type() == PROPERTIES){
+        if (_msg->has_name() && _msg->has_bb_center() && _msg->has_bb_size()){
+            ignition::math::Vector3d bb_center = gazebo::msgs::ConvertIgn(_msg->bb_center());
+            ignition::math::Vector3d bb_size = gazebo::msgs::ConvertIgn(_msg->bb_size());
+            std::cout << _msg->name() << " Bounding box" << std::endl <<
+            "\tCenter: " << bb_center << std::endl <<
+            "\tSize: " << bb_size << std::endl;
         }
     }
 }

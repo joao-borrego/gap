@@ -23,11 +23,11 @@ namespace gazebo {
     CameraUtils::CameraUtils()
         : SensorPlugin(), dataPtr(new CameraUtilsPrivate){
         
-        std::cout << "[PLUGIN] Loaded camera tools.\n";
+        std::cout << "[Camera] Loaded camera tools.\n";
     }
 
     CameraUtils::~CameraUtils(){
-        std::cout << "[PLUGIN] Unloaded camera tools.\n";
+        std::cout << "[Camera] Unloaded camera tools.\n";
         this->newFrameConnection.reset();
         this->parentSensor.reset();
         this->camera.reset();
@@ -39,7 +39,7 @@ namespace gazebo {
         
          
         if (!_sensor)
-            gzerr << "Invalid sensor pointer.\n";
+            gzerr << "[Camera] Invalid sensor pointer.\n";
 
         /* Camera sensor */
         this->parentSensor =
@@ -111,23 +111,23 @@ namespace gazebo {
         }
     }
 
-    void CameraUtils::OnNewFrame(const unsigned char * /*_image*/,
-        unsigned int /*_width*/,
-        unsigned int /*_height*/,
-        unsigned int /*_depth*/,
-        const std::string &/*_format*/){
+    void CameraUtils::OnNewFrame(
+    	const unsigned char * 	/*_image*/,
+        unsigned int 			/*_width*/,
+        unsigned int 			/*_height*/,
+        unsigned int 			/*_depth*/,
+        const std::string &		/*_format*/){
 
         if (save_on_update){
 
             save_on_update = false;
 
             bool success = this->camera->SaveFrame(next_file_name);
-            std::cout << "Saving frame as [" << next_file_name << "]\n";
+            std::cout << "[Camera] Saving frame as [" << next_file_name << "]\n";
 
             camera_utils_msgs::msgs::CameraReply msg;
             msg.set_success(success);
             this->dataPtr->pub->Publish(msg);
         }
-
     }
 }

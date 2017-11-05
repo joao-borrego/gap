@@ -1,15 +1,26 @@
 package object_spawner_msgs.msgs;
 
+import "pose.proto";
+import "vector3d.proto";
+
 message Reply
 {
     /* @brief Type of response */
     enum Type{
         /* @brief World status information */
-        INFO   = 1;
+        INFO        = 1;
+        /* @brief Object properties */
+        PROPERTIES  = 2;
     }
 
     /* @brief Type of request */
-    required Type   type = 1;
+    required Type                   type            = 1;
     /* @brief Object count */
-    optional int32  object_count = 2;
+    optional int32                  object_count    = 2;
+    /* @brief Object name */
+    optional string                 name            = 3;
+    /* @brief Bounding box pose */
+    optional gazebo.msgs.Vector3d   bb_center       = 4;
+    /* @brief Bounding box dimensions */
+    optional gazebo.msgs.Vector3d   bb_size         = 5;
 }

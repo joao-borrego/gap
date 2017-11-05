@@ -80,6 +80,8 @@
 
 /** Provid world state information */
 #define INFO            object_spawner_msgs::msgs::Reply::INFO
+/** Provide specific object state information */
+#define PROPERTIES      object_spawner_msgs::msgs::Reply::PROPERTIES
 
 /*
  * API Topics
@@ -139,7 +141,10 @@ bool waitForSpawner(int desired_objects);
 
 void queryModelCount(gazebo::transport::PublisherPtr pub);
 
-void updateModelCount(SpawnerReplyPtr &_msg);
+void queryModelBoundingBox(gazebo::transport::PublisherPtr pub,
+    const std::string &model_name);
+
+void onSpawnerResponse(SpawnerReplyPtr &_msg);
 
 /* Wait for camera to save to file */
 

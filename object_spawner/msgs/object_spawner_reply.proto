@@ -1,6 +1,5 @@
 package object_spawner_msgs.msgs;
 
-import "pose.proto";
 import "vector3d.proto";
 
 message Reply

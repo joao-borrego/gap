@@ -1,0 +1,6 @@
+package camera_utils.msgs;
+
+message CameraUtilsResponse
+{
+    required bool success = 1;
+}

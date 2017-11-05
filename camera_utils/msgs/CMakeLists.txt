@@ -10,7 +10,7 @@ endforeach()
 set (msgs
   #Custom messages
   camera_utils_request.proto
-  camera_utils_reply.proto
+  camera_utils_response.proto
   ${PROTOBUF_IMPORT_DIRS}/header.proto
   ${PROTOBUF_IMPORT_DIRS}/time.proto
 )

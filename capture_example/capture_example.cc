@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 {
 
     /* TODO - Process options */
-    if(argc<3)
+    if (argc < 3)
     {
         std::cout << "invalid number of arguments"<< std::endl;
         exit(-1);
@@ -50,17 +50,13 @@ int main(int argc, char **argv)
     std::string media_dir = std::string(argv[1]);
     unsigned int scenes = atoi(argv[2]);
 
-    std::string materials_dir = media_dir+"/materials";
-    std::string scripts_dir = media_dir+"/materials/scripts";
-
-    //std::cout << scripts_dir << std::endl;
-    //std::cout << scenes << std::endl;
+    std::string materials_dir   = media_dir + "/materials";
+    std::string scripts_dir     = media_dir + "/materials/scripts";
 
     /* Initialize random device */
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_int_distribution<int> dist;
-
 
     /* Load gazebo as a client */
     #if GAZEBO_MAJOR_VERSION < 6
@@ -78,14 +74,16 @@ int main(int argc, char **argv)
         node->Advertise<object_spawner_msgs::msgs::SpawnRequest>(OBJECT_SPAWNER_TOPIC);
 
     /* Subscribe to the object spawner reply topic and link callback function */
-    gazebo::transport::SubscriberPtr sub_spawner = node->Subscribe(OBJECT_SPAWNER_REPLY_TOPIC, onSpawnerResponse);
+    gazebo::transport::SubscriberPtr sub_spawner =
+        node->Subscribe(OBJECT_SPAWNER_REPLY_TOPIC, onSpawnerResponse);
 
     /* Publish to the camera topic */
     gazebo::transport::PublisherPtr pub_camera =
-        node->Advertise<camera_utils_msgs::msgs::CameraRequest>(CAMERA_UTILS_TOPIC);
+        node->Advertise<camera_utils::msgs::CameraUtilsRequest>(CAMERA_UTILS_TOPIC);
 
      /* Subscribe to the camera utils reply topic and link callback function */
-    gazebo::transport::SubscriberPtr sub_camera = node->Subscribe(CAMERA_UTILS_REPLY_TOPIC, updateCameraSuccess);
+    gazebo::transport::SubscriberPtr sub_camera =
+        node->Subscribe(CAMERA_UTILS_RESPONSE_TOPIC, updateCameraSuccess);
 
     /* Wait for a subscriber to connect */
     pub_spawner->WaitForConnection();
@@ -97,6 +95,7 @@ int main(int argc, char **argv)
         textures.push_back(aux.c_str());
     }
 
+    /* Auxiliary variables */
     ignition::math::Quaternion<double> camera_orientation(0, M_PI/2.0, 0);
     int min_objects = 5;
     int max_objects = 10;
@@ -110,11 +109,12 @@ int main(int argc, char **argv)
         /* Random object number */
         int num_objects = (dist(mt) % max_objects) + min_objects;
 
+        /* DEBUG */
         std::cout << "Number of objects:" << num_objects << std::endl;
+        
         /* Spawn ground and camera */
         spawnModelFromFile(
             pub_spawner, "models/custom_ground.sdf", false, false, true, textures);
-
 
         spawnModelFromFile(
             pub_spawner, "models/custom_camera.sdf", false, true, false,
@@ -387,7 +387,7 @@ void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable){
 
 
 void captureScene(gazebo::transport::PublisherPtr pub, int idx){
-    camera_utils_msgs::msgs::CameraRequest msg;
+    camera_utils::msgs::CameraUtilsRequest msg;
     msg.set_type(CAPTURE);
     msg.set_file_name(std::to_string(idx));
     pub->Publish(msg);
@@ -445,7 +445,7 @@ bool waitForCamera(){
     return true;
 }
 
-void updateCameraSuccess(CameraReplyPtr &_msg){
+void updateCameraSuccess(CameraUtilsResponsePtr &_msg){
     if (_msg->success()){
         std::lock_guard<std::mutex> lock(camera_success_mutex);
         camera_success = true;    

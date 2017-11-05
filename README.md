@@ -9,7 +9,7 @@ It includes:
 - [Object spawner plugin], that allows you to spawn boxes, spheres and cylinders, as well as custom models either by
 a uri reference or directly with an sdf string. Furthermore, it allows a model to be rendered with custom textures.
 
-- [Camera plugin], which creates an interface to capture frames at specific instants.
+- [Camera Utils plugin], which creates an interface to capture frames at specific instants.
 
 - [Pattern generation tool], which can randomly generate a high number of different types of textures,
 that are ready to be rendered in Gazebo.
@@ -53,5 +53,5 @@ source setup.sh
 
 
 [Object spawner plugin]: object_spawner
-[Camera plugin]: camera
+[Camera Utils plugin]: camera_utils
 [Pattern generation tool]: pattern_generation

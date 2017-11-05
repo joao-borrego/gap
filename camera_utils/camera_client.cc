@@ -1,5 +1,7 @@
 #include "camera_client.hh"
 
+using namespace camera_utils::msgs;
+
 /**
  * @brief      Client app for camera utils interface
  *
@@ -24,7 +26,7 @@ int main(int _argc, char **_argv)
 
     /* Publish to the object spawner topic */
     gazebo::transport::PublisherPtr pub =
-        node->Advertise<camera_utils_msgs::msgs::CameraRequest>(CAMERA_UTILS_TOPIC);
+        node->Advertise<CameraUtilsRequest>(CAMERA_UTILS_TOPIC);
 
     /* Wait for a subscriber to connect to this publisher */
     pub->WaitForConnection();
@@ -38,7 +40,7 @@ int main(int _argc, char **_argv)
         std::stringstream input_stream(line);
 
         /* Create a custom message (placeholder message) */
-        camera_utils_msgs::msgs::CameraRequest msg;
+        CameraUtilsRequest msg;
 
         msg.set_type(CAPTURE);
 

@@ -29,7 +29,7 @@
 /* Camera utils request */
 #include "camera_utils_request.pb.h"
 /* Camera utils reply */
-#include "camera_utils_reply.pb.h"
+#include "camera_utils_response.pb.h"
 /* Object spawner request */
 #include "object_spawner_request.pb.h"
 /* Object spawner reply */
@@ -42,7 +42,7 @@
 /* Camera utils */
 
 /** Request to capture a frame and save it to disk */
-#define CAPTURE     camera_utils_msgs::msgs::CameraRequest::CAPTURE
+#define CAPTURE         camera_utils::msgs::CameraUtilsRequest::CAPTURE
 
 /* Object Spawner */
 
@@ -88,9 +88,9 @@
  */
 
 /** Topic monitored by the server for incoming camera requests */
-#define CAMERA_UTILS_TOPIC          "~/gazebo-utils/camera_utils_plugin"
+#define CAMERA_UTILS_TOPIC          "~/gazebo-utils/camera_utils"
 /** Topic for receiving replies from the camera plugin server  */
-#define CAMERA_UTILS_REPLY_TOPIC    "~/gazebo-utils/camera_utils_plugin/reply"
+#define CAMERA_UTILS_RESPONSE_TOPIC "~/gazebo-utils/camera_utils/response"
 /** Topic monitored by the server for incoming object spawn requests */
 #define OBJECT_SPAWNER_TOPIC        "~/gazebo-utils/object_spawner"
 /** Topic for receiving replies from the object spawner server */
@@ -100,8 +100,8 @@
 
 typedef const boost::shared_ptr<const object_spawner_msgs::msgs::Reply>
     SpawnerReplyPtr;
-typedef const boost::shared_ptr<const camera_utils_msgs::msgs::CameraReply>
-    CameraReplyPtr;
+typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
+    CameraUtilsResponsePtr;
 
 /*
  * Function prototypes
@@ -150,4 +150,4 @@ void onSpawnerResponse(SpawnerReplyPtr &_msg);
 
 bool waitForCamera();
 
-void updateCameraSuccess(CameraReplyPtr &_msg);
+void updateCameraSuccess(CameraUtilsResponsePtr &_msg);

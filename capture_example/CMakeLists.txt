@@ -10,12 +10,12 @@ include_directories(
   ${GAZEBO_INCLUDE_DIRS}
   ${SDF_INCLUDE_DIRS}
   ${CMAKE_CURRENT_BINARY_DIR}/../object_spawner/msgs
-  ${CMAKE_CURRENT_BINARY_DIR}/../camera/msgs
+  ${CMAKE_CURRENT_BINARY_DIR}/../camera_utils/msgs
   )
 link_directories(
     ${GAZEBO_LIBRARY_DIRS}
     ${CMAKE_CURRENT_BINARY_DIR}../object_spawner/msgs
-    ${CMAKE_CURRENT_BINARY_DIR}../camera/msgs
+    ${CMAKE_CURRENT_BINARY_DIR}../camera_utils/msgs
   )
 
 # Camera utils plugin client

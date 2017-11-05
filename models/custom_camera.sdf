@@ -50,9 +50,7 @@
           </noise>
         </camera>
         <!-- gazebo-utils camera plugin -->
-        <plugin name='camera_utils' filename='libcamera_utils.so'>
-          <!-- Name of the world -->
-          <world>default</world>
+        <plugin name='camera_utils' filename='libCameraUtils.so'>
           <!-- Output directory -->
           <output_dir>/tmp/camera_utils_output/</output_dir>
           <!-- Output image extension -->

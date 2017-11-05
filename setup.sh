@@ -6,7 +6,7 @@ source /usr/share/gazebo-8/setup.sh &>/dev/null
 # Export location of object spawner gazebo plugin
 export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build/object_spawner
 # Export location of camera tools gazebo plugin
-export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build/camera
+export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build/camera_utils
 # Export location of custom resources
 export GAZEBO_RESOURCE_PATH=${GAZEBO_RESOURCE_PATH}:`pwd`/media
 # Export location of custom models

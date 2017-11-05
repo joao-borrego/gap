@@ -1,4 +1,15 @@
-#include "camera_utils.hh"
+/**
+ * @file camera_plugin.hh 
+ * @brief Camera utils plugin implementation
+ * 
+ * A custom gazebo plugin that provides an interface to 
+ * programatically collect data from cameras at specific
+ * times.
+ *  
+ * @author João Borrego
+ */
+
+#include "CameraUtils.hh"
 
 namespace gazebo {
 
@@ -23,23 +34,23 @@ namespace gazebo {
     CameraUtils::CameraUtils()
         : SensorPlugin(), dataPtr(new CameraUtilsPrivate){
         
-        std::cout << "[Camera] Loaded camera tools.\n";
+        std::cout << "[CameraUtils] Loaded camera tools." << std::endl;
     }
 
     CameraUtils::~CameraUtils(){
-        std::cout << "[Camera] Unloaded camera tools.\n";
         this->newFrameConnection.reset();
         this->parentSensor.reset();
         this->camera.reset();
         this->dataPtr->sub.reset();
         this->dataPtr->node->Fini();
+        std::cout << "[CameraUtils] Unloaded camera tools." << std::endl;
     }
 
     void CameraUtils::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf){
         
-         
+        /* Check if a parent sensor is provided */ 
         if (!_sensor)
-            gzerr << "[Camera] Invalid sensor pointer.\n";
+            gzerr << "[CameraUtils] Invalid sensor pointer." << std::endl;
 
         /* Camera sensor */
         this->parentSensor =
@@ -52,13 +63,6 @@ namespace gazebo {
 
         /* Plugin parameters */
 
-        std::string world_name;
-
-        if (_sdf->HasElement("world")){
-            world_name = _sdf->Get<std::string>("world");
-        } else {
-            world_name = DEFAULT_WORLD;
-        }
         if (_sdf->HasElement("output_dir")){
             this->output_dir = _sdf->Get<std::string>("output_dir"); 
         } else {
@@ -72,15 +76,16 @@ namespace gazebo {
 
         /* Subscriber setup */
         this->dataPtr->node = transport::NodePtr(new transport::Node());
-        this->dataPtr->node->Init(world_name);
+        this->dataPtr->node->Init();
 
         /* Create a topic for listening to requests */
         std::string topic_name = REQUEST_TOPIC;
         /* Subcribe to the topic */
         this->dataPtr->sub = this->dataPtr->node->Subscribe(topic_name,
-            &CameraUtils::onMsg, this);
+            &CameraUtils::onRequest, this);
         /* Setup publisher for the reply topic */
-        this->dataPtr->pub = this->dataPtr->node->Advertise<camera_utils_msgs::msgs::CameraReply>(REPLY_TOPIC);
+        this->dataPtr->pub = this->dataPtr->node->
+            Advertise<camera_utils::msgs::CameraUtilsResponse>(RESPONSE_TOPIC);
 
         /* Create output directory */
         boost::filesystem::path dir(output_dir);
@@ -94,7 +99,7 @@ namespace gazebo {
         this->parentSensor->SetActive(true);
     }
 
-    void CameraUtils::onMsg(CameraRequestPtr &_msg){
+    void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg){
         
         std::string file_name;
 
@@ -103,7 +108,7 @@ namespace gazebo {
             if (_msg->has_file_name()){
                 file_name = _msg->file_name() + extension;
             } else {
-                file_name = "tmp_" + std::to_string(saved_counter++) + extension;
+                file_name = std::to_string(saved_counter++) + extension;
             }
 
             this->next_file_name = output_dir + file_name;
@@ -112,20 +117,20 @@ namespace gazebo {
     }
 
     void CameraUtils::OnNewFrame(
-    	const unsigned char * 	/*_image*/,
-        unsigned int 			/*_width*/,
-        unsigned int 			/*_height*/,
-        unsigned int 			/*_depth*/,
-        const std::string &		/*_format*/){
+        const unsigned char *   /*_image*/,
+        unsigned int            /*_width*/,
+        unsigned int            /*_height*/,
+        unsigned int            /*_depth*/,
+        const std::string &     /*_format*/){
 
         if (save_on_update){
 
             save_on_update = false;
 
             bool success = this->camera->SaveFrame(next_file_name);
-            std::cout << "[Camera] Saving frame as [" << next_file_name << "]\n";
+            std::cout << "[CameraUtils] Saving frame as [" <<next_file_name << "]" << std::endl;
 
-            camera_utils_msgs::msgs::CameraReply msg;
+            camera_utils::msgs::CameraUtilsResponse msg;
             msg.set_success(success);
             this->dataPtr->pub->Publish(msg);
         }

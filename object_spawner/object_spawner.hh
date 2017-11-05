@@ -30,43 +30,46 @@
 namespace ObjectSpawnerPlugin{
 
 /** Topic monitored for incoming commands */
-#define OBJECT_SPAWNER_TOPIC "~/gazebo-utils/object_spawner"
+#define REQUEST_TOPIC "~/gazebo-utils/object_spawner"
 /** Topic for publishing replies */
-#define REPLY_TOPIC "~/gazebo-utils/object_spawner/reply"
+#define RESPONSE_TOPIC "~/gazebo-utils/object_spawner/reply"
 
 /* Ease of use macros */
 
 /* Request */
 
 /** Spawn object request */
-#define SPAWN       object_spawner_msgs::msgs::SpawnRequest::SPAWN
+#define SPAWN           object_spawner_msgs::msgs::SpawnRequest::SPAWN
 /** Move object request */
-#define MOVE        object_spawner_msgs::msgs::SpawnRequest::MOVE
+#define MOVE            object_spawner_msgs::msgs::SpawnRequest::MOVE
 /** Remove all entities from the world request */
-#define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
+#define CLEAR           object_spawner_msgs::msgs::SpawnRequest::CLEAR
 /** Toggle physics simulation request */
-#define TOGGLE      object_spawner_msgs::msgs::SpawnRequest::TOGGLE
+#define TOGGLE          object_spawner_msgs::msgs::SpawnRequest::TOGGLE
 /** Toggle pause simulation request */
-#define PAUSE       object_spawner_msgs::msgs::SpawnRequest::PAUSE
+#define PAUSE           object_spawner_msgs::msgs::SpawnRequest::PAUSE
 /** Request world state information */
-#define STATUS      object_spawner_msgs::msgs::SpawnRequest::STATUS
+#define STATUS          object_spawner_msgs::msgs::SpawnRequest::STATUS
+
 /** Spawn sphere object */
-#define SPHERE      object_spawner_msgs::msgs::SpawnRequest::SPHERE
+#define SPHERE          object_spawner_msgs::msgs::SpawnRequest::SPHERE
 /** Spawn cylinder object */
-#define CYLINDER    object_spawner_msgs::msgs::SpawnRequest::CYLINDER
+#define CYLINDER        object_spawner_msgs::msgs::SpawnRequest::CYLINDER
 /** Spawn box object */
-#define BOX         object_spawner_msgs::msgs::SpawnRequest::BOX
+#define BOX             object_spawner_msgs::msgs::SpawnRequest::BOX
 /** Spawn custom object */
-#define CUSTOM      object_spawner_msgs::msgs::SpawnRequest::CUSTOM
+#define CUSTOM          object_spawner_msgs::msgs::SpawnRequest::CUSTOM
+/** Spawn custom light object */
+#define CUSTOM_LIGHT    object_spawner_msgs::msgs::SpawnRequest::CUSTOM_LIGHT
 /** Spawn a model included in gazebo model path */
-#define MODEL       object_spawner_msgs::msgs::SpawnRequest::MODEL
+#define MODEL           object_spawner_msgs::msgs::SpawnRequest::MODEL
 /** Spawn ground plane */
-#define GROUND      object_spawner_msgs::msgs::SpawnRequest::GROUND
+#define GROUND          object_spawner_msgs::msgs::SpawnRequest::GROUND
 
 /* Reply */
 
 /** Provid world state information */
-#define INFO        object_spawner_msgs::msgs::Reply::INFO
+#define INFO            object_spawner_msgs::msgs::Reply::INFO
 
 /* Regex patterns */
 
@@ -94,14 +97,22 @@ namespace gazebo {
             physics::WorldPtr world;
             /** Keep track of live objects */
             std::list<std::string> live_objs;
+            
             /** A node used for transport */
             transport::NodePtr node;
-            /** A publisher to the factory topic */
-            transport::PublisherPtr factory_pub;
             /** A subscriber to the request topic */
             transport::SubscriberPtr sub;
             /** A publisher to the reply topic */
             transport::PublisherPtr pub;
+            
+            /** A publisher to the factory topic */
+            transport::PublisherPtr factory_pub;
+            /** A publisher to the light factory topic */
+            transport::PublisherPtr factory_light_pub;
+            /** A publisher to the gazebo request topic */
+            transport::PublisherPtr request_pub;
+            /** A subscriber to the gazebo response topic */
+            transport::SubscriberPtr response_sub;
 
             /* Regex patterns */
             std::regex script_reg;
@@ -144,9 +155,16 @@ namespace gazebo {
             void printLiveObjs();
 
             /**
-             * @brief      Deleters every entity in the world
+             * @brief      Deletes every model in the world
              */
             void clearWorld();
+
+            /**
+             * @brief      Deletes every model with name matching a given substring
+             *
+             * @param      match  The substring to be matched
+             */
+            void clearMatching(const std::string &match);
 
             /**
              * @brief      Generates SDF string for sphere object

@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.5"> 
-  <model name="custom_camera">
+  <model name="plugin_camera">
 
     <static>true</static>
     <pose>0 -1.8 1.3 0 0.6 1.57079632679</pose>
@@ -16,6 +16,7 @@
       </collision>
       
       <visual name="visual">
+        <cast_shadows>false</cast_shadows>
         <geometry>
           <box>
             <size>0.1 0.1 0.1</size>

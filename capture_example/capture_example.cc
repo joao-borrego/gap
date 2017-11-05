@@ -90,9 +90,6 @@ int main(int argc, char **argv)
     /* Wait for a subscriber to connect */
     pub_spawner->WaitForConnection();
 
-    /* Disable physics */
-    changePhysics(pub_spawner, false);
-
     /* Create a vector with the name of every texture in the textures dir */
     std::vector<std::string> textures;
     for (auto &p : fs::directory_iterator(scripts_dir)){
@@ -104,6 +101,9 @@ int main(int argc, char **argv)
     int min_objects = 5;
     int max_objects = 10;
     
+    spawnModelFromFile(
+        pub_spawner, "models/custom_sun.sdf", true, false, false, textures);
+
     /* Main loop */
     for (int i = 0; i < scenes; i++){
     
@@ -113,11 +113,11 @@ int main(int argc, char **argv)
         std::cout << "Number of objects:" << num_objects << std::endl;
         /* Spawn ground and camera */
         spawnModelFromFile(
-            pub_spawner, "models/custom_ground.sdf", false, true, textures);
+            pub_spawner, "models/custom_ground.sdf", false, false, true, textures);
 
 
         spawnModelFromFile(
-            pub_spawner, "models/custom_camera.sdf", true, false,
+            pub_spawner, "models/custom_camera.sdf", false, true, false,
             textures, 2.5, 2.5, 3.5, camera_orientation);
         pub_camera->WaitForConnection();
 
@@ -128,21 +128,18 @@ int main(int argc, char **argv)
 
         // Create 10 by 10 cell grid
         std::vector<int> cells_array;
-
-        for (int i=0; i<x_cells*y_cells;++i)
-        {
-	   cells_array.push_back(i);
+        for (int i = 0;  i < x_cells * y_cells; ++i){
+	       cells_array.push_back(i);
         }
 
         std::mt19937 g(rd());
- 
         std::shuffle(cells_array.begin(), cells_array.end(), g);
  
         //std::copy(cells_array.begin(), cells_array.end(), std::ostream_iterator<int>(std::cout, " "));
-        double grid_cell_size=0.5;
+        double grid_cell_size = 0.5;
         for (int j = 0; j < num_objects; ++j){
-            unsigned int rand_cell_x=floor(cells_array[j]/x_cells);
-            unsigned int rand_cell_y=floor(cells_array[j]-rand_cell_x*x_cells);
+            unsigned int rand_cell_x = floor(cells_array[j]/x_cells);
+            unsigned int rand_cell_y = floor(cells_array[j]-rand_cell_x*x_cells);
             spawnRandomObject(pub_spawner, textures, rand_cell_x, rand_cell_y, grid_cell_size);
         }
 
@@ -154,12 +151,18 @@ int main(int argc, char **argv)
         /* Still needed! */
         sleep(1);
 
+        /* Disable physics */
+        changePhysics(pub_spawner, false);
+
         /* Capture the scene and save it to a file */
         captureScene(pub_camera, i);
         
         while (waitForCamera()){
             usleep(1000);
         }
+
+        /* Disable physics */
+        changePhysics(pub_spawner, true);
 
         /* Clear the scene */
         clearWorld(pub_spawner);
@@ -185,6 +188,7 @@ int main(int argc, char **argv)
 void spawnModelFromFile(
     gazebo::transport::PublisherPtr pub,
     const std::string model_path,
+    const bool is_light,
     const bool use_custom_pose,
     const bool use_custom_textures,
     std::vector<std::string> textures,
@@ -199,7 +203,11 @@ void spawnModelFromFile(
     
     object_spawner_msgs::msgs::SpawnRequest msg;
     msg.set_type(SPAWN);
-    msg.set_model_type(CUSTOM);
+    if (is_light){
+        msg.set_model_type(CUSTOM_LIGHT);
+    } else {
+        msg.set_model_type(CUSTOM);
+    }
     msg.set_sdf(model_sdf);
 
     if (use_custom_pose){
@@ -357,6 +365,7 @@ void clearWorld(gazebo::transport::PublisherPtr pub){
 
     object_spawner_msgs::msgs::SpawnRequest msg;
     msg.set_type(CLEAR);
+    msg.set_name("plugin");
     pub->Publish(msg);
 }
 

@@ -15,6 +15,7 @@ namespace gazebo
 
     void ObjectSpawnerPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
 
+        /* Plugin parameters */
         this->world = _world;
 
         /* Subscriber setup */
@@ -28,15 +29,15 @@ namespace gazebo
 
         /* Setup publisher for the factory topic */
         this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
+        /* Setup publisher for the light factory topic */
+        this->factory_light_pub = this->node->Advertise<msgs::Light>("~/factory/light");
+        /* Setup publisher for the gazebo request topic */
+        this->request_pub = this->node->Advertise<msgs::Request>("~/request");
         
-        /* Create a topic for listening to requests */
-        std::string topic_name = OBJECT_SPAWNER_TOPIC;
-        
-        /* Subcribe to the topic */
-        this->sub = this->node->Subscribe(topic_name,
-            &ObjectSpawnerPlugin::onMsg, this);
-        /* Setup publisher for the reply topic */
-        this->pub = this->node->Advertise<object_spawner_msgs::msgs::Reply>(REPLY_TOPIC);
+        /* Subcribe to the request topic */
+        this->sub = this->node->Subscribe(REQUEST_TOPIC, &ObjectSpawnerPlugin::onMsg, this);
+        /* Setup publisher for the response topic */
+        this->pub = this->node->Advertise<object_spawner_msgs::msgs::Reply>(RESPONSE_TOPIC);
     
         /* Setup regular expression used for texture replacement */
         this->script_reg = std::regex(REGEX_XML_SCRIPT);
@@ -65,7 +66,7 @@ namespace gazebo
         type = (_msg->has_type())? (_msg->type()) : -1;
         model_type = (_msg->has_model_type())? (_msg->model_type()) : -1;
 
-        if(type == SPAWN){
+        if (type == SPAWN){
             
             /* Extract parameters from message */
             if (_msg->has_pose()){
@@ -105,7 +106,7 @@ namespace gazebo
 
                 sdf_string = genBox(name, mass, box_size, pos, ori);
             
-            } else if (model_type == CUSTOM){
+            } else if (model_type == CUSTOM || model_type == CUSTOM_LIGHT){
 
                 sdf_string = _msg->has_sdf()?
                     _msg->sdf() : "";
@@ -127,7 +128,7 @@ namespace gazebo
 
                 std::ostringstream model_str;
                     
-                if (model_type != CUSTOM) {
+                if (model_type != CUSTOM && model_type != CUSTOM_LIGHT) {
                     /* Enclose in sdf xml tags */
                     model_str << "<sdf version='" << SDF_VERSION << "'>"
                     << sdf_string << "</sdf>";
@@ -175,10 +176,19 @@ namespace gazebo
                     new_model_str = model_str.str();
                 } 
 
-                /* Send the model to the gazebo server */
-                msgs::Factory msg;
-                msg.set_sdf(new_model_str);
-                this->factory_pub->Publish(msg);
+                /* Send the model to the gazebo factory */
+                if (model_type == CUSTOM_LIGHT) {
+                    sdf::SDF sdf_light;
+                    sdf_light.SetFromString(new_model_str);
+                    msgs::Light msg = msgs::LightFromSDF(sdf_light.Root()->GetElement("light"));
+                    msg.set_name("plugin_light");
+                    this->factory_light_pub->Publish(msg);
+                } else {
+                    msgs::Factory msg;
+                    msg.set_sdf(new_model_str);
+                    this->factory_pub->Publish(msg);
+                }
+                
             }
 
         } else if (type == MOVE) {
@@ -193,7 +203,13 @@ namespace gazebo
 
         } else if (type == CLEAR){
 
-            clearWorld();
+            if (_msg->has_name()){
+                /* Clear specific object(s) */
+                clearMatching(_msg->name());
+            } else {
+                /* Clear everything */
+                clearWorld();
+            }
         
         } else if (type == TOGGLE){
             
@@ -218,21 +234,28 @@ namespace gazebo
         }
     }
 
-    void ObjectSpawnerPlugin::printLiveObjs(){
-
-        std::cout << "[PLUGIN] Printing live objects" << std::endl;
-
-        int model_count = this->world->GetModelCount();
-
-        for (int idx = 0; idx < model_count; idx++){
-            physics::ModelPtr model = this->world->GetModel(idx);
-            std::cout << model->GetName() << std::endl;
-        }
-    }
-
     void ObjectSpawnerPlugin::clearWorld(){
 
         this->world->Clear();
+    }
+
+    void ObjectSpawnerPlugin::clearMatching(const std::string &match){
+
+        int model_count = this->world->GetModelCount();
+        std::string model_name;
+        std::string match_str = match;
+        gazebo::msgs::Request *msg;
+
+        for (int idx = 0; idx < model_count; idx++){
+            physics::ModelPtr model = this->world->GetModel(idx);
+            model_name = model->GetName();
+            if (model_name.find(match_str) != std::string::npos){
+                msg = gazebo::msgs::CreateRequest("entity_delete", model_name);
+                request_pub->Publish(*msg, true);
+            }
+        }
+
+        delete msg;
     }
 
     const std::string ObjectSpawnerPlugin::genSphere(

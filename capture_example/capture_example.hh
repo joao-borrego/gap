@@ -49,34 +49,37 @@
 /* Request */
 
 /** Spawn object request */
-#define SPAWN       object_spawner_msgs::msgs::SpawnRequest::SPAWN
+#define SPAWN           object_spawner_msgs::msgs::SpawnRequest::SPAWN
 /** Move object request */
-#define MOVE        object_spawner_msgs::msgs::SpawnRequest::MOVE
+#define MOVE            object_spawner_msgs::msgs::SpawnRequest::MOVE
 /** Remove all entities from the world request */
-#define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
+#define CLEAR           object_spawner_msgs::msgs::SpawnRequest::CLEAR
 /** Toggle physics simulation request */
-#define TOGGLE      object_spawner_msgs::msgs::SpawnRequest::TOGGLE
+#define TOGGLE          object_spawner_msgs::msgs::SpawnRequest::TOGGLE
 /** Toggle pause simulation request */
-#define PAUSE       object_spawner_msgs::msgs::SpawnRequest::PAUSE
+#define PAUSE           object_spawner_msgs::msgs::SpawnRequest::PAUSE
 /** Request world state information */
-#define STATUS      object_spawner_msgs::msgs::SpawnRequest::STATUS
+#define STATUS          object_spawner_msgs::msgs::SpawnRequest::STATUS
+
 /** Spawn sphere object */
-#define SPHERE      object_spawner_msgs::msgs::SpawnRequest::SPHERE
+#define SPHERE          object_spawner_msgs::msgs::SpawnRequest::SPHERE
 /** Spawn cylinder object */
-#define CYLINDER    object_spawner_msgs::msgs::SpawnRequest::CYLINDER
+#define CYLINDER        object_spawner_msgs::msgs::SpawnRequest::CYLINDER
 /** Spawn box object */
-#define BOX         object_spawner_msgs::msgs::SpawnRequest::BOX
+#define BOX             object_spawner_msgs::msgs::SpawnRequest::BOX
 /** Spawn custom object */
-#define CUSTOM      object_spawner_msgs::msgs::SpawnRequest::CUSTOM
+#define CUSTOM          object_spawner_msgs::msgs::SpawnRequest::CUSTOM
+/** Spawn custom light object */
+#define CUSTOM_LIGHT    object_spawner_msgs::msgs::SpawnRequest::CUSTOM_LIGHT
 /** Spawn a model included in gazebo model path */
-#define MODEL       object_spawner_msgs::msgs::SpawnRequest::MODEL
+#define MODEL           object_spawner_msgs::msgs::SpawnRequest::MODEL
 /** Spawn ground plane */
-#define GROUND      object_spawner_msgs::msgs::SpawnRequest::GROUND
+#define GROUND          object_spawner_msgs::msgs::SpawnRequest::GROUND
 
 /* Reply */
 
 /** Provid world state information */
-#define INFO        object_spawner_msgs::msgs::Reply::INFO
+#define INFO            object_spawner_msgs::msgs::Reply::INFO
 
 /*
  * API Topics
@@ -105,6 +108,7 @@ typedef const boost::shared_ptr<const camera_utils_msgs::msgs::CameraReply>
 void spawnModelFromFile(
     gazebo::transport::PublisherPtr pub,
     const std::string model_path,
+    const bool is_light,
     const bool use_custom_pose,
     const bool use_custom_textures,
     std::vector<std::string> textures = std::vector<std::string>(),

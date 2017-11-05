@@ -28,8 +28,8 @@ find_package(Boost 1.40 COMPONENTS system REQUIRED)
 
 # Build project
 
-# Object spawner plugin
-add_subdirectory(object_spawner)
+# World plugin
+add_subdirectory(world_utils)
 # Camera plugin
 add_subdirectory(camera_utils)
 # Pattern generation tool

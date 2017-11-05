@@ -18,24 +18,24 @@ link_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/msgs)
 add_subdirectory(msgs)
 
+# Gazebo world utils plugin
+add_library(WorldUtils SHARED WorldUtils.cc )
+target_link_libraries(
+    WorldUtils
+    world_utils_msgs
+    ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
+add_dependencies(
+    WorldUtils
+    world_utils_msgs)
+
 # Spawner client
 add_executable (
     spawner_client
     spawner_client.cc)
 target_link_libraries(
     spawner_client
-    object_spawner_msgs
+    world_utils_msgs
     ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
 add_dependencies(
     spawner_client
-    object_spawner_msgs)
-
-# Spawner gazebo server plugin
-add_library(object_spawner SHARED object_spawner.cc )
-target_link_libraries(
-    object_spawner
-    object_spawner_msgs
-    ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(
-    object_spawner
-    object_spawner_msgs)
+    world_utils_msgs)

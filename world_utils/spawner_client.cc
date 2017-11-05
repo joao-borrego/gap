@@ -67,7 +67,7 @@ int main(int _argc, char **_argv)
 
     /* Publish to the object spawner topic */
     gazebo::transport::PublisherPtr pub =
-        node->Advertise<object_spawner_msgs::msgs::SpawnRequest>(OBJECT_SPAWNER_TOPIC);
+        node->Advertise<world_utils::msgs::WorldUtilsRequest>(WORLD_UTILS_TOPIC);
 
     /* Wait for a subscriber to connect to this publisher */
     pub->WaitForConnection();
@@ -84,7 +84,7 @@ int main(int _argc, char **_argv)
         std::stringstream input_stream(line);
 
         /* Create a custom message (placeholder message) */
-        object_spawner_msgs::msgs::SpawnRequest msg;
+        world_utils::msgs::WorldUtilsRequest msg;
 
         /* Fill the contents of the message */
         msg.set_type(SPAWN);
@@ -102,13 +102,11 @@ int main(int _argc, char **_argv)
         }
 
         std::string command = input_stream.str();
-        if (command == "clear"){
-            msg.set_type(CLEAR);
-        } else if (command == "ground"){
-            msg.set_model_type(GROUND);
+        if (command == "remove"){
+            msg.set_type(REMOVE);
         } else if (command == "custom"){
             msg.set_model_type(CUSTOM);
-            std::ifstream infile { "../../models/custom_ground.sdf" };
+            std::ifstream infile { "models/custom_ground.sdf" };
             std::string model_sdf { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
             msg.set_sdf(model_sdf);
         } else if (command == "model"){

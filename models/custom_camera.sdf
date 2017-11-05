@@ -3,7 +3,7 @@
   <model name="plugin_camera">
 
     <static>true</static>
-    <pose>0 -1.8 1.3 0 0.6 1.57079632679</pose>
+    <pose>0 0 0 0 0 0</pose>
 
     <link name="link">
 

@@ -1,11 +1,10 @@
 /**
- * @file camera_plugin.hh 
+ * @file CameraUtils.hh
  * @brief Camera utils plugin implementation
- * 
- * A custom gazebo plugin that provides an interface to 
- * programatically collect data from cameras at specific
- * times.
- *  
+ *
+ * A custom gazebo plugin that provides an interface to programatically collect data from cameras
+ * at specific times.
+ *
  * @author João Borrego
  */
 
@@ -21,7 +20,7 @@ namespace gazebo {
      */
     class CameraUtilsPrivate
     {
-        public: 
+        public:
 
             /** Gazebo transport node */
             public: transport::NodePtr node;
@@ -33,7 +32,7 @@ namespace gazebo {
 
     CameraUtils::CameraUtils()
         : SensorPlugin(), dataPtr(new CameraUtilsPrivate){
-        
+
         std::cout << "[CameraUtils] Loaded camera tools." << std::endl;
     }
 
@@ -47,8 +46,8 @@ namespace gazebo {
     }
 
     void CameraUtils::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf){
-        
-        /* Check if a parent sensor is provided */ 
+
+        /* Check if a parent sensor is provided */
         if (!_sensor)
             gzerr << "[CameraUtils] Invalid sensor pointer." << std::endl;
 
@@ -64,12 +63,12 @@ namespace gazebo {
         /* Plugin parameters */
 
         if (_sdf->HasElement("output_dir")){
-            this->output_dir = _sdf->Get<std::string>("output_dir"); 
+            this->output_dir = _sdf->Get<std::string>("output_dir");
         } else {
             this->output_dir = DEFAULT_OUTPUT_DIR;
         }
         if (_sdf->HasElement("extension")){
-            this->extension = _sdf->Get<std::string>("extension"); 
+            this->extension = _sdf->Get<std::string>("extension");
         } else {
             this->extension = DEFAULT_EXTENSION;
         }
@@ -100,7 +99,7 @@ namespace gazebo {
     }
 
     void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg){
-        
+
         std::string file_name;
 
         if (_msg->type() == CAPTURE){

@@ -1,8 +1,8 @@
-package object_spawner_msgs.msgs;
+package world_utils.msgs;
 
 import "vector3d.proto";
 
-message Reply
+message WorldUtilsResponse
 {
     /* @brief Type of response */
     enum Type{

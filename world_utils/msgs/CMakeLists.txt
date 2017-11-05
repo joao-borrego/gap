@@ -9,9 +9,9 @@ endforeach()
 
 set (msgs
   # Custom messages
-  object_spawner_request.proto
-  object_spawner_reply.proto
-  # Pose messages
+  world_utils_request.proto
+  world_utils_response.proto
+  # Message dependencies
   ${PROTOBUF_IMPORT_DIRS}/pose.proto
   ${PROTOBUF_IMPORT_DIRS}/vector3d.proto
   ${PROTOBUF_IMPORT_DIRS}/quaternion.proto
@@ -19,5 +19,5 @@ set (msgs
   ${PROTOBUF_IMPORT_DIRS}/time.proto
 )
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
-add_library(object_spawner_msgs SHARED ${PROTO_SRCS})
-target_link_libraries(object_spawner_msgs ${PROTOBUF_LIBRARY})
+add_library(world_utils_msgs SHARED ${PROTO_SRCS})
+target_link_libraries(world_utils_msgs ${PROTOBUF_LIBRARY})

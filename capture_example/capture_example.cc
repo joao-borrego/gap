@@ -99,12 +99,17 @@ int main(int argc, char **argv)
 
     /* Auxiliary variables */
     //ignition::math::Quaternion<double> camera_orientation(0, M_PI/2.0, 0);
-    ignition::math::Quaternion<double> camera_orientation(0, M_PI/2.0, 0);
+    ignition::math::Quaternion<double> camera_orientation(0, M_PI / 2.0, 0);
     int min_objects = 5;
     int max_objects = 10;
     
     spawnModelFromFile(
         pub_world, "models/custom_sun.sdf", true, false, false, textures);
+    
+    spawnModelFromFile(
+        pub_world, "models/custom_camera.sdf", false, true, false,
+        textures,  2.5, 2.5, 3.5, camera_orientation);
+    pub_camera->WaitForConnection();
 
     /* Main loop */
     for (int i = 0; i < scenes; i++){
@@ -113,17 +118,11 @@ int main(int argc, char **argv)
         int num_objects = (dist(mt) % max_objects) + min_objects;
 
         /* DEBUG */
-        std::cout << "Number of objects:" << num_objects << std::endl;
+        std::cout << "Scene " << i << " - Number of objects:" << num_objects << std::endl;
         
         /* Spawn ground and camera */
         spawnModelFromFile(
             pub_world, "models/custom_ground.sdf", false, false, true, textures);
-
-        // TODO - Only spawn camera once
-        spawnModelFromFile(
-            pub_world, "models/custom_camera.sdf", false, true, false,
-            textures,  2.5, 2.5, 3.5, camera_orientation);
-        pub_camera->WaitForConnection();
 
         /* Spawn random objects */
 
@@ -153,7 +152,7 @@ int main(int argc, char **argv)
         }
         
         /* Still needed! */
-        sleep(5);
+        sleep(1);
 
         /* Disable physics */
         changePhysics(pub_world, false);
@@ -173,7 +172,9 @@ int main(int argc, char **argv)
         /* Clear the scene */
         clearWorld(pub_world);
 
-        while (waitForSpawner(0)){
+        // TODO - Move camera and light source
+
+        while (waitForSpawner(1)){
             usleep(1000);
             queryModelCount(pub_world);
         }
@@ -366,6 +367,7 @@ void clearWorld(gazebo::transport::PublisherPtr pub){
 
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(REMOVE);
+    // Only remove models that match the string (exclude custom_camera)
     msg.set_name("plugin");
     pub->Publish(msg);
 }

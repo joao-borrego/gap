@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.5"> 
-  <model name="plugin_camera">
+  <model name="custom_camera">
 
     <static>true</static>
     <pose>0 0 0 0 0 0</pose>

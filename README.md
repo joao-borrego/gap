@@ -6,7 +6,7 @@ programatically with the simulator.
 These tools communicate directly with Gazebo server, not depending on any ROS modules.
 It includes:
 
-- [Object spawner plugin], that allows you to spawn boxes, spheres and cylinders, as well as custom models either by
+- [World Utils plugin], that allows you to spawn boxes, spheres and cylinders, as well as custom models either by
 a uri reference or directly with an sdf string. Furthermore, it allows a model to be rendered with custom textures.
 
 - [Camera Utils plugin], which creates an interface to capture frames at specific instants.
@@ -52,6 +52,6 @@ source setup.sh
 ```
 
 
-[Object spawner plugin]: object_spawner
+[World Utils plugin]: world_utils
 [Camera Utils plugin]: camera_utils
 [Pattern generation tool]: pattern_generation

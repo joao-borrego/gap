@@ -20,9 +20,9 @@
 #endif
 
 /** Request to capture a frame and save it to disk */
-#define CAPTURE camera_utils_msgs::msgs::CameraRequest::CAPTURE
+#define CAPTURE camera_utils::msgs::CameraUtilsRequest::CAPTURE
 
 /** Command prompt */
 #define PROMPT "> "
 /** Topic monitored by the server for incoming commands */
-#define CAMERA_UTILS_TOPIC "~/gazebo-utils/camera_utils_plugin"
+#define CAMERA_UTILS_TOPIC "~/gazebo-utils/camera_utils"

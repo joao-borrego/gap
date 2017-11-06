@@ -1,6 +1,0 @@
-package camera_utils_msgs.msgs;
-
-message CameraReply
-{
-    required bool success = 1;
-}

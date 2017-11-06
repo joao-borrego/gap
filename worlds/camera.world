@@ -40,7 +40,7 @@
             <horizontal_fov angle='1.57'/>
             <image width='640' height='480' format='R8G8B8'/>
           </camera>
-          <plugin name='camera_utils' filename='libcamera_utils.so'/>
+          <plugin name='camera_utils' filename='libCameraUtils.so'/>
         </sensor>
       </link>
     </model>

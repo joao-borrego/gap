@@ -21,20 +21,20 @@
 
 /* Custom messages */
 #include "camera_utils_request.pb.h"
-#include "camera_utils_reply.pb.h"
+#include "camera_utils_response.pb.h"
 
 namespace CameraUtils {
 
 /** Topic monitored for incoming commands */
-#define REQUEST_TOPIC   "~/gazebo-utils/camera_utils_plugin"
+#define REQUEST_TOPIC   "~/gazebo-utils/camera_utils"
 /** Topic for replying to commands */
-#define REPLY_TOPIC     "~/gazebo-utils/camera_utils_plugin/reply"
+#define RESPONSE_TOPIC  "~/gazebo-utils/camera_utils/response"
 
 /** Request to capture a frame and save it to disk */
-#define CAPTURE camera_utils_msgs::msgs::CameraRequest::CAPTURE
+#define CAPTURE camera_utils::msgs::CameraUtilsRequest::CAPTURE
 
 /* Default parameters */
-#define DEFAULT_WORLD       (const std::string) "default"
+
 #define DEFAULT_OUTPUT_DIR  (const std::string) "/tmp/camera_utils_output/"
 #define DEFAULT_EXTENSION   (const std::string) ".png"
 
@@ -42,11 +42,11 @@ namespace CameraUtils {
 
 namespace gazebo{
 
-    typedef const boost::shared_ptr<const camera_utils_msgs::msgs::CameraRequest>
-        CameraRequestPtr;
+    typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsRequest>
+        CameraUtilsRequestPtr;
 
-    typedef const boost::shared_ptr<const camera_utils_msgs::msgs::CameraReply>
-        CameraReplyPtr;
+    typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
+        CameraUtilsReplyPtr;
 
     // Forward declaration of private data class
     class CameraUtilsPrivate;
@@ -104,6 +104,15 @@ namespace gazebo{
              */
             virtual void Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf);
 
+            /**
+             * @brief      Callback function for handling frame updates
+             *
+             * @param[in]  _image   The image
+             * @param[in]  _width   The width
+             * @param[in]  _height  The height
+             * @param[in]  _depth   The depth
+             * @param[in]  _format  The format
+             */
             void OnNewFrame(const unsigned char *_image,
                 unsigned int _width, unsigned int _height,
                 unsigned int _depth, const std::string &_format);
@@ -112,10 +121,10 @@ namespace gazebo{
         private:
 
             /**
-             * @brief      { function_description }
+             * @brief      Callback function for handling incoming requests
              *
              * @param      _msg  The message
              */
-            void onMsg(CameraRequestPtr &_msg);
+            void onRequest(CameraUtilsRequestPtr &_msg);
     };
 }

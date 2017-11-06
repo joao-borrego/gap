@@ -9,13 +9,13 @@ list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 include_directories(
   ${GAZEBO_INCLUDE_DIRS}
   ${SDF_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_BINARY_DIR}/../object_spawner/msgs
-  ${CMAKE_CURRENT_BINARY_DIR}/../camera/msgs
+  ${CMAKE_CURRENT_BINARY_DIR}/../world_utils/msgs
+  ${CMAKE_CURRENT_BINARY_DIR}/../camera_utils/msgs
   )
 link_directories(
     ${GAZEBO_LIBRARY_DIRS}
-    ${CMAKE_CURRENT_BINARY_DIR}../object_spawner/msgs
-    ${CMAKE_CURRENT_BINARY_DIR}../camera/msgs
+    ${CMAKE_CURRENT_BINARY_DIR}../world_utils/msgs
+    ${CMAKE_CURRENT_BINARY_DIR}../camera_utils/msgs
   )
 
 # Camera utils plugin client
@@ -25,9 +25,9 @@ add_executable (
 target_link_libraries(
     capture_example
     camera_utils_msgs
-    object_spawner_msgs
+    world_utils_msgs
     ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
 add_dependencies(
     capture_example
     camera_utils_msgs
-    object_spawner_msgs)
+    world_utils_msgs)

@@ -1,16 +1,14 @@
-#include "capture_example.hh"
-
-namespace fs = boost::filesystem;
-
 /**
- * @brief      Example application using object spawner and camera plugins
+ * @file capture_example.hh
+ * 
+ * @brief Example application using object spawner and camera plugins
  * 
  * This example spawns randomly generated objects and captures images from 
  * a camera in a given position.
  * 
  * It requires that
  * - gazebo-utils/media folder is adequatly populated with different materials
- * - gazebo-utils/model folder has the custom_camera.sdf and custom_ground.sdf models
+ * - gazebo-utils/model folder has the custom_camera.sdf, custom_sun.sdf and custom_ground.sdf models
  * - output_dir exists 
  *
  * @param[in]  _argc  The number of command-line arguments
@@ -19,6 +17,10 @@ namespace fs = boost::filesystem;
  * @return     0
  */
 
+#include "capture_example.hh"
+
+namespace fs = boost::filesystem;
+
 double dRand(double fMin, double fMax)
 {
     /* Initialize random device */
@@ -26,7 +28,7 @@ double dRand(double fMin, double fMax)
     std::mt19937 mt(rd());
     std::uniform_int_distribution<int> dist;
 
-    double f = (double)dist(mt) / RAND_MAX;
+    double f = (double) dist(mt) / RAND_MAX;
     return fMin + f * (fMax - fMin);
 }
 
@@ -41,7 +43,7 @@ int main(int argc, char **argv)
 {
 
     /* TODO - Process options */
-    if(argc<3)
+    if (argc < 3)
     {
         std::cout << "invalid number of arguments"<< std::endl;
         exit(-1);
@@ -50,17 +52,13 @@ int main(int argc, char **argv)
     std::string media_dir = std::string(argv[1]);
     unsigned int scenes = atoi(argv[2]);
 
-    std::string materials_dir = media_dir+"/materials";
-    std::string scripts_dir = media_dir+"/materials/scripts";
-
-    //std::cout << scripts_dir << std::endl;
-    //std::cout << scenes << std::endl;
+    std::string materials_dir   = media_dir + "/materials";
+    std::string scripts_dir     = media_dir + "/materials/scripts";
 
     /* Initialize random device */
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_int_distribution<int> dist;
-
 
     /* Load gazebo as a client */
     #if GAZEBO_MAJOR_VERSION < 6
@@ -74,24 +72,23 @@ int main(int argc, char **argv)
     node->Init();
 
     /* Publish to the object spawner request topic */
-    gazebo::transport::PublisherPtr pub_spawner =
-        node->Advertise<object_spawner_msgs::msgs::SpawnRequest>(OBJECT_SPAWNER_TOPIC);
+    gazebo::transport::PublisherPtr pub_world =
+        node->Advertise<world_utils::msgs::WorldUtilsRequest>(WORLD_UTILS_TOPIC);
 
     /* Subscribe to the object spawner reply topic and link callback function */
-    gazebo::transport::SubscriberPtr sub_spawner = node->Subscribe(OBJECT_SPAWNER_REPLY_TOPIC, updateModelCount);
+    gazebo::transport::SubscriberPtr sub_world =
+        node->Subscribe(WORLD_UTILS_RESPONSE_TOPIC, onWorldUtilsResponse);
 
     /* Publish to the camera topic */
     gazebo::transport::PublisherPtr pub_camera =
-        node->Advertise<camera_utils_msgs::msgs::CameraRequest>(CAMERA_UTILS_TOPIC);
+        node->Advertise<camera_utils::msgs::CameraUtilsRequest>(CAMERA_UTILS_TOPIC);
 
      /* Subscribe to the camera utils reply topic and link callback function */
-    gazebo::transport::SubscriberPtr sub_camera = node->Subscribe(CAMERA_UTILS_REPLY_TOPIC, updateCameraSuccess);
+    gazebo::transport::SubscriberPtr sub_camera =
+        node->Subscribe(CAMERA_UTILS_RESPONSE_TOPIC, onCameraUtilsResponse);
 
     /* Wait for a subscriber to connect */
-    pub_spawner->WaitForConnection();
-
-    /* Disable physics */
-    changePhysics(pub_spawner, false);
+    pub_world->WaitForConnection();
 
     /* Create a vector with the name of every texture in the textures dir */
     std::vector<std::string> textures;
@@ -100,59 +97,65 @@ int main(int argc, char **argv)
         textures.push_back(aux.c_str());
     }
 
-    ignition::math::Quaternion<double> camera_orientation(0, M_PI/2.0, 0);
+    /* Auxiliary variables */
+    //ignition::math::Quaternion<double> camera_orientation(0, M_PI/2.0, 0);
+    ignition::math::Quaternion<double> camera_orientation(0, M_PI / 2.0, 0);
     int min_objects = 5;
     int max_objects = 10;
     
+    spawnModelFromFile(
+        pub_world, "models/custom_sun.sdf", true, false, false, textures);
+    
+    spawnModelFromFile(
+        pub_world, "models/custom_camera.sdf", false, true, false,
+        textures,  2.5, 2.5, 3.5, camera_orientation);
+    pub_camera->WaitForConnection();
+
     /* Main loop */
     for (int i = 0; i < scenes; i++){
     
         /* Random object number */
         int num_objects = (dist(mt) % max_objects) + min_objects;
 
-        std::cout << "Number of objects:" << num_objects << std::endl;
+        /* DEBUG */
+        std::cout << "Scene " << i << " - Number of objects:" << num_objects << std::endl;
+        
         /* Spawn ground and camera */
         spawnModelFromFile(
-            pub_spawner, "models/custom_ground.sdf", false, true, textures);
-
-
-        spawnModelFromFile(
-            pub_spawner, "models/custom_camera.sdf", true, false,
-            textures, 2.5, 2.5, 3.5, camera_orientation);
-        pub_camera->WaitForConnection();
+            pub_world, "models/custom_ground.sdf", false, false, true, textures);
 
         /* Spawn random objects */
 
-        int x_cells=10;
-        int y_cells=10;
-
-        // Create 10 by 10 cell grid
+        /* Create 10 by 10 cell grid */
+        const unsigned int x_cells = 10;
+        const unsigned int y_cells = 10;
         std::vector<int> cells_array;
-
-        for (int i=0; i<x_cells*y_cells;++i)
-        {
-	   cells_array.push_back(i);
+        for (int i = 0;  i < x_cells * y_cells; ++i){
+           cells_array.push_back(i);
         }
 
+        // TODO - Organise random generator
         std::mt19937 g(rd());
- 
         std::shuffle(cells_array.begin(), cells_array.end(), g);
  
         //std::copy(cells_array.begin(), cells_array.end(), std::ostream_iterator<int>(std::cout, " "));
-        double grid_cell_size=0.5;
+        double grid_cell_size = 0.5;
         for (int j = 0; j < num_objects; ++j){
-            unsigned int rand_cell_x=floor(cells_array[j]/x_cells);
-            unsigned int rand_cell_y=floor(cells_array[j]-rand_cell_x*x_cells);
-            spawnRandomObject(pub_spawner, textures, rand_cell_x, rand_cell_y, grid_cell_size);
+            unsigned int rand_cell_x = floor(cells_array[j] / x_cells);
+            unsigned int rand_cell_y = floor(cells_array[j] - rand_cell_x * x_cells);
+            spawnRandomObject(pub_world, textures, rand_cell_x, rand_cell_y, grid_cell_size);
         }
 
         while (waitForSpawner(num_objects + 2)){
             usleep(1000);
-            queryModelCount(pub_spawner);
+            queryModelCount(pub_world);
         }
         
         /* Still needed! */
         sleep(1);
+
+        /* Disable physics */
+        changePhysics(pub_world, false);
 
         /* Capture the scene and save it to a file */
         captureScene(pub_camera, i);
@@ -161,12 +164,19 @@ int main(int argc, char **argv)
             usleep(1000);
         }
 
-        /* Clear the scene */
-        clearWorld(pub_spawner);
+        /* Disable physics */
+        changePhysics(pub_world, true);
 
-        while (waitForSpawner(0)){
+        queryModelBoundingBox(pub_world, "plugin_camera");
+
+        /* Clear the scene */
+        clearWorld(pub_world);
+
+        // TODO - Move camera and light source
+
+        while (waitForSpawner(1)){
             usleep(1000);
-            queryModelCount(pub_spawner);
+            queryModelCount(pub_world);
         }
     }
 
@@ -185,6 +195,7 @@ int main(int argc, char **argv)
 void spawnModelFromFile(
     gazebo::transport::PublisherPtr pub,
     const std::string model_path,
+    const bool is_light,
     const bool use_custom_pose,
     const bool use_custom_textures,
     std::vector<std::string> textures,
@@ -197,9 +208,13 @@ void spawnModelFromFile(
     std::ifstream infile {model_path};
     std::string model_sdf { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
     
-    object_spawner_msgs::msgs::SpawnRequest msg;
+    world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(SPAWN);
-    msg.set_model_type(CUSTOM);
+    if (is_light){
+        msg.set_model_type(CUSTOM_LIGHT);
+    } else {
+        msg.set_model_type(CUSTOM);
+    }
     msg.set_sdf(model_sdf);
 
     if (use_custom_pose){
@@ -247,7 +262,7 @@ void spawnRandomObject(
     std::mt19937 mt(rd());
     std::uniform_int_distribution<int> dist;
 
-    object_spawner_msgs::msgs::SpawnRequest msg;
+    world_utils::msgs::WorldUtilsRequest msg;
     
     msg.set_type(SPAWN);
     
@@ -270,22 +285,24 @@ void spawnRandomObject(
     gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
     gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
 
-
-    /*ori->set_x(0.0);
+    /*
+    ori->set_x(0.0);
     ori->set_y(0.0);
     ori->set_z(0.0);
-    ori->set_w(1.0);*/
+    ori->set_w(1.0);
+    */
+    
     /* Mass */
     msg.set_mass(dist(mt) % 5 + 1.0);
     /* Sphere/cylinder radius */
-    double radius=dRand(0.1,grid_cell_size*0.5);
+    double radius=dRand(0.1, grid_cell_size * 0.5);
 
     msg.set_radius(radius);
 
     /* Box size */ 
-    double x_length=dRand(0.1,grid_cell_size);
-    double y_length=dRand(0.1,grid_cell_size);    
-    double z_length=dRand(0.1,grid_cell_size);
+    double x_length = dRand(0.1, grid_cell_size);
+    double y_length = dRand(0.1, grid_cell_size);    
+    double z_length = dRand(0.1, grid_cell_size);
 
     size->set_x(x_length);
     size->set_y(y_length);
@@ -297,37 +314,30 @@ void spawnRandomObject(
     /* Pose */
     ignition::math::Quaternion<double> object_orientation;
 
-    if(dRand(0.5,1.0)<0.5)
-    {
-       // Horizontal
-       double yaw=dRand(0.0,M_PI);
+    if (dRand(0.5, 1.0) < 0.5){
 
+        // Horizontal
+        double yaw = dRand(0.0,M_PI);
+        object_orientation=ignition::math::Quaternion<double> (0.0, M_PI*0.5, yaw);
+        pos->set_z(radius); // height is radius
+    
+    } else {
 
-       object_orientation=ignition::math::Quaternion<double> (0.0, M_PI*0.5, yaw);
-       pos->set_z(radius); //height is radius
-    }
-    else
-    {
-
-       double roll=dRand(0.0,M_PI);
-       double pitch=dRand(0.0,M_PI);
+       double roll = dRand(0.0,M_PI);
+       double pitch = dRand(0.0,M_PI);
 
        // Vertical
        object_orientation=ignition::math::Quaternion<double> (0.0, 0.0, 0.0);
        pos->set_z(z_length*0.5);
-       if(model_aux == 2)
-       {
+       if(model_aux == 2) {
            pos->set_z(radius);
        }
     }
-	
 
-
-    pos->set_x(x_cell*grid_cell_size+0.5*grid_cell_size);
-    pos->set_y(y_cell*grid_cell_size+0.5*grid_cell_size);
+    pos->set_x(x_cell * grid_cell_size + 0.5 * grid_cell_size);
+    pos->set_y(y_cell * grid_cell_size + 0.5 * grid_cell_size);
 
     ori=new gazebo::msgs::Quaternion(gazebo::msgs::Convert(object_orientation));
-
 
     /* Material script */
     int idx = dist(mt) % textures.size();
@@ -355,20 +365,22 @@ void spawnRandomObject(
 
 void clearWorld(gazebo::transport::PublisherPtr pub){
 
-    object_spawner_msgs::msgs::SpawnRequest msg;
-    msg.set_type(CLEAR);
+    world_utils::msgs::WorldUtilsRequest msg;
+    msg.set_type(REMOVE);
+    // Only remove models that match the string (exclude custom_camera)
+    msg.set_name("plugin");
     pub->Publish(msg);
 }
 
 void changePhysics(gazebo::transport::PublisherPtr pub, bool enable){
-    object_spawner_msgs::msgs::SpawnRequest msg;
-    msg.set_type(TOGGLE);
+    world_utils::msgs::WorldUtilsRequest msg;
+    msg.set_type(PHYSICS);
     msg.set_state(enable);
     pub->Publish(msg);
 }
 
 void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable){
-    object_spawner_msgs::msgs::SpawnRequest msg;
+    world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(PAUSE);
     msg.set_state(enable);
     pub->Publish(msg);
@@ -376,8 +388,7 @@ void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable){
 
 
 void captureScene(gazebo::transport::PublisherPtr pub, int idx){
-
-    camera_utils_msgs::msgs::CameraRequest msg;
+    camera_utils::msgs::CameraUtilsRequest msg;
     msg.set_type(CAPTURE);
     msg.set_file_name(std::to_string(idx));
     pub->Publish(msg);
@@ -393,16 +404,34 @@ bool waitForSpawner(int desired_objects){
 }
 
 void queryModelCount(gazebo::transport::PublisherPtr pub){
-    object_spawner_msgs::msgs::SpawnRequest msg;
+    world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(STATUS);
     pub->Publish(msg);
 }
 
-void updateModelCount(SpawnerReplyPtr &_msg){
+void queryModelBoundingBox(
+    gazebo::transport::PublisherPtr pub,
+    const std::string &model_name){
+
+    world_utils::msgs::WorldUtilsRequest msg;
+    msg.set_type(STATUS);
+    msg.set_name(model_name);
+    pub->Publish(msg);
+}
+
+void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
     if (_msg->type() == INFO){
         if (_msg->has_object_count()){
             std::lock_guard<std::mutex> lock(object_count_mutex);
             object_count = _msg->object_count();
+        }
+    } else if (_msg->type() == PROPERTIES){
+        if (_msg->has_name() && _msg->has_bb_center() && _msg->has_bb_size()){
+            ignition::math::Vector3d bb_center = gazebo::msgs::ConvertIgn(_msg->bb_center());
+            ignition::math::Vector3d bb_size = gazebo::msgs::ConvertIgn(_msg->bb_size());
+            std::cout << _msg->name() << " Bounding box" << std::endl <<
+            "\tCenter: " << bb_center << std::endl <<
+            "\tSize: " << bb_size << std::endl;
         }
     }
 }
@@ -418,7 +447,7 @@ bool waitForCamera(){
     return true;
 }
 
-void updateCameraSuccess(CameraReplyPtr &_msg){
+void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
     if (_msg->success()){
         std::lock_guard<std::mutex> lock(camera_success_mutex);
         camera_success = true;    

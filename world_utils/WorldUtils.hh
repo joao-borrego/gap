@@ -1,6 +1,18 @@
 /**
- * @file object_spawner.hh 
- * @brief Object spawner headers
+ * @file WorldUtils.hh 
+ * @brief World utils headers
+ * 
+ * A gazebo WorldPlugin that provides an interface to programatically interact with the simulator
+ * and perform a set of actions including:
+ * - Spawning entities
+ *  + generic shapes from respective parameters
+ *  + from SDF strings, namely light objects
+ *  + from model URI
+ *  + with custom textures in a known media directory
+ * - Moving and removing entities
+ * - Get world information
+ * - Get specific object information, namely
+ *  + 3D bounding box
  *  
  * @author João Borrego
  */
@@ -24,68 +36,71 @@
 #include <gazebo/msgs/msgs.hh>
 
 /* Custom messages */
-#include "object_spawner_request.pb.h"
-#include "object_spawner_reply.pb.h"
+#include "world_utils_request.pb.h"
+#include "world_utils_response.pb.h"
 
-namespace ObjectSpawnerPlugin{
+namespace WorldUtils {
 
 /** Topic monitored for incoming commands */
-#define OBJECT_SPAWNER_TOPIC "~/gazebo-utils/object_spawner"
+#define REQUEST_TOPIC "~/gazebo-utils/world_utils"
 /** Topic for publishing replies */
-#define REPLY_TOPIC "~/gazebo-utils/object_spawner/reply"
+#define RESPONSE_TOPIC "~/gazebo-utils/world_utils/response"
 
 /* Ease of use macros */
 
 /* Request */
 
-/** Spawn object request */
-#define SPAWN       object_spawner_msgs::msgs::SpawnRequest::SPAWN
-/** Move object request */
-#define MOVE        object_spawner_msgs::msgs::SpawnRequest::MOVE
-/** Remove all entities from the world request */
-#define CLEAR       object_spawner_msgs::msgs::SpawnRequest::CLEAR
-/** Toggle physics simulation request */
-#define TOGGLE      object_spawner_msgs::msgs::SpawnRequest::TOGGLE
-/** Toggle pause simulation request */
-#define PAUSE       object_spawner_msgs::msgs::SpawnRequest::PAUSE
-/** Request world state information */
-#define STATUS      object_spawner_msgs::msgs::SpawnRequest::STATUS
+/** Spawn entity */
+#define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
+/** Move entity */
+#define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
+/** Remove entity from the world */
+#define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
+/** Start or stop physcis simulation */
+#define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
+/** Pause or resume simulation */
+#define PAUSE           world_utils::msgs::WorldUtilsRequest::PAUSE
+/** Get entity or world information */
+#define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
+
 /** Spawn sphere object */
-#define SPHERE      object_spawner_msgs::msgs::SpawnRequest::SPHERE
+#define SPHERE          world_utils::msgs::WorldUtilsRequest::SPHERE
 /** Spawn cylinder object */
-#define CYLINDER    object_spawner_msgs::msgs::SpawnRequest::CYLINDER
+#define CYLINDER        world_utils::msgs::WorldUtilsRequest::CYLINDER
 /** Spawn box object */
-#define BOX         object_spawner_msgs::msgs::SpawnRequest::BOX
+#define BOX             world_utils::msgs::WorldUtilsRequest::BOX
 /** Spawn custom object */
-#define CUSTOM      object_spawner_msgs::msgs::SpawnRequest::CUSTOM
+#define CUSTOM          world_utils::msgs::WorldUtilsRequest::CUSTOM
+/** Spawn custom light object */
+#define CUSTOM_LIGHT    world_utils::msgs::WorldUtilsRequest::CUSTOM_LIGHT
 /** Spawn a model included in gazebo model path */
-#define MODEL       object_spawner_msgs::msgs::SpawnRequest::MODEL
-/** Spawn ground plane */
-#define GROUND      object_spawner_msgs::msgs::SpawnRequest::GROUND
+#define MODEL           world_utils::msgs::WorldUtilsRequest::MODEL
 
-/* Reply */
+/* Response */
 
-/** Provid world state information */
-#define INFO        object_spawner_msgs::msgs::Reply::INFO
+/** Provide world state information */
+#define INFO            world_utils::msgs::WorldUtilsResponse::INFO
+/** Provide specific object state information */
+#define PROPERTIES      world_utils::msgs::WorldUtilsResponse::PROPERTIES
 
 /* Regex patterns */
 
 /** Matches string enclosed in <script> XML tags */
-#define REGEX_XML_SCRIPT (const std::string) "<script>[\\s\\S]*?<\\/script>"
+#define REGEX_XML_SCRIPT "<script>[\\s\\S]*?<\\/script>"
 /** Matches string enclosed in <pose> XML tags */
-#define REGEX_XML_POSE   (const std::string) "<pose>[\\s\\S]*?<\\/pose>"
+#define REGEX_XML_POSE   "<pose>[\\s\\S]*?<\\/pose>"
 
 }
 
 namespace gazebo {
 
-    typedef const boost::shared_ptr<const object_spawner_msgs::msgs::SpawnRequest>
-        SpawnRequestPtr;
+    typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsRequest>
+        WorldUtilsRequestPtr;
 
-    typedef const boost::shared_ptr<const object_spawner_msgs::msgs::Reply>
-        ReplyPtr;
+    typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
+        WorldUtilsResponsePtr;
 
-    class ObjectSpawnerPlugin : public WorldPlugin {
+    class WorldUtils : public WorldPlugin {
 
         /* Private attributes */
         private:
@@ -94,31 +109,41 @@ namespace gazebo {
             physics::WorldPtr world;
             /** Keep track of live objects */
             std::list<std::string> live_objs;
+            
             /** A node used for transport */
             transport::NodePtr node;
-            /** A publisher to the factory topic */
-            transport::PublisherPtr factory_pub;
             /** A subscriber to the request topic */
             transport::SubscriberPtr sub;
             /** A publisher to the reply topic */
             transport::PublisherPtr pub;
+            
+            /** A publisher to the factory topic */
+            transport::PublisherPtr factory_pub;
+            /** A publisher to the light factory topic */
+            transport::PublisherPtr factory_light_pub;
+            /** A publisher to the gazebo request topic */
+            transport::PublisherPtr request_pub;
+            /** A subscriber to the gazebo response topic */
+            transport::SubscriberPtr response_sub;
 
             /* Regex patterns */
             std::regex script_reg;
             std::regex pose_reg;
 
             /* Counters for automatic naming */
-            int sphere_counter = 0;
-            int cylinder_counter = 0;
-            int box_counter = 0;
-        
+            int sphere_counter      {0};
+            int cylinder_counter    {0};
+            int box_counter         {0};
+            /* TODO - Implement */
+            int light_counter       {0};
+
         /* Public methods */
         public:
             
             /**
              * @brief      Constructor
              */
-            ObjectSpawnerPlugin();
+            WorldUtils();
 
             /**
              * @brief      Plugin setup executed on gazebo server launch
@@ -136,7 +161,7 @@ namespace gazebo {
              *
              * @param      _msg  The message
              */
-            void onMsg(SpawnRequestPtr &_msg);
+            void onRequest(WorldUtilsRequestPtr &_msg);
 
             /**
              * @brief      Prints live objects in the world
@@ -144,9 +169,16 @@ namespace gazebo {
             void printLiveObjs();
 
             /**
-             * @brief      Deleters every entity in the world
+             * @brief      Deletes every model in the world
              */
             void clearWorld();
+
+            /**
+             * @brief      Deletes every model with name matching a given substring
+             *
+             * @param      match  The substring to be matched
+             */
+            void clearMatching(const std::string &match);
 
             /**
              * @brief      Generates SDF string for sphere object

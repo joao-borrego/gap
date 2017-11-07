@@ -250,7 +250,7 @@ namespace gazebo {
                 msg.set_allocated_bb_center(bb_center_msg);
                 msg.set_allocated_bb_size(bb_size_msg);
                 pub->Publish(msg, true);
-
+		std::cout << "entrei server" << std::endl;
             } else {
                 int model_count = this->world->GetModelCount();
                 msg.set_type(INFO);

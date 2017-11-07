@@ -121,8 +121,7 @@ int main(int argc, char **argv)
         std::cout << "Scene " << i << " - Number of objects:" << num_objects << std::endl;
         
         /* Spawn ground and camera */
-        spawnModelFromFile(
-            pub_world, "models/custom_ground.sdf", false, false, true, textures);
+        spawnModelFromFile(pub_world, "models/custom_ground.sdf", false, false, true, textures);
 
         /* Spawn random objects */
 
@@ -164,10 +163,15 @@ int main(int argc, char **argv)
             usleep(1000);
         }
 
+	// DEBUG - Display image using opencv //
+
+        // DEBUG - Draw bounding box //
+	
+
         /* Disable physics */
         changePhysics(pub_world, true);
 
-        queryModelBoundingBox(pub_world, "plugin_camera");
+        queryModelBoundingBox(pub_world, "custom_camera");
 
         /* Clear the scene */
         clearWorld(pub_world);
@@ -314,7 +318,7 @@ void spawnRandomObject(
     /* Pose */
     ignition::math::Quaternion<double> object_orientation;
 
-    if (dRand(0.5, 1.0) < 0.5){
+    if (dRand(0.0, 1.0) < 0.5){
 
         // Horizontal
         double yaw = dRand(0.0,M_PI);

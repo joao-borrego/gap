@@ -44,6 +44,8 @@
 /** Request to capture a frame and save it to disk */
 #define CAPTURE         camera_utils::msgs::CameraUtilsRequest::CAPTURE
 
+#define CAMERA_POINT         camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
+
 /* World utils */
 
 /* Request */
@@ -118,7 +120,7 @@ void spawnModelFromFile(
     const ignition::math::Quaternion<double> & orientation  = ignition::math::Quaternion<double>(0, M_PI/2.0, 0));
 
 
-void spawnRandomObject(
+std::string spawnRandomObject(
     gazebo::transport::PublisherPtr pub,
     std::vector<std::string> textures,
     unsigned int & x_cell,
@@ -139,6 +141,10 @@ void queryModelCount(gazebo::transport::PublisherPtr pub);
 
 void queryModelBoundingBox(gazebo::transport::PublisherPtr pub,
     const std::string &model_name);
+
+void query2DcameraPoint(
+    gazebo::transport::PublisherPtr pub,
+    const ignition::math::Vector3d &point);
 
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg);
 

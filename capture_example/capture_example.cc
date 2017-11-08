@@ -18,6 +18,11 @@
  */
 
 #include "capture_example.hh"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/imgproc.hpp"
+
+#include <Eigen/Dense>
 
 namespace fs = boost::filesystem;
 
@@ -38,7 +43,13 @@ int object_count{0};
 /** Protect access to camera success */
 std::mutex camera_success_mutex;
 int camera_success{0};
-
+std::vector<ignition::math::Vector3d> bbs_centers_3d;
+std::vector<ignition::math::Vector3d> bbs_sizes_3d;
+std::vector<ignition::math::Vector2d> points_2d;
+ignition::math::Matrix4d projection_matrix;
+int box_counter=0;
+int cylinder_counter=0;
+int sphere_counter=0;
 int main(int argc, char **argv)
 {
 
@@ -102,14 +113,25 @@ int main(int argc, char **argv)
     ignition::math::Quaternion<double> camera_orientation(0, M_PI / 2.0, 0);
     int min_objects = 5;
     int max_objects = 10;
-    
+    double tx=2.5;
+    double ty=2.5;
+    double tz=3.5;
     spawnModelFromFile(
         pub_world, "models/custom_sun.sdf", true, false, false, textures);
     
     spawnModelFromFile(
         pub_world, "models/custom_camera.sdf", false, true, false,
-        textures,  2.5, 2.5, 3.5, camera_orientation);
+        textures,  tx, ty, tz, camera_orientation);
     pub_camera->WaitForConnection();
+
+    /* Create 10 by 10 cell grid */
+    const unsigned int x_cells = 10;
+    const unsigned int y_cells = 10;
+    double grid_cell_size = 0.5;
+    std::vector<int> cells_array;
+    for (int i = 0;  i < x_cells * y_cells; ++i){
+      cells_array.push_back(i);
+    }
 
     /* Main loop */
     for (int i = 0; i < scenes; i++){
@@ -125,24 +147,16 @@ int main(int argc, char **argv)
 
         /* Spawn random objects */
 
-        /* Create 10 by 10 cell grid */
-        const unsigned int x_cells = 10;
-        const unsigned int y_cells = 10;
-        std::vector<int> cells_array;
-        for (int i = 0;  i < x_cells * y_cells; ++i){
-           cells_array.push_back(i);
-        }
-
         // TODO - Organise random generator
         std::mt19937 g(rd());
         std::shuffle(cells_array.begin(), cells_array.end(), g);
  
         //std::copy(cells_array.begin(), cells_array.end(), std::ostream_iterator<int>(std::cout, " "));
-        double grid_cell_size = 0.5;
+	std::vector<std::string> object_names;
         for (int j = 0; j < num_objects; ++j){
             unsigned int rand_cell_x = floor(cells_array[j] / x_cells);
             unsigned int rand_cell_y = floor(cells_array[j] - rand_cell_x * x_cells);
-            spawnRandomObject(pub_world, textures, rand_cell_x, rand_cell_y, grid_cell_size);
+            object_names.push_back(spawnRandomObject(pub_world, textures, rand_cell_x, rand_cell_y, grid_cell_size));
         }
 
         while (waitForSpawner(num_objects + 2)){
@@ -163,25 +177,87 @@ int main(int argc, char **argv)
             usleep(1000);
         }
 
-	// DEBUG - Display image using opencv //
-
-        // DEBUG - Draw bounding box //
-	
-
         /* Disable physics */
         changePhysics(pub_world, true);
 
-        queryModelBoundingBox(pub_world, "custom_camera");
+        /* get 3d bounding boxes */
+        bbs_centers_3d.clear();
+        bbs_sizes_3d.clear();
+	for(int j=0; j < num_objects;++j)
+	{
+	   queryModelBoundingBox(pub_world, object_names[j]);
+	}
 
         /* Clear the scene */
         clearWorld(pub_world);
 
         // TODO - Move camera and light source
-
         while (waitForSpawner(1)){
             usleep(1000);
             queryModelCount(pub_world);
         }
+
+	/* Query 2D image points given 3d bounding box (8 3d points) */
+	// TODO - Apparently responses are not synchronous (points belonging to different objects become mixed): possible solution: query2DcameraPoint could send an object identifier
+	for(int j=0;j<num_objects;++j)
+	{
+		ignition::math::Vector3d point_1=bbs_centers_3d[j]; point_1.X()+=bbs_sizes_3d[j].X()*0.5; point_1.Y()+=bbs_sizes_3d[j].Y()*0.5; point_1.Z()+=bbs_sizes_3d[j].Z()*0.5;
+		ignition::math::Vector3d point_2=bbs_centers_3d[j]; point_2.X()+=bbs_sizes_3d[j].X()*0.5; point_2.Y()+=bbs_sizes_3d[j].Y()*0.5; point_2.Z()-=bbs_sizes_3d[j].Z()*0.5;
+		ignition::math::Vector3d point_3=bbs_centers_3d[j]; point_3.X()+=bbs_sizes_3d[j].X()*0.5; point_3.Y()-=bbs_sizes_3d[j].Y()*0.5; point_3.Z()+=bbs_sizes_3d[j].Z()*0.5;
+		ignition::math::Vector3d point_4=bbs_centers_3d[j]; point_4.X()+=bbs_sizes_3d[j].X()*0.5; point_4.Y()-=bbs_sizes_3d[j].Y()*0.5; point_4.Z()-=bbs_sizes_3d[j].Z()*0.5;
+		ignition::math::Vector3d point_5=bbs_centers_3d[j]; point_5.X()-=bbs_sizes_3d[j].X()*0.5; point_5.Y()+=bbs_sizes_3d[j].Y()*0.5; point_5.Z()+=bbs_sizes_3d[j].Z()*0.5;
+		ignition::math::Vector3d point_6=bbs_centers_3d[j]; point_6.X()-=bbs_sizes_3d[j].X()*0.5; point_6.Y()+=bbs_sizes_3d[j].Y()*0.5; point_6.Z()-=bbs_sizes_3d[j].Z()*0.5;
+		ignition::math::Vector3d point_7=bbs_centers_3d[j]; point_7.X()-=bbs_sizes_3d[j].X()*0.5; point_7.Y()-=bbs_sizes_3d[j].Y()*0.5; point_7.Z()+=bbs_sizes_3d[j].Z()*0.5;
+		ignition::math::Vector3d point_8=bbs_centers_3d[j]; point_8.X()-=bbs_sizes_3d[j].X()*0.5; point_8.Y()-=bbs_sizes_3d[j].Y()*0.5; point_8.Z()-=bbs_sizes_3d[j].Z()*0.5;
+
+		query2DcameraPoint(pub_camera,point_1);
+		query2DcameraPoint(pub_camera,point_2);
+		query2DcameraPoint(pub_camera,point_3);
+		query2DcameraPoint(pub_camera,point_4);
+		query2DcameraPoint(pub_camera,point_5);
+		query2DcameraPoint(pub_camera,point_6);
+		query2DcameraPoint(pub_camera,point_7);
+		query2DcameraPoint(pub_camera,point_8);
+	}
+
+	// TODO - ENSURE "SYNCHRONISM" USING MUTEXES OR A COUNTER TO AVOID USING SLEEPS
+        sleep(5);
+
+	/* Get bounding boxes */
+	std::vector<cv::Rect> boundRect( num_objects );
+	for(int j=0;j<num_objects;++j)
+	{
+		std::vector<cv::Point> contours_poly( 8 );
+		for(int p=0;p<8;++p)
+		{
+			contours_poly[p]=cv::Point(points_2d[p+j*num_objects].X(),points_2d[p+j*num_objects].Y());
+		}
+       		boundRect[j] = cv::boundingRect( cv::Mat(contours_poly) );
+	}
+
+	// TODO - SAVE TO FILE (SEE OBJECT DETECTION DATASETS. Eg. pascal voc)
+
+	cv::Mat image;
+	image = cv::imread("/tmp/camera_utils_output/"+std::to_string(i)+".png", CV_LOAD_IMAGE_COLOR);   // Read the file
+
+	if(! image.data )                              // Check for invalid input
+	{
+           std::cout <<  "Could not open or find the image" << std::endl ;
+           return -1;
+	}
+
+	for(int j=0;j<num_objects;++j)
+	{
+		for(int p=0;p<8;++p)
+		{
+			cv::circle(image, cv::Point(points_2d[p+j*num_objects].X(),points_2d[p+j*num_objects].Y()), 5, cv::Scalar(255,0,1));
+
+		}
+       		rectangle( image, boundRect[j].tl(), boundRect[j].br(), cv::Scalar(255,0,1), 2, 8, 0 );
+	}
+	cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
+	cv::imshow( "Display window", image );                   // Show our image inside it.
+	cv::waitKey(1000);                                          // Wait for a keystroke in the window
     }
 
     /* Shut down */
@@ -238,9 +314,9 @@ void spawnModelFromFile(
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_int_distribution<int> dist;
-        int idx=dist(mt) % textures.size();
+        int j=dist(mt) % textures.size();
 
-        std::string texture = textures.at(idx);
+        std::string texture = textures.at(j);
         std::stringstream texture_uri;
         std::stringstream texture_name;
 
@@ -254,7 +330,7 @@ void spawnModelFromFile(
     pub->Publish(msg);
 }
 
-void spawnRandomObject(
+std::string spawnRandomObject(
     gazebo::transport::PublisherPtr pub,
     std::vector<std::string> textures,
     unsigned int & x_cell,
@@ -270,17 +346,23 @@ void spawnRandomObject(
     
     msg.set_type(SPAWN);
     
-
+    std::string object_name;
     int model_aux=dist(mt) % 3;
 
     if (model_aux == 0){
         msg.set_model_type(CYLINDER);
+        object_name="plugin_cylinder_"+std::to_string(cylinder_counter++);
+	msg.set_name(object_name);
     }
     else if(model_aux == 1){
         msg.set_model_type(BOX);
+        object_name="plugin_box_"+std::to_string(box_counter++);
+	msg.set_name(object_name);
     }
     else if(model_aux == 2){
         msg.set_model_type(SPHERE);
+        object_name="plugin_sphere_"+std::to_string(sphere_counter++);
+	msg.set_name(object_name);
     }
 
     /* External optional fields have to be allocated */
@@ -344,9 +426,9 @@ void spawnRandomObject(
     ori=new gazebo::msgs::Quaternion(gazebo::msgs::Convert(object_orientation));
 
     /* Material script */
-    int idx = dist(mt) % textures.size();
+    int j = dist(mt) % textures.size();
 
-    std::string texture = textures.at(idx);
+    std::string texture = textures.at(j);
     std::stringstream texture_uri;
     std::stringstream texture_name;
 
@@ -365,6 +447,7 @@ void spawnRandomObject(
 
     /* Send the message */
     pub->Publish(msg);
+    return object_name;
 }
 
 void clearWorld(gazebo::transport::PublisherPtr pub){
@@ -391,10 +474,10 @@ void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable){
 }
 
 
-void captureScene(gazebo::transport::PublisherPtr pub, int idx){
+void captureScene(gazebo::transport::PublisherPtr pub, int j){
     camera_utils::msgs::CameraUtilsRequest msg;
     msg.set_type(CAPTURE);
-    msg.set_file_name(std::to_string(idx));
+    msg.set_file_name(std::to_string(j));
     pub->Publish(msg);
 }
 
@@ -423,6 +506,20 @@ void queryModelBoundingBox(
     pub->Publish(msg);
 }
 
+void query2DcameraPoint(
+    gazebo::transport::PublisherPtr pub,
+    const ignition::math::Vector3d &point){
+
+    gazebo::msgs::Vector3d *point_msg = new gazebo::msgs::Vector3d();
+    point_msg->set_x(point.X());
+    point_msg->set_y(point.Y());
+    point_msg->set_z(point.Z());
+    camera_utils::msgs::CameraUtilsRequest msg;
+    msg.set_type(CAMERA_POINT);
+    msg.set_allocated_point(point_msg);
+    pub->Publish(msg);
+}
+
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
     if (_msg->type() == INFO){
         if (_msg->has_object_count()){
@@ -433,7 +530,9 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
         if (_msg->has_name() && _msg->has_bb_center() && _msg->has_bb_size()){
             ignition::math::Vector3d bb_center = gazebo::msgs::ConvertIgn(_msg->bb_center());
             ignition::math::Vector3d bb_size = gazebo::msgs::ConvertIgn(_msg->bb_size());
-            std::cout << _msg->name() << " Bounding box" << std::endl <<
+	    bbs_sizes_3d.push_back(bb_size);
+	    bbs_centers_3d.push_back(bb_center);
+            std::cout << _msg->name() << " bounding box" << std::endl <<
             "\tCenter: " << bb_center << std::endl <<
             "\tSize: " << bb_size << std::endl;
         }
@@ -452,6 +551,10 @@ bool waitForCamera(){
 }
 
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
+    if (_msg->has_point()){
+        ignition::math::Vector2d point_2d = gazebo::msgs::ConvertIgn(_msg->point());
+        points_2d.push_back(point_2d);
+    }
     if (_msg->success()){
         std::lock_guard<std::mutex> lock(camera_success_mutex);
         camera_success = true;    

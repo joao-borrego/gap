@@ -1,6 +1,9 @@
 package camera_utils.msgs;
 
+import "vector2d.proto";
 message CameraUtilsResponse
 {
     required bool success = 1;
+    /** 3D Point */
+    optional gazebo.msgs.Vector2d point = 2;
 }

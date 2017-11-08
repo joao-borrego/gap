@@ -113,6 +113,25 @@ namespace gazebo {
             this->next_file_name = output_dir + file_name;
             this->save_on_update = true;
         }
+	else if(_msg->type() == CAMERA_POINT)
+	{
+        	if (_msg->has_point()){
+            	    camera_utils::msgs::CameraUtilsResponse msg;
+		    ignition::math::Vector3d point_3d = gazebo::msgs::ConvertIgn(_msg->point());
+
+		    ignition::math::Vector2i point_2d = this->camera->Project (point_3d);
+
+                    gazebo::msgs::Vector2d *point_2d_msg = new gazebo::msgs::Vector2d();
+
+                    point_2d_msg->set_x(point_2d.X());
+                    point_2d_msg->set_y(point_2d.Y());
+
+		    msg.set_success(true);
+		    msg.set_allocated_point(point_2d_msg);
+
+		    this->dataPtr->pub->Publish(msg);
+        	}
+	}
     }
 
     void CameraUtils::OnNewFrame(

@@ -1,5 +1,7 @@
 package camera_utils.msgs;
 
+import "vector3d.proto";
+
 message CameraUtilsRequest
 {
     /** Type of request */
@@ -8,6 +10,8 @@ message CameraUtilsRequest
         CAPTURE         = 1;
         /** Change output directory */
         DIR             = 2;
+        /** From 3d to 2d camera point */
+        CAMERA_POINT         = 3;
     }
 
     /** Type of request */
@@ -16,4 +20,6 @@ message CameraUtilsRequest
     optional string file_name   = 2;
     /** Path to the output folder */
     optional string output_dir  = 3;
+    /** 3D Point */
+    optional gazebo.msgs.Vector3d point = 4;
 }

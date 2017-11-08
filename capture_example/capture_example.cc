@@ -220,8 +220,9 @@ int main(int argc, char **argv)
 		query2DcameraPoint(pub_camera,point_8);
 	}
 
-	// TODO - ENSURE "SYNCHRONISM" USING MUTEXES OR A COUNTER TO AVOID USING SLEEPS
-        sleep(5);
+        while (points_2d.size()<8*num_objects){
+            usleep(1000);
+        }
 
 	/* Get bounding boxes */
 	std::vector<cv::Rect> boundRect( num_objects );

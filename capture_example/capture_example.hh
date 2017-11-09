@@ -144,7 +144,8 @@ void queryModelBoundingBox(gazebo::transport::PublisherPtr pub,
 
 void query2DcameraPoint(
     gazebo::transport::PublisherPtr pub,
-    const ignition::math::Vector3d &point);
+    const ignition::math::Vector3d &point,
+    const std::string &model_name);
 
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg);
 

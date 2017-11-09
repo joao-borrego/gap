@@ -125,7 +125,7 @@ namespace gazebo {
 
                     point_2d_msg->set_x(point_2d.X());
                     point_2d_msg->set_y(point_2d.Y());
-
+                    msg.set_name(_msg->name());
 		    msg.set_success(true);
 		    msg.set_allocated_point(point_2d_msg);
 

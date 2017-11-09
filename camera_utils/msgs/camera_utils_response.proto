@@ -6,4 +6,7 @@ message CameraUtilsResponse
     required bool success = 1;
     /** 3D Point */
     optional gazebo.msgs.Vector2d point = 2;
+    /* @brief Object name */
+    optional string name = 3;
+
 }

@@ -127,6 +127,7 @@ namespace gazebo {
                     point_2d_msg->set_y(point_2d.Y());
 
 		    msg.set_success(true);
+		    msg.set_name(_msg->name());
 		    msg.set_allocated_point(point_2d_msg);
 
 		    this->dataPtr->pub->Publish(msg);

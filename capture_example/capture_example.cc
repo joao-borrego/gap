@@ -43,9 +43,26 @@ int object_count{0};
 /** Protect access to camera success */
 std::mutex camera_success_mutex;
 int camera_success{0};
-std::vector<ignition::math::Vector3d> bbs_centers_3d;
-std::vector<ignition::math::Vector3d> bbs_sizes_3d;
-std::vector<ignition::math::Vector2d> points_2d;
+
+class bounding_box_3d{
+	public:
+	bounding_box_3d(ignition::math::Vector3d & center_,ignition::math::Vector3d & size_) : center(center_), size(size_)
+	{};
+	ignition::math::Vector3d center;
+	ignition::math::Vector3d size;
+};
+
+
+typedef std::multimap<std::string,bounding_box_3d> BoundingBox3d;
+typedef std::multimap<std::string,ignition::math::Vector2d> BoundingBox2d;
+
+BoundingBox3d bbs_3d;
+BoundingBox2d points_2d;
+
+
+
+
+std::vector<std::string> object_names;
 ignition::math::Matrix4d projection_matrix;
 int box_counter=0;
 int cylinder_counter=0;
@@ -152,7 +169,7 @@ int main(int argc, char **argv)
         std::shuffle(cells_array.begin(), cells_array.end(), g);
  
         //std::copy(cells_array.begin(), cells_array.end(), std::ostream_iterator<int>(std::cout, " "));
-	std::vector<std::string> object_names;
+	object_names.clear();
         for (int j = 0; j < num_objects; ++j){
             unsigned int rand_cell_x = floor(cells_array[j] / x_cells);
             unsigned int rand_cell_y = floor(cells_array[j] - rand_cell_x * x_cells);
@@ -181,8 +198,7 @@ int main(int argc, char **argv)
         changePhysics(pub_world, true);
 
         /* get 3d bounding boxes */
-        bbs_centers_3d.clear();
-        bbs_sizes_3d.clear();
+        bbs_3d.clear();
 	for(int j=0; j < num_objects;++j)
 	{
 	   queryModelBoundingBox(pub_world, object_names[j]);
@@ -199,42 +215,57 @@ int main(int argc, char **argv)
 
 	/* Query 2D image points given 3d bounding box (8 3d points) */
 	// TODO - Apparently responses are not synchronous (points belonging to different objects become mixed): possible solution: query2DcameraPoint could send an object identifier
+	points_2d.clear();
 	for(int j=0;j<num_objects;++j)
 	{
-		ignition::math::Vector3d point_1=bbs_centers_3d[j]; point_1.X()+=bbs_sizes_3d[j].X()*0.5; point_1.Y()+=bbs_sizes_3d[j].Y()*0.5; point_1.Z()+=bbs_sizes_3d[j].Z()*0.5;
-		ignition::math::Vector3d point_2=bbs_centers_3d[j]; point_2.X()+=bbs_sizes_3d[j].X()*0.5; point_2.Y()+=bbs_sizes_3d[j].Y()*0.5; point_2.Z()-=bbs_sizes_3d[j].Z()*0.5;
-		ignition::math::Vector3d point_3=bbs_centers_3d[j]; point_3.X()+=bbs_sizes_3d[j].X()*0.5; point_3.Y()-=bbs_sizes_3d[j].Y()*0.5; point_3.Z()+=bbs_sizes_3d[j].Z()*0.5;
-		ignition::math::Vector3d point_4=bbs_centers_3d[j]; point_4.X()+=bbs_sizes_3d[j].X()*0.5; point_4.Y()-=bbs_sizes_3d[j].Y()*0.5; point_4.Z()-=bbs_sizes_3d[j].Z()*0.5;
-		ignition::math::Vector3d point_5=bbs_centers_3d[j]; point_5.X()-=bbs_sizes_3d[j].X()*0.5; point_5.Y()+=bbs_sizes_3d[j].Y()*0.5; point_5.Z()+=bbs_sizes_3d[j].Z()*0.5;
-		ignition::math::Vector3d point_6=bbs_centers_3d[j]; point_6.X()-=bbs_sizes_3d[j].X()*0.5; point_6.Y()+=bbs_sizes_3d[j].Y()*0.5; point_6.Z()-=bbs_sizes_3d[j].Z()*0.5;
-		ignition::math::Vector3d point_7=bbs_centers_3d[j]; point_7.X()-=bbs_sizes_3d[j].X()*0.5; point_7.Y()-=bbs_sizes_3d[j].Y()*0.5; point_7.Z()+=bbs_sizes_3d[j].Z()*0.5;
-		ignition::math::Vector3d point_8=bbs_centers_3d[j]; point_8.X()-=bbs_sizes_3d[j].X()*0.5; point_8.Y()-=bbs_sizes_3d[j].Y()*0.5; point_8.Z()-=bbs_sizes_3d[j].Z()*0.5;
+		std::pair <BoundingBox3d::iterator, BoundingBox3d::iterator> ret;
+		ret = bbs_3d.equal_range(object_names[j]);
+		for (BoundingBox3d::iterator it=ret.first; it!=ret.second; ++it)
+		{
+			ignition::math::Vector3d point_1=it->second.center; point_1.X()+=it->second.size.X()*0.5; point_1.Y()+=it->second.size.Y()*0.5; point_1.Z()+=it->second.size.Z()*0.5;
+			ignition::math::Vector3d point_2=it->second.center; point_2.X()+=it->second.size.X()*0.5; point_2.Y()+=it->second.size.Y()*0.5; point_2.Z()-=it->second.size.Z()*0.5;
+			ignition::math::Vector3d point_3=it->second.center; point_3.X()+=it->second.size.X()*0.5; point_3.Y()-=it->second.size.Y()*0.5; point_3.Z()+=it->second.size.Z()*0.5;
+			ignition::math::Vector3d point_4=it->second.center; point_4.X()+=it->second.size.X()*0.5; point_4.Y()-=it->second.size.Y()*0.5; point_4.Z()-=it->second.size.Z()*0.5;
+			ignition::math::Vector3d point_5=it->second.center; point_5.X()-=it->second.size.X()*0.5; point_5.Y()+=it->second.size.Y()*0.5; point_5.Z()+=it->second.size.Z()*0.5;
+			ignition::math::Vector3d point_6=it->second.center; point_6.X()-=it->second.size.X()*0.5; point_6.Y()+=it->second.size.Y()*0.5; point_6.Z()-=it->second.size.Z()*0.5;
+			ignition::math::Vector3d point_7=it->second.center; point_7.X()-=it->second.size.X()*0.5; point_7.Y()-=it->second.size.Y()*0.5; point_7.Z()+=it->second.size.Z()*0.5;
+			ignition::math::Vector3d point_8=it->second.center; point_8.X()-=it->second.size.X()*0.5; point_8.Y()-=it->second.size.Y()*0.5; point_8.Z()-=it->second.size.Z()*0.5;
 
-		query2DcameraPoint(pub_camera,point_1);
-		query2DcameraPoint(pub_camera,point_2);
-		query2DcameraPoint(pub_camera,point_3);
-		query2DcameraPoint(pub_camera,point_4);
-		query2DcameraPoint(pub_camera,point_5);
-		query2DcameraPoint(pub_camera,point_6);
-		query2DcameraPoint(pub_camera,point_7);
-		query2DcameraPoint(pub_camera,point_8);
+			query2DcameraPoint(pub_camera,point_1,object_names[j]);
+			query2DcameraPoint(pub_camera,point_2,object_names[j]);
+			query2DcameraPoint(pub_camera,point_3,object_names[j]);
+			query2DcameraPoint(pub_camera,point_4,object_names[j]);
+			query2DcameraPoint(pub_camera,point_5,object_names[j]);
+			query2DcameraPoint(pub_camera,point_6,object_names[j]);
+			query2DcameraPoint(pub_camera,point_7,object_names[j]);
+			query2DcameraPoint(pub_camera,point_8,object_names[j]);
+		}
 	}
+
 
         while (points_2d.size()<8*num_objects){
             usleep(1000);
+
         }
 
 	/* Get bounding boxes */
 	std::vector<cv::Rect> boundRect( num_objects );
 	for(int j=0;j<num_objects;++j)
 	{
+		std::pair <BoundingBox2d::iterator, BoundingBox2d::iterator> ret;
+		ret = points_2d.equal_range(object_names[j]);
 		std::vector<cv::Point> contours_poly( 8 );
-		for(int p=0;p<8;++p)
-		{
-			contours_poly[p]=cv::Point(points_2d[p+j*num_objects].X(),points_2d[p+j*num_objects].Y());
+		int p=0;
+
+		for (std::multimap<std::string,ignition::math::Vector2d>::iterator it=ret.first; it!=ret.second; ++it)
+		{		
+			contours_poly[p++]=cv::Point(it->second.X(),it->second.Y());
 		}
-       		boundRect[j] = cv::boundingRect( cv::Mat(contours_poly) );
+
+       		boundRect[j]=cv::boundingRect( cv::Mat(contours_poly) );
 	}
+
+	std::cout << std::endl;
 
 	// TODO - SAVE TO FILE (SEE OBJECT DETECTION DATASETS. Eg. pascal voc)
 
@@ -249,10 +280,13 @@ int main(int argc, char **argv)
 
 	for(int j=0;j<num_objects;++j)
 	{
-		for(int p=0;p<8;++p)
-		{
-			cv::circle(image, cv::Point(points_2d[p+j*num_objects].X(),points_2d[p+j*num_objects].Y()), 5, cv::Scalar(255,0,1));
+		std::pair <BoundingBox2d::iterator, BoundingBox2d::iterator> ret;
+		ret = points_2d.equal_range(object_names[j]);
 
+		for (std::multimap<std::string,ignition::math::Vector2d>::iterator it=ret.first; it!=ret.second; ++it)
+		{
+
+			cv::circle(image, cv::Point(it->second.X(),it->second.Y()), 5, cv::Scalar(255,0,1));
 		}
        		rectangle( image, boundRect[j].tl(), boundRect[j].br(), cv::Scalar(255,0,1), 2, 8, 0 );
 	}
@@ -509,7 +543,8 @@ void queryModelBoundingBox(
 
 void query2DcameraPoint(
     gazebo::transport::PublisherPtr pub,
-    const ignition::math::Vector3d &point){
+    const ignition::math::Vector3d &point,
+    const std::string &model_name){
 
     gazebo::msgs::Vector3d *point_msg = new gazebo::msgs::Vector3d();
     point_msg->set_x(point.X());
@@ -517,6 +552,7 @@ void query2DcameraPoint(
     point_msg->set_z(point.Z());
     camera_utils::msgs::CameraUtilsRequest msg;
     msg.set_type(CAMERA_POINT);
+    msg.set_name(model_name);
     msg.set_allocated_point(point_msg);
     pub->Publish(msg);
 }
@@ -531,11 +567,9 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
         if (_msg->has_name() && _msg->has_bb_center() && _msg->has_bb_size()){
             ignition::math::Vector3d bb_center = gazebo::msgs::ConvertIgn(_msg->bb_center());
             ignition::math::Vector3d bb_size = gazebo::msgs::ConvertIgn(_msg->bb_size());
-	    bbs_sizes_3d.push_back(bb_size);
-	    bbs_centers_3d.push_back(bb_center);
-            std::cout << _msg->name() << " bounding box" << std::endl <<
-            "\tCenter: " << bb_center << std::endl <<
-            "\tSize: " << bb_size << std::endl;
+
+            bounding_box_3d bb(bb_center, bb_size);
+	    bbs_3d.insert( std::pair<std::string,bounding_box_3d>(_msg->name(), bb) );
         }
     }
 }
@@ -552,9 +586,10 @@ bool waitForCamera(){
 }
 
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
-    if (_msg->has_point()){
+    if (_msg->has_point() &&_msg->has_name() ){
         ignition::math::Vector2d point_2d = gazebo::msgs::ConvertIgn(_msg->point());
-        points_2d.push_back(point_2d);
+
+    	points_2d.insert( std::pair<std::string,ignition::math::Vector2d>(_msg->name(), point_2d) );
     }
     if (_msg->success()){
         std::lock_guard<std::mutex> lock(camera_success_mutex);

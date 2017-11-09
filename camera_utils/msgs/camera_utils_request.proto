@@ -24,4 +24,5 @@ message CameraUtilsRequest
     optional gazebo.msgs.Vector3d point = 4;
     /* @brief Model name */
     optional string                 name            = 5;
+
 }

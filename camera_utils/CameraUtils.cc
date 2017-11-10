@@ -116,6 +116,7 @@ namespace gazebo {
 	else if(_msg->type() == CAMERA_POINT)
 	{
         	if (_msg->has_point()){
+
             	    camera_utils::msgs::CameraUtilsResponse msg;
 		    ignition::math::Vector3d point_3d = gazebo::msgs::ConvertIgn(_msg->point());
 
@@ -125,11 +126,10 @@ namespace gazebo {
 
                     point_2d_msg->set_x(point_2d.X());
                     point_2d_msg->set_y(point_2d.Y());
-
-		    msg.set_success(true);
-		    msg.set_name(_msg->name());
+                    msg.set_name(_msg->name());
 		    msg.set_allocated_point(point_2d_msg);
 
+            msg.set_success(false);
 		    this->dataPtr->pub->Publish(msg);
         	}
 	}

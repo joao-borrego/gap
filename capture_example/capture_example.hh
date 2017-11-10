@@ -127,7 +127,7 @@ std::string spawnRandomObject(
     unsigned int & y_cell,
     double & grid_cell_size);
 
-void clearWorld(gazebo::transport::PublisherPtr pub);
+void clearWorld(gazebo::transport::PublisherPtr pub, std::string name = std::string(""));
 
 void changePhysics(gazebo::transport::PublisherPtr pub, bool enable);
 

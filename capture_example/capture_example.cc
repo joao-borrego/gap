@@ -63,7 +63,7 @@ BoundingBox2d points_2d;
 
 
 std::vector<std::string> object_names;
-ignition::math::Matrix4d projection_matrix;
+
 int box_counter=0;
 int cylinder_counter=0;
 int sphere_counter=0;
@@ -133,13 +133,23 @@ int main(int argc, char **argv)
     double tx=2.5;
     double ty=2.5;
     double tz=3.5;
+
+
+
+    /* Ensure no objects are spawned on the server */
+    clearWorld(pub_world);
+    //clearWorld(pub_world,"plugin");
+    while (waitForSpawner(0)){
+        usleep(1000);
+        queryModelCount(pub_world);
+    }
+	sleep(2);
     spawnModelFromFile(
         pub_world, "models/custom_sun.sdf", true, false, false, textures);
     
-    spawnModelFromFile(
-        pub_world, "models/custom_camera.sdf", false, true, false,
-        textures,  tx, ty, tz, camera_orientation);
-    pub_camera->WaitForConnection();
+
+
+
 
     /* Create 10 by 10 cell grid */
     const unsigned int x_cells = 10;
@@ -149,7 +159,8 @@ int main(int argc, char **argv)
     for (int i = 0;  i < x_cells * y_cells; ++i){
       cells_array.push_back(i);
     }
-
+/* Disable physics */
+changePhysics(pub_world, false);
     /* Main loop */
     for (int i = 0; i < scenes; i++){
     
@@ -159,11 +170,23 @@ int main(int argc, char **argv)
         /* DEBUG */
         std::cout << "Scene " << i << " - Number of objects:" << num_objects << std::endl;
         
+
         /* Spawn ground and camera */
         spawnModelFromFile(pub_world, "models/custom_ground.sdf", false, false, true, textures);
 
-        /* Spawn random objects */
+	spawnModelFromFile(
+	pub_world, "models/custom_camera.sdf", false, true, false,
+	textures,  tx, ty, tz, camera_orientation);
+    std::cout << 123 << std::endl;
 
+
+        while (waitForSpawner(2)){
+            usleep(1000);
+    	    std::cout << object_count << std::endl;
+            queryModelCount(pub_world);
+        }
+        /* Spawn random objects */
+	pub_camera->WaitForConnection();
         // TODO - Organise random generator
         std::mt19937 g(rd());
         std::shuffle(cells_array.begin(), cells_array.end(), g);
@@ -173,45 +196,50 @@ int main(int argc, char **argv)
         for (int j = 0; j < num_objects; ++j){
             unsigned int rand_cell_x = floor(cells_array[j] / x_cells);
             unsigned int rand_cell_y = floor(cells_array[j] - rand_cell_x * x_cells);
+		while (waitForSpawner(j+2)){
+		    usleep(1000);
+		    queryModelCount(pub_world);
+		    //std::cout << object_count << " " << j + 2<< std::endl;
+		  }
             object_names.push_back(spawnRandomObject(pub_world, textures, rand_cell_x, rand_cell_y, grid_cell_size));
+
         }
 
         while (waitForSpawner(num_objects + 2)){
             usleep(1000);
+    		//std::cout << object_count << " " << num_objects + 2<< std::endl;
             queryModelCount(pub_world);
         }
-        
-        /* Still needed! */
-        sleep(1);
+
+
 
         /* Disable physics */
-        changePhysics(pub_world, false);
-
+        //changePhysics(pub_world, false);
+        /* Still needed! */
+        sleep(1.0);
         /* Capture the scene and save it to a file */
         captureScene(pub_camera, i);
-        
+
         while (waitForCamera()){
             usleep(1000);
         }
 
         /* Disable physics */
-        changePhysics(pub_world, true);
+        //changePhysics(pub_world, true);
 
         /* get 3d bounding boxes */
         bbs_3d.clear();
 	for(int j=0; j < num_objects;++j)
 	{
+
 	   queryModelBoundingBox(pub_world, object_names[j]);
 	}
 
-        /* Clear the scene */
-        clearWorld(pub_world);
-
-        // TODO - Move camera and light source
-        while (waitForSpawner(1)){
+        while (bbs_3d.size()<num_objects){
+            //std::cout << "foda-se:"<<bbs_3d.size() <<" " << num_objects << std::endl;
             usleep(1000);
-            queryModelCount(pub_world);
         }
+
 
 	/* Query 2D image points given 3d bounding box (8 3d points) */
 	// TODO - Apparently responses are not synchronous (points belonging to different objects become mixed): possible solution: query2DcameraPoint could send an object identifier
@@ -220,8 +248,10 @@ int main(int argc, char **argv)
 	{
 		std::pair <BoundingBox3d::iterator, BoundingBox3d::iterator> ret;
 		ret = bbs_3d.equal_range(object_names[j]);
+
 		for (BoundingBox3d::iterator it=ret.first; it!=ret.second; ++it)
 		{
+
 			ignition::math::Vector3d point_1=it->second.center; point_1.X()+=it->second.size.X()*0.5; point_1.Y()+=it->second.size.Y()*0.5; point_1.Z()+=it->second.size.Z()*0.5;
 			ignition::math::Vector3d point_2=it->second.center; point_2.X()+=it->second.size.X()*0.5; point_2.Y()+=it->second.size.Y()*0.5; point_2.Z()-=it->second.size.Z()*0.5;
 			ignition::math::Vector3d point_3=it->second.center; point_3.X()+=it->second.size.X()*0.5; point_3.Y()-=it->second.size.Y()*0.5; point_3.Z()+=it->second.size.Z()*0.5;
@@ -242,11 +272,11 @@ int main(int argc, char **argv)
 		}
 	}
 
-
         while (points_2d.size()<8*num_objects){
+            //std::cout << points_2d.size() <<" " << 8*num_objects << std::endl;
             usleep(1000);
-
         }
+
 
 	/* Get bounding boxes */
 	std::vector<cv::Rect> boundRect( num_objects );
@@ -269,7 +299,7 @@ int main(int argc, char **argv)
 
 	// TODO - SAVE TO FILE (SEE OBJECT DETECTION DATASETS. Eg. pascal voc)
 
-	cv::Mat image;
+	/*cv::Mat image;
 	image = cv::imread("/tmp/camera_utils_output/"+std::to_string(i)+".png", CV_LOAD_IMAGE_COLOR);   // Read the file
 
 	if(! image.data )                              // Check for invalid input
@@ -293,6 +323,26 @@ int main(int argc, char **argv)
 	cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
 	cv::imshow( "Display window", image );                   // Show our image inside it.
 	cv::waitKey(1000);                                          // Wait for a keystroke in the window
+	*/
+        /* Clear the scene */
+        clearWorld(pub_world);
+        //clearWorld(pub_world,"plugin");
+        while (waitForSpawner(0)){
+           usleep(1000);
+           queryModelCount(pub_world);
+        }
+        sleep(1);
+	/*for(int j=0; j < num_objects;++j)
+	{
+        	clearWorld(pub_world, object_names[j]);
+	}
+	clearWorld(pub_world,"plugin_ground_plane");
+	//clearWorld(pub_world,"plugin");
+        // TODO - Move camera and light source
+        while (waitForSpawner(1)){
+            usleep(1000);
+            queryModelCount(pub_world);
+        }*/
     }
 
     /* Shut down */
@@ -485,12 +535,12 @@ std::string spawnRandomObject(
     return object_name;
 }
 
-void clearWorld(gazebo::transport::PublisherPtr pub){
-
+void clearWorld(gazebo::transport::PublisherPtr pub, std::string name){
+    std::cout <<"limpar" << std::endl;
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(REMOVE);
     // Only remove models that match the string (exclude custom_camera)
-    msg.set_name("plugin");
+    msg.set_name(name);
     pub->Publish(msg);
 }
 
@@ -520,6 +570,7 @@ void captureScene(gazebo::transport::PublisherPtr pub, int j){
 
 bool waitForSpawner(int desired_objects){
     std::lock_guard<std::mutex> lock(object_count_mutex);
+
     if (desired_objects == object_count)
         return false;
     return true;
@@ -552,7 +603,7 @@ void query2DcameraPoint(
     point_msg->set_z(point.Z());
     camera_utils::msgs::CameraUtilsRequest msg;
     msg.set_type(CAMERA_POINT);
-    msg.set_name(model_name);
+    msg.set_name(model_name);	
     msg.set_allocated_point(point_msg);
     pub->Publish(msg);
 }
@@ -586,12 +637,15 @@ bool waitForCamera(){
 }
 
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
-    if (_msg->has_point() &&_msg->has_name() ){
+
+    if (_msg->has_point() &&_msg->has_name()){
         ignition::math::Vector2d point_2d = gazebo::msgs::ConvertIgn(_msg->point());
 
     	points_2d.insert( std::pair<std::string,ignition::math::Vector2d>(_msg->name(), point_2d) );
+	std::cout << _msg->name() << std::endl;
     }
-    if (_msg->success()){
+    else if (_msg->success()){
+	std::cout << "hum2" << std::endl;
         std::lock_guard<std::mutex> lock(camera_success_mutex);
         camera_success = true;    
     } else {

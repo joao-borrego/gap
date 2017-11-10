@@ -205,6 +205,7 @@ namespace gazebo {
         } else if (type == REMOVE){
 
             if (_msg->has_name()){
+
                 /* Clear specific object(s) */
                 clearMatching(_msg->name());
             } else {
@@ -260,7 +261,7 @@ namespace gazebo {
     }
 
     void WorldUtils::clearWorld(){
-
+	std::cout << "HUHU" << std::endl;
         this->world->Clear();
     }
 

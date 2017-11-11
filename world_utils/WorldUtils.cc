@@ -72,7 +72,7 @@ namespace gazebo {
         model_type = (_msg->has_model_type())? (_msg->model_type()) : -1;
 
         if (type == SPAWN){
-
+	    std::cout << _msg->name() << std::endl;
             /* Extract parameters from message */
             if (_msg->has_pose()){
                 pos = msgs::ConvertIgn(_msg->pose().position());

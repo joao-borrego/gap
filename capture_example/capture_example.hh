@@ -35,6 +35,9 @@
 /* World utils response */
 #include "world_utils_response.pb.h"
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/imgproc.hpp"
 /*
  * Macros for custom messages
  */
@@ -65,12 +68,16 @@
 
 /** Spawn sphere object */
 #define SPHERE          world_utils::msgs::WorldUtilsRequest::SPHERE
+
 /** Spawn cylinder object */
 #define CYLINDER        world_utils::msgs::WorldUtilsRequest::CYLINDER
+
 /** Spawn box object */
 #define BOX             world_utils::msgs::WorldUtilsRequest::BOX
+
 /** Spawn custom object */
 #define CUSTOM          world_utils::msgs::WorldUtilsRequest::CUSTOM
+
 /** Spawn custom light object */
 #define CUSTOM_LIGHT    world_utils::msgs::WorldUtilsRequest::CUSTOM_LIGHT
 /** Spawn a model included in gazebo model path */
@@ -96,12 +103,54 @@
 /** Topic for receiving replies from the object spawner server */
 #define WORLD_UTILS_RESPONSE_TOPIC  "~/gazebo-utils/world_utils/response"
 
+/* Classes */
+#define CYLINDER_ID       1
+#define SPHERE_ID       0
+#define BOX_ID       2
+const std::map<int,std::string> classes_map{
+   {CYLINDER_ID, "cylinder"},
+   {SPHERE_ID, "sphere"},
+   {BOX_ID, "box"}
+};
+
+
+
+class bounding_box_3d{
+	public:
+	bounding_box_3d(ignition::math::Vector3d & center_,ignition::math::Vector3d & size_) : center(center_), size(size_)
+	{};
+	ignition::math::Vector3d center;
+	ignition::math::Vector3d size;
+};
+
+
+class Object {
+	public:
+	Object(std::string & _name, int & _type) : name(_name), type(_type)
+	{};
+
+	std::string name;
+	int type;
+	cv::Rect bounding_box;
+};
+
+
 /* Message pointer typedefs */
 
 typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
     WorldUtilsResponsePtr;
 typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
     CameraUtilsResponsePtr;
+
+
+typedef std::multimap<std::string,bounding_box_3d> BoundingBox3d;
+typedef std::multimap<std::string,ignition::math::Vector2d> BoundingBox2d;
+
+
+
+
+
+
 
 /*
  * Function prototypes
@@ -120,12 +169,14 @@ void spawnModelFromFile(
     const ignition::math::Quaternion<double> & orientation  = ignition::math::Quaternion<double>(0, M_PI/2.0, 0));
 
 
-std::string spawnRandomObject(
+Object spawnRandomObject(
     gazebo::transport::PublisherPtr pub,
     std::vector<std::string> textures,
     unsigned int & x_cell,
     unsigned int & y_cell,
     double & grid_cell_size);
+
+void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file);
 
 void clearWorld(gazebo::transport::PublisherPtr pub, std::string name = std::string(""));
 

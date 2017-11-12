@@ -101,7 +101,7 @@ namespace gazebo {
 
         std::string file_name;
 
-        if (_msg->type() == CAPTURE){
+        if (_msg->type() == CAPTURE_REQUEST){
 
             if (_msg->has_file_name()){
                 file_name = _msg->file_name() + extension;
@@ -154,7 +154,8 @@ namespace gazebo {
 
             camera_utils::msgs::CameraUtilsResponse msg;
             msg.set_success(success);
-            this->dataPtr->pub->Publish(msg,true);
+            msg.set_type(CAPTURE_RESPONSE);
+            this->dataPtr->pub->Publish(msg);
         }
     }
 }

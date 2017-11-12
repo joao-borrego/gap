@@ -193,79 +193,63 @@ int main(int argc, char **argv)
         std::shuffle(cells_array.begin(), cells_array.end(), g);
  
         //std::copy(cells_array.begin(), cells_array.end(), std::ostream_iterator<int>(std::cout, " "));
+	
+	std::cout << "spawn random objects" << std::endl;
 	objects.clear();
-
-
-
-		/*while (waitForSpawner(j+2)){
-		usleep(1000);
-		queryModelCount(pub_world);
-		}*/
 	spawnRandomObject(pub_world, textures, grid_cell_size, num_objects, objects);
         
 
-	/*while (pub_world->GetOutgoingCount()>0){
-		std::cout << pub_world->GetOutgoingCount() << std::endl;
-		usleep(100000);
-	}*/
         while (waitForSpawner(num_objects + 2)){
             usleep(1000);
 
             queryModelCount(pub_world);
         }
-	    while (pub_world->GetOutgoingCount()>0){
-	      usleep(1000);
-	    }
+        
+        while (pub_world->GetOutgoingCount()>0){
+            usleep(1000);
+        }
 
 
-        /* Disable physics */
-        //changePhysics(pub_world, false);
+
+
         /* Still needed! */
         sleep(1.0);
         /* Capture the scene and save it to a file */
         captureScene(pub_camera, i);
-        /*while (waitForCamera()){
+        while (waitForCamera()){
 
             usleep(100000);
-        }*/
+        }
 	while (pub_camera->GetOutgoingCount()>0){
 		usleep(100000);
 	}
+        /* Still needed! */
+        sleep(1.0);
 
-
-        sleep(0.5);
-        /* Disable physics */
-        //changePhysics(pub_world, true);
-
+	std::cout << "getting 3d bounding boxes..." << std::endl;
         /* get 3d bounding boxes */
         bbs_3d.clear();
 	queryModelBoundingBox(pub_world, objects);
-
-
-	while (pub_world->GetOutgoingCount()>0){
-		usleep(10000);
-	}
-
 	if(bbs_3d.size()!=num_objects)
 	{
 		while (bbs_3d.size()!=num_objects){
-			usleep(10000);
+		    usleep(10000);
 		}
 	}
-
+	std::cout << "done" << std::endl;
 	/* Query 2D image points given 3d bounding box (8 3d points) */
 	// TODO - Apparently responses are not synchronous (points belonging to different objects become mixed): possible solution: query2DcameraPoint could send an object identifier
+	
+	std::cout << "getting 2d bounding boxes..." << std::endl;
 	points_2d.clear();
-
 	query2DcameraPoint(pub_camera,objects);
-
-	while (pub_camera->GetOutgoingCount()>0){
-		usleep(10000);
+	if(points_2d.size()!=8*num_objects)
+	{
+		while (points_2d.size()<num_objects){
+		    usleep(10000);
+		}
 	}
-        while (points_2d.size()<num_objects){
-            usleep(1000);
-        }
-
+	std::cout << "done" << std::endl;
 	/* Get bounding boxes */
 	std::vector<cv::Rect> boundRect( num_objects );
 
@@ -286,7 +270,7 @@ int main(int argc, char **argv)
 		objects[j].bounding_box=boundRect[j];
 	}
 
-
+	std::cout << "save annotations" << std::endl;
 	/* Save annotations */
 	storeAnnotations(objects, train_dir, std::to_string(i)+".xml");
 
@@ -549,7 +533,7 @@ void spawnRandomObject(
 }
 
 void clearWorld(gazebo::transport::PublisherPtr pub, std::vector<std::string> object_names){
-    std::cout <<"limpar" << std::endl;
+    std::cout <<"clean" << std::endl;
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(REMOVE);
     // Only remove models that match the string (exclude custom_camera)
@@ -579,7 +563,7 @@ void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable){
 
 void captureScene(gazebo::transport::PublisherPtr pub, int j){
     camera_utils::msgs::CameraUtilsRequest msg;
-    msg.set_type(CAPTURE);
+    msg.set_type(CAPTURE_REQUEST);
     msg.set_file_name(std::to_string(j));
     pub->Publish(msg,false);
 }
@@ -722,7 +706,7 @@ void query2DcameraPoint(
 		}
 	}
 
-    pub->Publish(msg,true);
+    pub->Publish(msg,false);
 }
 
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
@@ -757,7 +741,7 @@ bool waitForCamera(){
 }
 
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
-    std::cout << "camera response" << std::endl;
+
     if (_msg->type()==CAMERA_POINT_RESPONSE){
 
         for(int i(0); i<_msg->bounding_box_size();++i){
@@ -766,10 +750,14 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
     		points_2d.insert( std::pair<std::string,ignition::math::Vector2d>(_msg->bounding_box(i).name(), point_2d) );
 	}
     }
-    else if (_msg->success()){
-	std::cout << "hum2" << std::endl;
+    else if (_msg->type()==CAPTURE_RESPONSE){
         std::lock_guard<std::mutex> lock(camera_success_mutex);
-        camera_success = true;    
+
+	if(_msg->success())
+	{
+    		std::cout << "capture response" << std::endl;
+       		camera_success = true;    
+	}
     } else {
         std::cout << "Camera could not save to file! Exiting..." << std::endl;
         exit(EXIT_FAILURE);

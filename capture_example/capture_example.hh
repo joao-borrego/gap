@@ -178,7 +178,7 @@ void spawnRandomObject(
 
 void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file);
 
-void clearWorld(gazebo::transport::PublisherPtr pub, std::string name = std::string(""));
+void clearWorld(gazebo::transport::PublisherPtr pub,  std::vector<std::string> object_names = std::vector<std::string>());
 
 void changePhysics(gazebo::transport::PublisherPtr pub, bool enable);
 

@@ -163,15 +163,16 @@ int main(int argc, char **argv)
 
     /* Main loop */
     for (int i = 0; i < scenes; i++){
-    	    while (pub_world->GetOutgoingCount()>0){
-	      usleep(1000);
-	    }
+
         /* Random object number */
         int num_objects = (dist(mt) % max_objects) + min_objects;
 
         /* DEBUG */
         std::cout << "Scene " << i << " - Number of objects:" << num_objects << std::endl;
         
+	while (pub_world->GetOutgoingCount()>0){
+		usleep(1000);
+	}
 
         /* Spawn ground */
         spawnModelFromFile(pub_world, "models/custom_ground.sdf", false, false, true, textures);
@@ -323,14 +324,16 @@ int main(int argc, char **argv)
            usleep(1000);
            queryModelCount(pub_world);
         }*/
-
+	std::vector<std::string> object_names;
+	object_names.push_back("plugin_ground_plane");
 	for(int j=0; j < num_objects;++j)
 	{
-        	clearWorld(pub_world, objects[j].name);
+		object_names.push_back(objects[j].name);
+
 	}
 
-	clearWorld(pub_world,"plugin_ground_plane");
-	//clearWorld(pub_world,"plugin");
+	clearWorld(pub_world, object_names);
+
         // TODO - Move camera and light source
         while (waitForSpawner(1)){
             usleep(10000);
@@ -545,16 +548,16 @@ void spawnRandomObject(
 
 }
 
-void clearWorld(gazebo::transport::PublisherPtr pub, std::string name){
+void clearWorld(gazebo::transport::PublisherPtr pub, std::vector<std::string> object_names){
     std::cout <<"limpar" << std::endl;
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(REMOVE);
     // Only remove models that match the string (exclude custom_camera)
 
-    if(!name.empty())
+    for(int i(0); i<object_names.size();++i)
     {
         world_utils::msgs::Object* object = msg.add_object();
- 	object->set_name(name);
+ 	object->set_name(object_names[i]);
     }
     pub->Publish(msg);
 }

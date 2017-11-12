@@ -77,10 +77,9 @@ namespace gazebo {
         this->dataPtr->node = transport::NodePtr(new transport::Node());
         this->dataPtr->node->Init();
 
-        /* Create a topic for listening to requests */
-        std::string topic_name = REQUEST_TOPIC;
+
         /* Subcribe to the topic */
-        this->dataPtr->sub = this->dataPtr->node->Subscribe(topic_name,
+        this->dataPtr->sub = this->dataPtr->node->Subscribe(REQUEST_TOPIC,
             &CameraUtils::onRequest, this);
         /* Setup publisher for the reply topic */
         this->dataPtr->pub = this->dataPtr->node->
@@ -113,25 +112,27 @@ namespace gazebo {
             this->next_file_name = output_dir + file_name;
             this->save_on_update = true;
         }
-	else if(_msg->type() == CAMERA_POINT)
+	else if(_msg->type() == CAMERA_POINT_REQUEST)
 	{
-        	if (_msg->has_point()){
+		camera_utils::msgs::CameraUtilsResponse msg;
+		msg.set_success(false);
+    		msg.set_type(CAMERA_POINT_RESPONSE);		
+		for(int i(0); i<_msg->bounding_box_size();++i)
+		{
+			ignition::math::Vector3d point_3d = gazebo::msgs::ConvertIgn(_msg->bounding_box(i).point3d());
 
-            	    camera_utils::msgs::CameraUtilsResponse msg;
-		    ignition::math::Vector3d point_3d = gazebo::msgs::ConvertIgn(_msg->point());
+			ignition::math::Vector2i point_2d = this->camera->Project (point_3d);
 
-		    ignition::math::Vector2i point_2d = this->camera->Project (point_3d);
+		        gazebo::msgs::Vector2d *bb = new gazebo::msgs::Vector2d();
+			bb->set_x(point_2d.X());
+			bb->set_y(point_2d.Y());
+	    		camera_utils::msgs::BoundingBoxCamera* bounding_box = msg.add_bounding_box();
+			bounding_box->set_name(_msg->bounding_box(i).name());
+			bounding_box->set_allocated_point(bb);
+		}
 
-                    gazebo::msgs::Vector2d *point_2d_msg = new gazebo::msgs::Vector2d();
-
-                    point_2d_msg->set_x(point_2d.X());
-                    point_2d_msg->set_y(point_2d.Y());
-                    msg.set_name(_msg->name());
-		    msg.set_allocated_point(point_2d_msg);
-
-            msg.set_success(false);
-		    this->dataPtr->pub->Publish(msg);
-        	}
+		this->dataPtr->pub->Publish(msg);
+        	
 	}
     }
 
@@ -147,11 +148,13 @@ namespace gazebo {
             save_on_update = false;
 
             bool success = this->camera->SaveFrame(next_file_name);
-            std::cout << "[CameraUtils] Saving frame as [" <<next_file_name << "]" << std::endl;
+
+	    if(success) std::cout << "[CameraUtils] Saving frame as [" <<next_file_name << "]" << std::endl;
+	    else std::cout << "[CameraUtils] FAILED saving frame as [" <<next_file_name << "]" << std::endl;
 
             camera_utils::msgs::CameraUtilsResponse msg;
             msg.set_success(success);
-            this->dataPtr->pub->Publish(msg);
+            this->dataPtr->pub->Publish(msg,true);
         }
     }
 }

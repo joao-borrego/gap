@@ -1,0 +1,14 @@
+package world_utils.msgs;
+
+import "vector3d.proto";
+
+message BoundingBox
+{
+    /* @brief Type of request */
+    /* @brief Bounding box pose */
+    optional gazebo.msgs.Vector3d   bb_center       = 1;
+    /* @brief Bounding box dimensions */
+    optional gazebo.msgs.Vector3d   bb_size         = 2;
+
+    optional string                 name            = 3;
+}

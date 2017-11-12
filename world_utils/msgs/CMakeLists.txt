@@ -9,6 +9,8 @@ endforeach()
 
 set (msgs
   # Custom messages
+  object.proto
+  bounding_box.proto
   world_utils_request.proto
   world_utils_response.proto
   # Message dependencies

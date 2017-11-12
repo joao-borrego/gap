@@ -1,7 +1,7 @@
 package camera_utils.msgs;
 
 import "vector3d.proto";
-
+import "bounding_box_camera.proto";
 message CameraUtilsRequest
 {
     /** Type of request */
@@ -20,9 +20,8 @@ message CameraUtilsRequest
     optional string file_name   = 2;
     /** Path to the output folder */
     optional string output_dir  = 3;
-    /** 3D Point */
-    optional gazebo.msgs.Vector3d point = 4;
     /* @brief Model name */
     optional string                 name            = 5;
-
+    /* @brief Bounding box */
+    repeated BoundingBoxCamera            bounding_box       = 6;
 }

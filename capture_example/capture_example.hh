@@ -47,8 +47,8 @@
 /** Request to capture a frame and save it to disk */
 #define CAPTURE         camera_utils::msgs::CameraUtilsRequest::CAPTURE
 
-#define CAMERA_POINT         camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
-
+#define CAMERA_POINT_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
+#define CAMERA_POINT_RESPONSE         camera_utils::msgs::CameraUtilsResponse::CAMERA_POINT
 /* World utils */
 
 /* Request */
@@ -67,21 +67,21 @@
 #define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
 
 /** Spawn sphere object */
-#define SPHERE          world_utils::msgs::WorldUtilsRequest::SPHERE
+#define SPHERE          world_utils::msgs::Object::SPHERE
 
 /** Spawn cylinder object */
-#define CYLINDER        world_utils::msgs::WorldUtilsRequest::CYLINDER
+#define CYLINDER        world_utils::msgs::Object::CYLINDER
 
 /** Spawn box object */
-#define BOX             world_utils::msgs::WorldUtilsRequest::BOX
+#define BOX             world_utils::msgs::Object::BOX
 
 /** Spawn custom object */
-#define CUSTOM          world_utils::msgs::WorldUtilsRequest::CUSTOM
+#define CUSTOM          world_utils::msgs::Object::CUSTOM
 
 /** Spawn custom light object */
-#define CUSTOM_LIGHT    world_utils::msgs::WorldUtilsRequest::CUSTOM_LIGHT
+#define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
 /** Spawn a model included in gazebo model path */
-#define MODEL           world_utils::msgs::WorldUtilsRequest::MODEL
+#define MODEL           world_utils::msgs::Object::MODEL
 
 /* Response */
 
@@ -169,12 +169,12 @@ void spawnModelFromFile(
     const ignition::math::Quaternion<double> & orientation  = ignition::math::Quaternion<double>(0, M_PI/2.0, 0));
 
 
-Object spawnRandomObject(
+void spawnRandomObject(
     gazebo::transport::PublisherPtr pub,
     std::vector<std::string> textures,
-    unsigned int & x_cell,
-    unsigned int & y_cell,
-    double & grid_cell_size);
+    double & grid_cell_size,
+    int & num_objects,
+    std::vector<Object> & objects);
 
 void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file);
 
@@ -191,12 +191,11 @@ bool waitForSpawner(int desired_objects);
 void queryModelCount(gazebo::transport::PublisherPtr pub);
 
 void queryModelBoundingBox(gazebo::transport::PublisherPtr pub,
-    const std::string &model_name);
+    const std::vector<Object> & objects);
 
 void query2DcameraPoint(
     gazebo::transport::PublisherPtr pub,
-    const ignition::math::Vector3d &point,
-    const std::string &model_name);
+    const std::vector<Object> & objects);
 
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg);
 

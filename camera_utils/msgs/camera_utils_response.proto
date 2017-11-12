@@ -1,12 +1,26 @@
 package camera_utils.msgs;
 
 import "vector2d.proto";
+import "bounding_box_camera.proto";
+
 message CameraUtilsResponse
 {
-    required bool success = 1;
-    /** 3D Point */
-    optional gazebo.msgs.Vector2d point = 2;
-    /* @brief Model name */
-    optional string                 name            = 3;
+    /** Type of request */
+    enum Type{
+        /** Acquire frame and save it to disk */
+        CAPTURE         = 1;
+        /** Change output directory */
+        DIR             = 2;
+        /** From 3d to 2d camera point */
+        CAMERA_POINT         = 3;
+    }
 
+    /** Type of request */
+    required Type   type        = 1;
+    /** Success */
+    required bool success = 2;
+    /* @brief Model name */
+    optional string                 name            = 4;
+    /* @brief Bounding box */
+    repeated BoundingBoxCamera            bounding_box       = 5;
 }

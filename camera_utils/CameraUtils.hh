@@ -33,7 +33,8 @@ namespace CameraUtils {
 /** Request to capture a frame and save it to disk */
 #define CAPTURE camera_utils::msgs::CameraUtilsRequest::CAPTURE
 
-#define CAMERA_POINT camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
+#define CAMERA_POINT_RESPONSE camera_utils::msgs::CameraUtilsResponse::CAMERA_POINT
+#define CAMERA_POINT_REQUEST camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
 /* Default parameters */
 
 #define DEFAULT_OUTPUT_DIR  (const std::string) "/tmp/camera_utils_output/"

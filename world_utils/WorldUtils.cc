@@ -69,199 +69,224 @@ namespace gazebo {
         std::string sdf_string;
 
         type = (_msg->has_type())? (_msg->type()) : -1;
-        model_type = (_msg->has_model_type())? (_msg->model_type()) : -1;
 
-        if (type == SPAWN){
-	    std::cout << _msg->name() << std::endl;
-            /* Extract parameters from message */
-            if (_msg->has_pose()){
-                pos = msgs::ConvertIgn(_msg->pose().position());
-                ori = msgs::ConvertIgn(_msg->pose().orientation());
-            }
-            if (_msg->has_mass()){
-                mass = _msg->mass();
-            }
 
-            if (model_type == SPHERE){
+	if (type == SPAWN){
+		for (int i=0; i< _msg->object_size();++i)
+		{
+		    model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
 
-                name = _msg->has_name()?
-                    _msg->name() : "plugin_sphere_" + std::to_string(this->sphere_counter++);
-                radius = _msg->has_radius()?
-                    _msg->radius() : 1.0;
+		    /* Extract parameters from message */
+		    if (_msg->object(i).has_pose()){
+		        pos = msgs::ConvertIgn(_msg->object(i).pose().position());
+		        ori = msgs::ConvertIgn(_msg->object(i).pose().orientation());
+		    }
+		    if (_msg->object(i).has_mass()){
+		        mass = _msg->object(i).mass();
+		    }
 
-                sdf_string = genSphere(name, mass, radius, pos, ori);
+		    if (model_type == SPHERE){
 
-            } else if (model_type == CYLINDER){
+		        name = _msg->object(i).has_name()?
+		            _msg->object(i).name() : "plugin_sphere_" + std::to_string(this->sphere_counter++);
+		        radius = _msg->object(i).has_radius()?
+		            _msg->object(i).radius() : 1.0;
 
-                name = _msg->has_name()?
-                    _msg->name() : "plugin_cylinder_" + std::to_string(this->cylinder_counter++);
-                radius = _msg->has_radius()?
-                    _msg->radius() : 1.0;
-                length = _msg->has_length()?
-                    _msg->length() : 1.0;
+		        sdf_string = genSphere(name, mass, radius, pos, ori);
 
-                sdf_string = genCylinder(name, mass, radius, length, pos, ori);
+		    } else if (model_type == CYLINDER){
 
-            } else if (model_type == BOX){
+		        name = _msg->object(i).has_name()?
+		            _msg->object(i).name() : "plugin_cylinder_" + std::to_string(this->cylinder_counter++);
+		        radius = _msg->object(i).has_radius()?
+		            _msg->object(i).radius() : 1.0;
+		        length = _msg->object(i).has_length()?
+		            _msg->object(i).length() : 1.0;
 
-                name = _msg->has_name()?
-                    _msg->name() : "plugin_box_" + std::to_string(this->box_counter++);
-                if (_msg->has_box_size())
-                    box_size = msgs::ConvertIgn(_msg->box_size());
+		        sdf_string = genCylinder(name, mass, radius, length, pos, ori);
 
-                sdf_string = genBox(name, mass, box_size, pos, ori);
+		    } else if (model_type == BOX){
 
-            } else if (model_type == CUSTOM || model_type == CUSTOM_LIGHT){
+		        name = _msg->object(i).has_name()?
+		            _msg->object(i).name() : "plugin_box_" + std::to_string(this->box_counter++);
+		        if (_msg->object(i).has_box_size())
+		            box_size = msgs::ConvertIgn(_msg->object(i).box_size());
 
-                sdf_string = _msg->has_sdf()?
-                    _msg->sdf() : "";
+		        sdf_string = genBox(name, mass, box_size, pos, ori);
 
-            } else if (model_type == MODEL){
+		    } else if (model_type == CUSTOM || model_type == CUSTOM_LIGHT){
 
-                if (_msg->has_name()){
-                    name = "model://" + _msg->name();
-                    this->world->InsertModelFile(name);
-                }
-            }
+		        sdf_string = _msg->object(i).has_sdf()?
+		            _msg->object(i).sdf() : "";
 
-            /* If a spawn message was requested */
-            if (!sdf_string.empty()){
+		    } else if (model_type == MODEL){
 
-                std::ostringstream model_str;
+		        if (_msg->object(i).has_name()){
+		            name = "model://" +_msg->object(i).name();
+		            this->world->InsertModelFile(name);
+		        }
+		    }
 
-                if (model_type != CUSTOM && model_type != CUSTOM_LIGHT) {
-                    /* Enclose in sdf xml tags */
-                    model_str << "<sdf version='" << SDF_VERSION << "'>"
-                    << sdf_string << "</sdf>";
+		    /* If a spawn message was requested */
+		    if (!sdf_string.empty()){
 
-                } else {
+		        std::ostringstream model_str;
 
-                    /* Regex to modify pose string in custom model */
-                    if (_msg->has_pose()){
+		        if (model_type != CUSTOM && model_type != CUSTOM_LIGHT) {
+		            /* Enclose in sdf xml tags */
+		            model_str << "<sdf version='" << SDF_VERSION << "'>"
+		            << sdf_string << "</sdf>";
 
-                        ignition::math::Vector3d rpy = ori.Euler();
+		        } else {
 
-                        std::ostringstream pose_xml;
-                        pose_xml <<
-                            "<pose>" <<
-                            pos.X() << " " << pos.Y() << " " << pos.Z() << " " <<
-                            rpy.X() << " " << rpy.Y() << " " << rpy.Z() <<
-                            "</pose>";
+		            /* Regex to modify pose string in custom model */
+		            if (_msg->object(i).has_pose()){
 
-                        std::string new_model_str = std::regex_replace(
-                            sdf_string, this->pose_reg, pose_xml.str());
+		                ignition::math::Vector3d rpy = ori.Euler();
 
-                        model_str << new_model_str;
+		                std::ostringstream pose_xml;
+		                pose_xml <<
+		                    "<pose>" <<
+		                    pos.X() << " " << pos.Y() << " " << pos.Z() << " " <<
+		                    rpy.X() << " " << rpy.Y() << " " << rpy.Z() <<
+		                    "</pose>";
 
-                    } else {
-                        model_str << sdf_string;
-                    }
-                }
+		                std::string new_model_str = std::regex_replace(
+		                    sdf_string, this->pose_reg, pose_xml.str());
 
-                std::string new_model_str;
+		                model_str << new_model_str;
 
-                if (_msg->has_texture_uri() && _msg->has_texture_name()){
+		            } else {
+		                model_str << sdf_string;
+		            }
+		        }
 
-                    /* Change material script in string */
-                    texture_uri = _msg->texture_uri();
-                    texture_name = _msg->texture_name();
+		        std::string new_model_str;
 
-                    std::string texture_str =
-                    "<script><uri>" + texture_uri + "</uri>" +
-                    "<name>" + texture_name + "</name></script>";
+		        if (_msg->object(i).has_texture_uri() && _msg->object(i).has_texture_name()){
 
-                    new_model_str = std::regex_replace(
-                        model_str.str(), this->script_reg, texture_str);
+		            /* Change material script in string */
+		            texture_uri = _msg->object(i).texture_uri();
+		            texture_name = _msg->object(i).texture_name();
 
-                } else {
-                    new_model_str = model_str.str();
-                }
+		            std::string texture_str =
+		            "<script><uri>" + texture_uri + "</uri>" +
+		            "<name>" + texture_name + "</name></script>";
 
-                /* Send the model to the gazebo factory */
-                if (model_type == CUSTOM_LIGHT) {
-                    sdf::SDF sdf_light;
-                    sdf_light.SetFromString(new_model_str);
-                    msgs::Light msg = msgs::LightFromSDF(sdf_light.Root()->GetElement("light"));
-                    msg.set_name("plugin_light");
-                    this->factory_light_pub->Publish(msg);
-                } else {
-                    msgs::Factory msg;
-                    msg.set_sdf(new_model_str);
-                    this->factory_pub->Publish(msg);
-                }
+		            new_model_str = std::regex_replace(
+		                model_str.str(), this->script_reg, texture_str);
 
-            }
+		        } else {
+		            new_model_str = model_str.str();
+		        }
 
-        } else if (type == MOVE) {
+		        /* Send the model to the gazebo factory */
+		        if (model_type == CUSTOM_LIGHT) {
+		            sdf::SDF sdf_light;
+		            sdf_light.SetFromString(new_model_str);
+		            msgs::Light msg = msgs::LightFromSDF(sdf_light.Root()->GetElement("light"));
+		            msg.set_name("plugin_light");
+		            this->factory_light_pub->Publish(msg,true);
+		        } else {
+		            msgs::Factory msg;
+		            msg.set_sdf(new_model_str);
+		            this->factory_pub->Publish(msg,true);
+		        }
 
-            if (_msg->has_name() && _msg->has_pose()){
+		    }
+		}
 
-                msgs::Pose m_pose = _msg->pose();
-                ignition::math::Pose3d pose = msgs::ConvertIgn(m_pose);
-                physics::ModelPtr model = this->world->GetModel(_msg->name());
-                model->SetWorldPose(pose);
-            }
+	} else if (type == MOVE) {
+			for (int i=0; i< _msg->object_size();++i)
+			{
+			    model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
 
-        } else if (type == REMOVE){
+			    if (_msg->object(i).has_name() && _msg->object(i).has_pose()){
 
-            if (_msg->has_name()){
+				msgs::Pose m_pose = _msg->object(i).pose();
+				ignition::math::Pose3d pose = msgs::ConvertIgn(m_pose);
+				physics::ModelPtr model = this->world->GetModel(_msg->object(i).name());
+				model->SetWorldPose(pose);
+			    }
 
-                /* Clear specific object(s) */
-                clearMatching(_msg->name());
-            } else {
-                /* Clear everything */
-                clearWorld();
-            }
+			}
 
-        } else if (type == PHYSICS){
+	} else if (type == REMOVE){
+		if(_msg->object_size()>0)
+			for (int i=0; i< _msg->object_size();++i)
+			{
+			    model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
 
-            bool state = (_msg->has_state())?
-                _msg->state() : !this->world->GetEnablePhysicsEngine();
-            this->world->EnablePhysicsEngine(state);
+			    if (_msg->object(i).has_name()){
+				/* Clear specific object(s) */
+				clearMatching(_msg->object(i).name());
+			    } else {
+				/* Clear everything */
+				clearWorld();
+			    }
+			}
+		else
+			clearWorld();
+	} 
 
-        } else if (type == PAUSE){
 
-            bool state = (_msg->has_state())?
-                _msg->state() : !this->world->IsPaused();;
-            this->world->SetPaused(state);
+	else if (type == PHYSICS){
 
-        } else if (type == STATUS){
+		    bool state = (_msg->has_state())?
+		        _msg->state() : !this->world->GetEnablePhysicsEngine();
+		    this->world->EnablePhysicsEngine(state);
 
-            world_utils::msgs::WorldUtilsResponse msg;
-            if (_msg->has_name()){
-                physics::ModelPtr model = this->world->GetModel(_msg->name());
-                if (model == NULL){
-                    return;
-                }
-                math::Box bb = model->GetBoundingBox();
-                gazebo::msgs::Vector3d *bb_center_msg = new gazebo::msgs::Vector3d();
-                gazebo::msgs::Vector3d *bb_size_msg = new gazebo::msgs::Vector3d();
-                ignition::math::Vector3d bb_center = bb.GetCenter().Ign();
-                ignition::math::Vector3d bb_size = bb.GetSize().Ign();
+		} else if (type == PAUSE){
 
-                bb_center_msg->set_x(bb_center.X());
-                bb_center_msg->set_y(bb_center.Y());
-                bb_center_msg->set_z(bb_center.Z());
-                bb_size_msg->set_x(bb_size.X());
-                bb_size_msg->set_y(bb_size.Y());
-                bb_size_msg->set_z(bb_size.Z());
+		    bool state = (_msg->has_state())?
+		        _msg->state() : !this->world->IsPaused();;
+		    this->world->SetPaused(state);
 
-                msg.set_type(PROPERTIES);
-                msg.set_name(_msg->name());
-                msg.set_allocated_bb_center(bb_center_msg);
-                msg.set_allocated_bb_size(bb_size_msg);
-                pub->Publish(msg, true);
-            } else {
-                int model_count = this->world->GetModelCount();
-                msg.set_type(INFO);
-                msg.set_object_count(model_count);
-                pub->Publish(msg);
-            }
-        }
+		} else if (type == STATUS){
+
+		    world_utils::msgs::WorldUtilsResponse msg;
+		    if (_msg->bounding_box_size()>0){
+			for(int i(0); i<_msg->bounding_box_size();++i)
+			{
+				physics::ModelPtr model = this->world->GetModel(_msg->bounding_box(i).name());
+				if (model == NULL){
+				    return;
+				}
+				math::Box bb = model->GetBoundingBox();
+				gazebo::msgs::Vector3d *bb_center_msg = new gazebo::msgs::Vector3d();
+				gazebo::msgs::Vector3d *bb_size_msg = new gazebo::msgs::Vector3d();
+
+				ignition::math::Vector3d bb_center = bb.GetCenter().Ign();
+				ignition::math::Vector3d bb_size = bb.GetSize().Ign();
+
+
+				bb_center_msg->set_x(bb_center.X());
+				bb_center_msg->set_y(bb_center.Y());
+				bb_center_msg->set_z(bb_center.Z());
+				bb_size_msg->set_x(bb_size.X());
+				bb_size_msg->set_y(bb_size.Y());
+				bb_size_msg->set_z(bb_size.Z());
+
+		    		world_utils::msgs::BoundingBox* bounding_box = msg.add_bounding_box();
+				bounding_box->set_allocated_bb_center(bb_center_msg);
+				bounding_box->set_allocated_bb_size(bb_size_msg);
+				bounding_box->set_name(_msg->bounding_box(i).name());
+			}
+			msg.set_type(PROPERTIES);
+
+		        pub->Publish(msg);
+		    } else {
+		        int model_count = this->world->GetModelCount();
+		        msg.set_type(INFO);
+		        msg.set_object_count(model_count);
+		        pub->Publish(msg,true);
+		    }
+		}
+	
     }
 
     void WorldUtils::clearWorld(){
-	std::cout << "HUHU" << std::endl;
+
         this->world->Clear();
     }
 

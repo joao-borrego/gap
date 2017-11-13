@@ -136,19 +136,25 @@ int main(int argc, char **argv)
 
 
     /* Ensure no objects are spawned on the server */
+    std::cout <<"clean" << std::endl;
     clearWorld(pub_world);
     //clearWorld(pub_world,"plugin");
     while (waitForSpawner(0)){
-        usleep(1000);
+        usleep(10000);
         queryModelCount(pub_world);
     }
     sleep(2);
-    spawnModelFromFile( pub_world, "models/custom_sun.sdf", true, false, false, textures);
-    spawnModelFromFile(pub_world, "models/custom_camera.sdf", false, true, false, textures,  tx, ty, tz, camera_orientation);
+
+    world_utils::msgs::WorldUtilsRequest msg_basic_objects;
+    msg_basic_objects.set_type(SPAWN);
+    spawnModelFromFile(msg_basic_objects, "models/custom_sun.sdf", true, false, false, textures);
+    spawnModelFromFile(msg_basic_objects, "models/custom_camera.sdf", false, true, false, textures,  tx, ty, tz, camera_orientation);
+    pub_world->Publish(msg_basic_objects);
+
     pub_camera->WaitForConnection();
     
     while (waitForSpawner(1)){
-      usleep(1000);
+      usleep(10000);
       queryModelCount(pub_world);
     }
 
@@ -162,7 +168,8 @@ int main(int argc, char **argv)
     changePhysics(pub_world, false);
 
     /* Main loop */
-    for (int i = 0; i < scenes; i++){
+    for (int i = 620; i < scenes; i++){
+
 
         /* Random object number */
         int num_objects = (dist(mt) % max_objects) + min_objects;
@@ -171,63 +178,40 @@ int main(int argc, char **argv)
         std::cout << "Scene " << i << " - Number of objects:" << num_objects << std::endl;
         
 	while (pub_world->GetOutgoingCount()>0){
-		usleep(1000);
+		usleep(10000);
 	}
 
-        /* Spawn ground */
-        spawnModelFromFile(pub_world, "models/custom_ground.sdf", false, false, true, textures);
-
-        while (waitForSpawner(2)){
-            usleep(1000);
+        /* Spawn ground + random objects */
+	std::cout << "spawn objects" << std::endl;
+        world_utils::msgs::WorldUtilsRequest msg_random_objects;
+        msg_random_objects.set_type(SPAWN);
+        spawnModelFromFile(msg_random_objects, "models/custom_ground.sdf", false, false, true, textures);
+	objects.clear();
+	spawnRandomObject(msg_random_objects, textures, grid_cell_size, num_objects, objects);
+        pub_world->Publish(msg_random_objects);
+        
+	while (waitForSpawner(num_objects + 2)){
+            usleep(10000);
             queryModelCount(pub_world);
         }
 
 	while (pub_world->GetOutgoingCount()>0){
-		usleep(1000);
+	    usleep(10000);
 	}
 
-        /* Spawn random objects */
+	std::cout << "done" << std::endl; 
 
-        // TODO - Organise random generator
-        std::mt19937 g(rd());
-        std::shuffle(cells_array.begin(), cells_array.end(), g);
- 
-        //std::copy(cells_array.begin(), cells_array.end(), std::ostream_iterator<int>(std::cout, " "));
-	
-	std::cout << "spawn random objects" << std::endl;
-	objects.clear();
-	spawnRandomObject(pub_world, textures, grid_cell_size, num_objects, objects);
-        
-
-        while (waitForSpawner(num_objects + 2)){
-            usleep(1000);
-
-            queryModelCount(pub_world);
-        }
-        
-        while (pub_world->GetOutgoingCount()>0){
-            usleep(1000);
-        }
-
-
-
-
-        /* Still needed! */
-        sleep(1.0);
         /* Capture the scene and save it to a file */
+	std::cout << "capture scene" << std::endl;
         captureScene(pub_camera, i);
         while (waitForCamera()){
 
-            usleep(100000);
+            usleep(10000);
         }
-	while (pub_camera->GetOutgoingCount()>0){
-		usleep(100000);
-	}
-        /* Still needed! */
-        sleep(1.0);
+	std::cout << "done" << std::endl;
 
+        /* Get 3d bounding boxes */
 	std::cout << "getting 3d bounding boxes..." << std::endl;
-        /* get 3d bounding boxes */
         bbs_3d.clear();
 	queryModelBoundingBox(pub_world, objects);
 	if(bbs_3d.size()!=num_objects)
@@ -237,9 +221,8 @@ int main(int argc, char **argv)
 		}
 	}
 	std::cout << "done" << std::endl;
-	/* Query 2D image points given 3d bounding box (8 3d points) */
-	// TODO - Apparently responses are not synchronous (points belonging to different objects become mixed): possible solution: query2DcameraPoint could send an object identifier
-	
+
+	/* Get 2D image points given 3d bounding box (8 3d points) */
 	std::cout << "getting 2d bounding boxes..." << std::endl;
 	points_2d.clear();
 	query2DcameraPoint(pub_camera,objects);
@@ -250,6 +233,7 @@ int main(int argc, char **argv)
 		}
 	}
 	std::cout << "done" << std::endl;
+
 	/* Get bounding boxes */
 	std::vector<cv::Rect> boundRect( num_objects );
 
@@ -270,12 +254,12 @@ int main(int argc, char **argv)
 		objects[j].bounding_box=boundRect[j];
 	}
 
-	std::cout << "save annotations" << std::endl;
+
 	/* Save annotations */
-	storeAnnotations(objects, train_dir, std::to_string(i)+".xml");
+	std::cout << "save annotations" << std::endl;
+	storeAnnotations(objects, train_dir, std::to_string(i)+".xml",std::to_string(i)+".png");
 
-	// TODO - SAVE TO FILE (SEE OBJECT DETECTION DATASETS. Eg. pascal voc)
-
+	/* Visualize data */
 	/*cv::Mat image;
 	image = cv::imread("/tmp/camera_utils_output/"+std::to_string(i)+".png", CV_LOAD_IMAGE_COLOR);   // Read the file
 
@@ -301,13 +285,6 @@ int main(int argc, char **argv)
 	cv::imshow( "Display window", image );                   // Show our image inside it.
 	cv::waitKey(1000);                                          // Wait for a keystroke in the window
 		*/
-        /* Clear the scene */
-        /*clearWorld(pub_world);
-        //clearWorld(pub_world,"plugin");
-        while (waitForSpawner(0)){
-           usleep(1000);
-           queryModelCount(pub_world);
-        }*/
 	std::vector<std::string> object_names;
 	object_names.push_back("plugin_ground_plane");
 	for(int j=0; j < num_objects;++j)
@@ -316,6 +293,7 @@ int main(int argc, char **argv)
 
 	}
 
+        std::cout <<"clean" << std::endl;
 	clearWorld(pub_world, object_names);
 
         // TODO - Move camera and light source
@@ -323,8 +301,6 @@ int main(int argc, char **argv)
             usleep(10000);
             queryModelCount(pub_world);
         }//*/
-
-        //sleep(0.1);
     }
 
     /* Shut down */
@@ -338,9 +314,13 @@ int main(int argc, char **argv)
 }
 
 /* Spawn objects */
+void spawnObjects()
+{
+        //spawnModelFromFile(pub_world, "models/custom_ground.sdf", false, false, true, textures);
+}
 
 void spawnModelFromFile(
-    gazebo::transport::PublisherPtr pub,
+    world_utils::msgs::WorldUtilsRequest & msg,
     const std::string model_path,
     const bool is_light,
     const bool use_custom_pose,
@@ -349,14 +329,15 @@ void spawnModelFromFile(
     const double & px, 
     const double & py,
     const double & pz,
-    const ignition::math::Quaternion<double> & orientation){
+    const ignition::math::Quaternion<double> & orientation
+    ){
 
     /* Read model sdf string from file */
     std::ifstream infile {model_path};
     std::string model_sdf { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
     
-    world_utils::msgs::WorldUtilsRequest msg;
-    msg.set_type(SPAWN);
+    //world_utils::msgs::WorldUtilsRequest msg;
+
     world_utils::msgs::Object* object = msg.add_object();
     if (is_light){
         object->set_model_type(CUSTOM_LIGHT);
@@ -395,28 +376,26 @@ void spawnModelFromFile(
         object->set_texture_uri(texture_uri.str());
         object->set_texture_name(texture_name.str());
     }
-    pub->Publish(msg);
 }
 
 void spawnRandomObject(
-    gazebo::transport::PublisherPtr pub,
+    world_utils::msgs::WorldUtilsRequest & msg,
     std::vector<std::string> textures,
     double & grid_cell_size,
     int & num_objects,
     std::vector<Object> & objects){
-
-
 
     /* Initialize random device */
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_int_distribution<int> dist;
 
-    world_utils::msgs::WorldUtilsRequest msg;
-    
     msg.set_type(SPAWN);
 
-
+    std::mt19937 g(rd());
+    std::shuffle(cells_array.begin(), cells_array.end(), g);
+ 
+	
     for(int i=0; i<num_objects;++i)
     {
             unsigned int x_cell = floor(cells_array[i] / x_cells);
@@ -446,25 +425,18 @@ void spawnRandomObject(
 	    gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
 	    gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
 	    gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
-
-	    /*
-	    ori->set_x(0.0);
-	    ori->set_y(0.0);
-	    ori->set_z(0.0);
-	    ori->set_w(1.0);
-	    */
-	    
+    
 	    /* Mass */
 	    object->set_mass(dist(mt) % 5 + 1.0);
-	    /* Sphere/cylinder radius */
+	    
+            /* Sphere/cylinder radius */
 	    double radius=dRand(0.1, grid_cell_size * 0.5);
-
 	    object->set_radius(radius);
 
 	    /* Box size */ 
-	    double x_length = dRand(0.1, grid_cell_size);
-	    double y_length = dRand(0.1, grid_cell_size);    
-	    double z_length = dRand(0.1, grid_cell_size);
+	    double x_length(dRand(0.1, grid_cell_size));
+	    double y_length(dRand(0.1, grid_cell_size));    
+	    double z_length(dRand(0.1, grid_cell_size));
 
 	    size->set_x(x_length);
 	    size->set_y(y_length);
@@ -525,15 +497,14 @@ void spawnRandomObject(
 	    object->set_allocated_pose(pose);
 	    object->set_allocated_box_size(size);
 
-   	 objects.push_back( Object(object_name,object_type));
+            objects.push_back( Object(object_name,object_type));
     }
-    /* Send the message */
-    pub->Publish(msg);
+
 
 }
 
 void clearWorld(gazebo::transport::PublisherPtr pub, std::vector<std::string> object_names){
-    std::cout <<"clean" << std::endl;
+
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(REMOVE);
     // Only remove models that match the string (exclude custom_camera)
@@ -765,7 +736,7 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
 }
 
 
-void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name)
+void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name, const std::string & image_name)
 {
 	std::ofstream out(path+file_name);
         out << "<annotation>" << std::endl 
@@ -774,7 +745,7 @@ void storeAnnotations(const std::vector<Object> & objects, const std::string & p
             << "  <source>"<<std::endl
 	    << "    <database>The SHAPE2017 Database</database>"<< std::endl
 	    << "    <annotation>SHAPE SHAPE2017</annotation>" << std::endl 
-            << "    <image>flickr</image>" << std::endl
+            << "    <image>"+ image_name +"</image>" << std::endl
             << "  </source>" << std::endl
             << "  <size>" << std::endl
             << "    <width></width>" << std::endl

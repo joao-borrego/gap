@@ -157,8 +157,10 @@ typedef std::multimap<std::string,ignition::math::Vector2d> BoundingBox2d;
  * Function prototypes
  */
 
+void spawnObjects();
+
 void spawnModelFromFile(
-    gazebo::transport::PublisherPtr pub,
+    world_utils::msgs::WorldUtilsRequest & msg,
     const std::string model_path,
     const bool is_light,
     const bool use_custom_pose,
@@ -171,13 +173,13 @@ void spawnModelFromFile(
 
 
 void spawnRandomObject(
-    gazebo::transport::PublisherPtr pub,
+    world_utils::msgs::WorldUtilsRequest & msg,
     std::vector<std::string> textures,
     double & grid_cell_size,
     int & num_objects,
     std::vector<Object> & objects);
 
-void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file);
+void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name, const std::string & image_name);
 
 void clearWorld(gazebo::transport::PublisherPtr pub,  std::vector<std::string> object_names = std::vector<std::string>());
 

@@ -12,6 +12,8 @@ message CameraUtilsRequest
         DIR             = 2;
         /** From 3d to 2d camera point */
         CAMERA_POINT         = 3;
+        /** Get camera info */
+        CAMERA_INFO         = 4;
     }
 
     /** Type of request */

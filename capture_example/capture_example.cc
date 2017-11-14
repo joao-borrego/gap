@@ -167,8 +167,14 @@ int main(int argc, char **argv)
     /* Disable physics */
     changePhysics(pub_world, false);
 
+    std::cout << "Query camera parameters" << std::endl; 
+    queryCameraParameters(pub_camera);
+    while (waitForCamera()){
+       usleep(10000);
+    }
+    std::cout << "Done" << std::endl; 
     /* Main loop */
-    for (int i = 620; i < scenes; i++){
+    for (int i = 0; i < scenes; i++){
 
 
         /* Random object number */
@@ -539,6 +545,13 @@ void captureScene(gazebo::transport::PublisherPtr pub, int j){
     pub->Publish(msg,false);
 }
 
+void queryCameraParameters(gazebo::transport::PublisherPtr pub){
+    camera_utils::msgs::CameraUtilsRequest msg;
+    msg.set_type(CAMERA_INFO_REQUEST);
+    pub->Publish(msg,false);
+}
+
+
 /* Handle object count */
 
 bool waitForSpawner(int desired_objects){
@@ -677,7 +690,7 @@ void query2DcameraPoint(
 		}
 	}
 
-    pub->Publish(msg,false);
+	pub->Publish(msg,false);
 }
 
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
@@ -699,7 +712,6 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
 }
 
 /* Handle camera success */
-
 bool waitForCamera(){
 
     std::lock_guard<std::mutex> lock(camera_success_mutex);
@@ -710,6 +722,7 @@ bool waitForCamera(){
     }
     return true;
 }
+
 
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
 
@@ -729,7 +742,18 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
     		std::cout << "capture response" << std::endl;
        		camera_success = true;    
 	}
-    } else {
+    }
+    else if(_msg->type()==CAMERA_INFO_RESPONSE)
+    {
+        std::lock_guard<std::mutex> lock(camera_success_mutex);
+
+	if(_msg->success())
+	{
+		std::cout << "camera infooooooooooooooooo: " << _msg->camera_info().width() << std::endl;
+       		camera_success = true;    
+	}
+    }
+    else {
         std::cout << "Camera could not save to file! Exiting..." << std::endl;
         exit(EXIT_FAILURE);
     }

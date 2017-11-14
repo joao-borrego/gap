@@ -1,8 +1,8 @@
 package camera_utils.msgs;
 
-import "vector2d.proto";
-import "bounding_box_camera.proto";
 
+import "bounding_box_camera.proto";
+import "camera_info.proto";
 message CameraUtilsResponse
 {
     /** Type of request */
@@ -13,6 +13,8 @@ message CameraUtilsResponse
         DIR             = 2;
         /** From 3d to 2d camera point */
         CAMERA_POINT         = 3;
+        /** Get camera info */
+        CAMERA_INFO         = 4;
     }
 
     /** Type of request */
@@ -20,7 +22,9 @@ message CameraUtilsResponse
     /** Success */
     required bool success = 2;
     /* @brief Model name */
-    optional string                 name            = 4;
+    optional string                 name            = 3;
     /* @brief Bounding box */
-    repeated BoundingBoxCamera            bounding_box       = 5;
+    repeated BoundingBoxCamera            bounding_box       = 4;
+    /* @brief Camera Info */
+    optional CameraInfo            camera_info       = 5;
 }

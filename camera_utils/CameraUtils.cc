@@ -134,6 +134,20 @@ namespace gazebo {
 		this->dataPtr->pub->Publish(msg);
         	
 	}
+	else if(_msg->type() == CAMERA_INFO_REQUEST)
+	{
+		camera_utils::msgs::CameraUtilsResponse msg;
+    		msg.set_type(CAMERA_INFO_RESPONSE);
+		msg.set_success(true);		
+		camera_utils::msgs::CameraInfo* camera_info= new camera_utils::msgs::CameraInfo();
+                camera_info->set_width(this->camera->ViewportWidth ());
+                camera_info->set_height(this->camera->ViewportHeight());
+                camera_info->set_depth(this->camera->ImageDepth());
+		msg.set_allocated_camera_info(camera_info);
+
+		std::cout << "YES" << std::endl;
+		this->dataPtr->pub->Publish(msg);
+	}
     }
 
     void CameraUtils::OnNewFrame(

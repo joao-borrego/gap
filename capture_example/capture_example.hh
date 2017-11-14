@@ -45,6 +45,9 @@
 /* Camera utils */
 
 /** Request to capture a frame and save it to disk */
+#define CAMERA_INFO_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAMERA_INFO
+#define CAMERA_INFO_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAMERA_INFO
+
 #define CAPTURE_REQUEST          camera_utils::msgs::CameraUtilsRequest::CAPTURE
 #define CAPTURE_RESPONSE         camera_utils::msgs::CameraUtilsResponse::CAPTURE
 
@@ -199,6 +202,8 @@ void queryModelBoundingBox(gazebo::transport::PublisherPtr pub,
 void query2DcameraPoint(
     gazebo::transport::PublisherPtr pub,
     const std::vector<Object> & objects);
+
+void queryCameraParameters(gazebo::transport::PublisherPtr pub);
 
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg);
 

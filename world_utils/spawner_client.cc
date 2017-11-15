@@ -90,31 +90,31 @@ int main(int _argc, char **_argv)
         msg.set_type(SPAWN);
 
         int model_aux = rand() % 3;
-        
+	world_utils::msgs::Object* object = msg.add_object();
         if(model_aux == 0){
-            msg.set_model_type(CYLINDER);
+            object->set_model_type(CYLINDER);
         }
         else if(model_aux == 1){
-            msg.set_model_type(BOX);
+            object->set_model_type(BOX);
         }
         else if(model_aux == 2){
-            msg.set_model_type(SPHERE);
+            object->set_model_type(SPHERE);
         }
 
         std::string command = input_stream.str();
         if (command == "remove"){
             msg.set_type(REMOVE);
         } else if (command == "custom"){
-            msg.set_model_type(CUSTOM);
+            object->set_model_type(CUSTOM);
             std::ifstream infile { "models/custom_ground.sdf" };
             std::string model_sdf { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
-            msg.set_sdf(model_sdf);
+            object->set_sdf(model_sdf);
         } else if (command == "model"){
-            msg.set_model_type(MODEL);
-            msg.set_name("kinect");
+            object->set_model_type(MODEL);
+            object->set_name("kinect");
         } else if (command == "move"){
             msg.set_type(MOVE);
-            msg.set_name("kinect");
+            object->set_name("kinect");
         }
 
         /* External optional fields have to be allocated */
@@ -134,11 +134,11 @@ int main(int _argc, char **_argv)
         ori->set_z(0.0);
         ori->set_w(0.0);
         /* Mass */
-        msg.set_mass(rand() % 5 + 1.0);
+        object->set_mass(rand() % 5 + 1.0);
         /* Sphere/cylinder radius */
-        msg.set_radius((rand() % 20 + 1.0) / 5.0);
+        object->set_radius((rand() % 20 + 1.0) / 5.0);
         /* Cylinder length */
-        msg.set_length((rand() % 20 + 5.0) / 3.0);
+        object->set_length((rand() % 20 + 5.0) / 3.0);
         /* Box size */ 
         size->set_x((rand() % 20 + 5.0) / 3.0);
         size->set_y((rand() % 20 + 5.0) / 3.0);
@@ -155,14 +155,14 @@ int main(int _argc, char **_argv)
         << "</uri><uri>file://materials/textures/";
         texture_name << "Plugin/" << texture;
 
-        msg.set_texture_uri(texture_uri.str());
-        msg.set_texture_name(texture_name.str());
+        object->set_texture_uri(texture_uri.str());
+        object->set_texture_name(texture_name.str());
 
         /* Associate dynamic fields */
         pose->set_allocated_position(pos);
         pose->set_allocated_orientation(ori);
-        msg.set_allocated_pose(pose);
-        msg.set_allocated_box_size(size);
+        object->set_allocated_pose(pose);
+        object->set_allocated_box_size(size);
 
         /* Send the message */
         pub->Publish(msg);

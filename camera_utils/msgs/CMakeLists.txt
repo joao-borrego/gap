@@ -9,6 +9,8 @@ endforeach()
 
 set (msgs
   #Custom messages
+  camera_info.proto
+  bounding_box_camera.proto
   camera_utils_request.proto
   camera_utils_response.proto
   ${PROTOBUF_IMPORT_DIRS}/header.proto

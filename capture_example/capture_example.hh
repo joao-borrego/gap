@@ -35,6 +35,9 @@
 /* World utils response */
 #include "world_utils_response.pb.h"
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/imgproc.hpp"
 /*
  * Macros for custom messages
  */
@@ -42,10 +45,14 @@
 /* Camera utils */
 
 /** Request to capture a frame and save it to disk */
-#define CAPTURE         camera_utils::msgs::CameraUtilsRequest::CAPTURE
+#define CAMERA_INFO_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAMERA_INFO
+#define CAMERA_INFO_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAMERA_INFO
 
-#define CAMERA_POINT         camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
+#define CAPTURE_REQUEST          camera_utils::msgs::CameraUtilsRequest::CAPTURE
+#define CAPTURE_RESPONSE         camera_utils::msgs::CameraUtilsResponse::CAPTURE
 
+#define CAMERA_POINT_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
+#define CAMERA_POINT_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAMERA_POINT
 /* World utils */
 
 /* Request */
@@ -64,17 +71,21 @@
 #define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
 
 /** Spawn sphere object */
-#define SPHERE          world_utils::msgs::WorldUtilsRequest::SPHERE
+#define SPHERE          world_utils::msgs::Object::SPHERE
+
 /** Spawn cylinder object */
-#define CYLINDER        world_utils::msgs::WorldUtilsRequest::CYLINDER
+#define CYLINDER        world_utils::msgs::Object::CYLINDER
+
 /** Spawn box object */
-#define BOX             world_utils::msgs::WorldUtilsRequest::BOX
+#define BOX             world_utils::msgs::Object::BOX
+
 /** Spawn custom object */
-#define CUSTOM          world_utils::msgs::WorldUtilsRequest::CUSTOM
+#define CUSTOM          world_utils::msgs::Object::CUSTOM
+
 /** Spawn custom light object */
-#define CUSTOM_LIGHT    world_utils::msgs::WorldUtilsRequest::CUSTOM_LIGHT
+#define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
 /** Spawn a model included in gazebo model path */
-#define MODEL           world_utils::msgs::WorldUtilsRequest::MODEL
+#define MODEL           world_utils::msgs::Object::MODEL
 
 /* Response */
 
@@ -96,6 +107,46 @@
 /** Topic for receiving replies from the object spawner server */
 #define WORLD_UTILS_RESPONSE_TOPIC  "~/gazebo-utils/world_utils/response"
 
+/* Classes */
+#define CYLINDER_ID       1
+#define SPHERE_ID       0
+#define BOX_ID       2
+const std::map<int,std::string> classes_map{
+   {CYLINDER_ID, "cylinder"},
+   {SPHERE_ID, "sphere"},
+   {BOX_ID, "box"}
+};
+
+
+
+class bounding_box_3d{
+	public:
+	bounding_box_3d(ignition::math::Vector3d & center_,ignition::math::Vector3d & size_) : center(center_), size(size_)
+	{};
+	ignition::math::Vector3d center;
+	ignition::math::Vector3d size;
+};
+
+
+class Object {
+	public:
+	Object(std::string & _name, int & _type) : name(_name), type(_type)
+	{};
+
+	std::string name;
+	int type;
+	cv::Rect bounding_box;
+};
+
+class CameraInfo {
+	public:
+	CameraInfo(double _width, double _height, double _depth) : width(_width), height(_height), depth(_depth)
+	{};
+	double width, height, depth;
+
+};
+
+
 /* Message pointer typedefs */
 
 typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
@@ -103,12 +154,24 @@ typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
 typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
     CameraUtilsResponsePtr;
 
+
+typedef std::multimap<std::string,bounding_box_3d> BoundingBox3d;
+typedef std::multimap<std::string,ignition::math::Vector2d> BoundingBox2d;
+
+
+
+
+
+
+
 /*
  * Function prototypes
  */
 
+void spawnObjects();
+
 void spawnModelFromFile(
-    gazebo::transport::PublisherPtr pub,
+    world_utils::msgs::WorldUtilsRequest & msg,
     const std::string model_path,
     const bool is_light,
     const bool use_custom_pose,
@@ -120,14 +183,16 @@ void spawnModelFromFile(
     const ignition::math::Quaternion<double> & orientation  = ignition::math::Quaternion<double>(0, M_PI/2.0, 0));
 
 
-std::string spawnRandomObject(
-    gazebo::transport::PublisherPtr pub,
+void spawnRandomObject(
+    world_utils::msgs::WorldUtilsRequest & msg,
     std::vector<std::string> textures,
-    unsigned int & x_cell,
-    unsigned int & y_cell,
-    double & grid_cell_size);
+    double & grid_cell_size,
+    int & num_objects,
+    std::vector<Object> & objects);
 
-void clearWorld(gazebo::transport::PublisherPtr pub);
+void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name, const std::string & image_name);
+
+void clearWorld(gazebo::transport::PublisherPtr pub,  std::vector<std::string> object_names = std::vector<std::string>());
 
 void changePhysics(gazebo::transport::PublisherPtr pub, bool enable);
 
@@ -140,12 +205,13 @@ bool waitForSpawner(int desired_objects);
 void queryModelCount(gazebo::transport::PublisherPtr pub);
 
 void queryModelBoundingBox(gazebo::transport::PublisherPtr pub,
-    const std::string &model_name);
+    const std::vector<Object> & objects);
 
 void query2DcameraPoint(
     gazebo::transport::PublisherPtr pub,
-    const ignition::math::Vector3d &point,
-    const std::string &model_name);
+    const std::vector<Object> & objects);
+
+void queryCameraParameters(gazebo::transport::PublisherPtr pub);
 
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg);
 

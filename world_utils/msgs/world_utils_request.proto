@@ -1,8 +1,8 @@
 package world_utils.msgs;
 
-import "pose.proto";
-import "vector3d.proto";
 
+import "bounding_box.proto";
+import "object.proto";
 message WorldUtilsRequest
 {
     /* @brief Type of request */
@@ -37,28 +37,13 @@ message WorldUtilsRequest
         MODEL           = 6;
     }
 
+
     /* @brief Type of request */
     required Type                   type            = 1;
-    /* @brief Model type for spawn */
-    optional ModelType              model_type      = 2;
-    /* @brief Model name */
-    optional string                 name            = 3;
-    /* @brief Model pose */
-    optional gazebo.msgs.Pose       pose            = 4;
-    /* @brief Model mass */
-    optional double                 mass            = 5;
-    /* @brief Material script uri */
-    optional string                 texture_uri     = 6;
-    /* @brief Material script name */
-    optional string                 texture_name    = 7;
-    /* @brief radius of a cylinder or a sphere */
-    optional double                 radius          = 8;
-    /* @brief Length of a cylinder */
-    optional double                 length          = 9;
-    /* @brief Dimensions of a box */
-    optional gazebo.msgs.Vector3d   box_size        = 10;
-    /* @brief Custom object sdf string */
-    optional string                 sdf             = 11;
+    /* @brief Object of request */
+    repeated Object                 object            = 2;
     /* @brief World physics state */
-    optional bool                   state           = 12;
+    optional bool                   state           = 3;
+    /* @brief Bounding box */
+    repeated BoundingBox            bounding_box       = 4;
 }

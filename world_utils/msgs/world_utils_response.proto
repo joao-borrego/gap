@@ -1,7 +1,7 @@
 package world_utils.msgs;
 
-import "vector3d.proto";
 
+import "bounding_box.proto";
 message WorldUtilsResponse
 {
     /* @brief Type of response */
@@ -18,8 +18,6 @@ message WorldUtilsResponse
     optional int32                  object_count    = 2;
     /* @brief Object name */
     optional string                 name            = 3;
-    /* @brief Bounding box pose */
-    optional gazebo.msgs.Vector3d   bb_center       = 4;
-    /* @brief Bounding box dimensions */
-    optional gazebo.msgs.Vector3d   bb_size         = 5;
+    /* @brief Bounding box */
+    repeated BoundingBox            bounding_box       = 4;
 }

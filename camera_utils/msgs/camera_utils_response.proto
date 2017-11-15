@@ -27,4 +27,6 @@ message CameraUtilsResponse
     repeated BoundingBoxCamera            bounding_box       = 4;
     /* @brief Camera Info */
     optional CameraInfo            camera_info       = 5;
+
+
 }

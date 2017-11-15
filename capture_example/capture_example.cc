@@ -63,7 +63,7 @@ int max_objects = 10;
 double tx=2.5;
 double ty=2.5;
 double tz=3.5;
-
+std::shared_ptr<CameraInfo> camera_info;
 int main(int argc, char **argv)
 {
 
@@ -174,7 +174,7 @@ int main(int argc, char **argv)
     }
     std::cout << "Done" << std::endl; 
     /* Main loop */
-    for (int i = 0; i < scenes; i++){
+    for (int i = 711; i < scenes; i++){
 
 
         /* Random object number */
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
 	while (pub_world->GetOutgoingCount()>0){
 	    usleep(10000);
 	}
-
+	sleep(1.0);
 	std::cout << "done" << std::endl; 
 
         /* Capture the scene and save it to a file */
@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 
 	/* Save annotations */
 	std::cout << "save annotations" << std::endl;
-	storeAnnotations(objects, train_dir, std::to_string(i)+".xml",std::to_string(i)+".png");
+	storeAnnotations(objects, train_dir, std::to_string(i)+".xml",std::to_string(i)+".jpg");
 
 	/* Visualize data */
 	/*cv::Mat image;
@@ -685,8 +685,6 @@ void query2DcameraPoint(
 	    		camera_utils::msgs::BoundingBoxCamera* bounding_box_8 = msg.add_bounding_box();
 			bounding_box_8->set_name(objects[j].name);
 			bounding_box_8->set_allocated_point3d(point_msg_8);
-
-
 		}
 	}
 
@@ -750,7 +748,8 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
 	if(_msg->success())
 	{
 		std::cout << "camera infooooooooooooooooo: " << _msg->camera_info().width() << std::endl;
-       		camera_success = true;    
+       		camera_success = true;   
+		camera_info=std::shared_ptr<CameraInfo> (new CameraInfo(_msg->camera_info().width(), _msg->camera_info().height(), _msg->camera_info().depth()) );
 	}
     }
     else {
@@ -764,17 +763,17 @@ void storeAnnotations(const std::vector<Object> & objects, const std::string & p
 {
 	std::ofstream out(path+file_name);
         out << "<annotation>" << std::endl 
-	    << "  <folder>SHAPES2017</folder>" << std::endl
-	    << "  <filename>"+file_name+"</filename>" << std::endl
+	    << "  <folder>images</folder>" << std::endl
+	    << "  <filename>"+image_name+"</filename>" << std::endl
             << "  <source>"<<std::endl
 	    << "    <database>The SHAPE2017 Database</database>"<< std::endl
 	    << "    <annotation>SHAPE SHAPE2017</annotation>" << std::endl 
             << "    <image>"+ image_name +"</image>" << std::endl
             << "  </source>" << std::endl
             << "  <size>" << std::endl
-            << "    <width></width>" << std::endl
-            << "    <height></height>" << std::endl
-            << "    <depth></depth>" << std::endl
+            << "    <width>"  << camera_info->width  << "</width>"  << std::endl
+            << "    <height>" << camera_info->height << "</height>" << std::endl
+            << "    <depth>"  << camera_info->depth  << "</depth>"  << std::endl
             << "  </size>" << std::endl
             << "  <segmented>1</segmented>" << std::endl;
 
@@ -783,9 +782,9 @@ void storeAnnotations(const std::vector<Object> & objects, const std::string & p
 	{
 		out << "  <object>" << std::endl
 		    << "    <name>" << classes_map.find(objects[i].type)->second << "</name>" << std::endl
-		    << "    <pose></pose>" << std::endl
-		    << "    <truncated></truncated>" << std::endl
-		    << "    <difficult></difficult>" << std::endl
+		    << "    <pose>top</pose>" << std::endl
+		    << "    <truncated>0</truncated>" << std::endl
+		    << "    <difficult>1</difficult>" << std::endl
 		    << "    <bndbox>" << std::endl
 		    << "      <xmin>"<< objects[i].bounding_box.x <<"</xmin>" << std::endl
 		    << "      <ymin>"<< objects[i].bounding_box.y <<"</ymin>" << std::endl
@@ -797,5 +796,4 @@ void storeAnnotations(const std::vector<Object> & objects, const std::string & p
 
 	out << "</annotation>";
         out.close();
-
 }

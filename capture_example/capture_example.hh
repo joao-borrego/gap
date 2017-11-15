@@ -138,6 +138,14 @@ class Object {
 	cv::Rect bounding_box;
 };
 
+class CameraInfo {
+	public:
+	CameraInfo(double _width, double _height, double _depth) : width(_width), height(_height), depth(_depth)
+	{};
+	double width, height, depth;
+
+};
+
 
 /* Message pointer typedefs */
 

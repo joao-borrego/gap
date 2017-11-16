@@ -177,9 +177,7 @@ void spawnModelFromFile(
     const bool use_custom_pose,
     const bool use_custom_textures,
     std::vector<std::string> textures = std::vector<std::string>(),
-    const double & px = 0, 
-    const double & py = 0,
-    const double & pz = 0,
+    const ignition::math::Vector3d & position  = ignition::math::Vector3d(2.5, 2.5, 3.5),
     const ignition::math::Quaternion<double> & orientation  = ignition::math::Quaternion<double>(0, M_PI/2.0, 0));
 
 

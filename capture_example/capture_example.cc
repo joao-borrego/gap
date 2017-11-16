@@ -60,9 +60,7 @@ double grid_cell_size = 0.5;
 
 int min_objects = 5;
 int max_objects = 10;
-double tx=2.5;
-double ty=2.5;
-double tz=3.5;
+
 std::shared_ptr<CameraInfo> camera_info;
 int main(int argc, char **argv)
 {
@@ -132,9 +130,13 @@ int main(int argc, char **argv)
 
     /* Auxiliary variables */
     //ignition::math::Quaternion<double> camera_orientation(0, M_PI/2.0, 0);
-    ignition::math::Quaternion<double> camera_orientation(0, M_PI / 2.0, 0);
+    ignition::math::Pose3d camera_pose;
+    ignition::math::Vector3d camera_position(0, 0, 5.0);
+    ignition::math::Quaternion<double> correct_orientation(ignition::math::Vector3d(0,1,0), -M_PI / 2.0);
+    ignition::math::Quaternion<double> camera_orientation(dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0)); 
 
-
+    camera_pose.Set (camera_position, (correct_orientation*camera_orientation).Inverse());//CoordPositionAdd(camera_position);
+    camera_pose=camera_pose.RotatePositionAboutOrigin(camera_orientation);
     /* Ensure no objects are spawned on the server */
     std::cout <<"clean" << std::endl;
     clearWorld(pub_world);
@@ -148,7 +150,7 @@ int main(int argc, char **argv)
     world_utils::msgs::WorldUtilsRequest msg_basic_objects;
     msg_basic_objects.set_type(SPAWN);
     spawnModelFromFile(msg_basic_objects, "models/custom_sun.sdf", true, false, false, textures);
-    spawnModelFromFile(msg_basic_objects, "models/custom_camera.sdf", false, true, false, textures,  tx, ty, tz, camera_orientation);
+    spawnModelFromFile(msg_basic_objects, "models/custom_camera.sdf", false, true, false, textures,  camera_pose.Pos(), camera_pose.Rot());
     pub_world->Publish(msg_basic_objects);
 
     pub_camera->WaitForConnection();
@@ -174,7 +176,7 @@ int main(int argc, char **argv)
     }
     std::cout << "Done" << std::endl; 
     /* Main loop */
-    for (int i = 711; i < scenes; i++){
+    for (int i = 0; i < scenes; i++){
 
 
         /* Random object number */
@@ -289,8 +291,9 @@ int main(int argc, char **argv)
 	}
 	cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
 	cv::imshow( "Display window", image );                   // Show our image inside it.
-	cv::waitKey(1000);                                          // Wait for a keystroke in the window
-		*/
+	cv::waitKey(1000);                                          // Wait for a keystroke in the window*/
+
+	/* Clear the world */
 	std::vector<std::string> object_names;
 	object_names.push_back("plugin_ground_plane");
 	for(int j=0; j < num_objects;++j)
@@ -332,9 +335,7 @@ void spawnModelFromFile(
     const bool use_custom_pose,
     const bool use_custom_textures,
     std::vector<std::string> textures,
-    const double & px, 
-    const double & py,
-    const double & pz,
+    const ignition::math::Vector3d & position,
     const ignition::math::Quaternion<double> & orientation
     ){
 
@@ -353,12 +354,9 @@ void spawnModelFromFile(
     object->set_sdf(model_sdf);
 
     if (use_custom_pose){
-        gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
+        gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d(gazebo::msgs::Convert(position));
         gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion(gazebo::msgs::Convert(orientation));
         gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
-        pos->set_x(px);
-        pos->set_y(py);
-        pos->set_z(pz);
         pose->set_allocated_position(pos);
         pose->set_allocated_orientation(ori);
         object->set_allocated_pose(pose);
@@ -478,8 +476,8 @@ void spawnRandomObject(
 	       }
 	    }
 
-	    pos->set_x(x_cell * grid_cell_size + 0.5 * grid_cell_size);
-	    pos->set_y(y_cell * grid_cell_size + 0.5 * grid_cell_size);
+	    pos->set_x(x_cell * grid_cell_size + 0.5 * grid_cell_size - x_cells * 0.5 * grid_cell_size);
+	    pos->set_y(y_cell * grid_cell_size + 0.5 * grid_cell_size - y_cells * 0.5 * grid_cell_size);
 
 	    ori=new gazebo::msgs::Quaternion(gazebo::msgs::Convert(object_orientation));
 
@@ -508,6 +506,24 @@ void spawnRandomObject(
 
 
 }
+
+
+void moveObject(gazebo::transport::PublisherPtr pub, std::vector<std::string> object_names){
+
+    world_utils::msgs::WorldUtilsRequest msg;
+    msg.set_type(MOVE);
+    // Only remove models that match the string (exclude custom_camera)
+    world_utils::msgs::Object* object = msg.add_object();
+    gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
+    gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
+    gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
+    gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
+    pose->set_allocated_position(pos);
+    pose->set_allocated_orientation(ori);
+    object->set_allocated_pose(pose);
+    pub->Publish(msg);
+}
+
 
 void clearWorld(gazebo::transport::PublisherPtr pub, std::vector<std::string> object_names){
 
@@ -747,7 +763,7 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
 
 	if(_msg->success())
 	{
-		std::cout << "camera infooooooooooooooooo: " << _msg->camera_info().width() << std::endl;
+		std::cout << "camera info response" << std::endl;
        		camera_success = true;   
 		camera_info=std::shared_ptr<CameraInfo> (new CameraInfo(_msg->camera_info().width(), _msg->camera_info().height(), _msg->camera_info().depth()) );
 	}

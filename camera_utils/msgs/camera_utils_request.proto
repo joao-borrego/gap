@@ -26,4 +26,5 @@ message CameraUtilsRequest
     optional string                 name            = 5;
     /* @brief Bounding box */
     repeated BoundingBoxCamera            bounding_box       = 6;
+
 }

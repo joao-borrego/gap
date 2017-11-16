@@ -202,7 +202,6 @@ namespace gazebo {
 			    model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
 
 			    if (_msg->object(i).has_name() && _msg->object(i).has_pose()){
-
 				msgs::Pose m_pose = _msg->object(i).pose();
 				ignition::math::Pose3d pose = msgs::ConvertIgn(m_pose);
 				physics::ModelPtr model = this->world->GetModel(_msg->object(i).name());

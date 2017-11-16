@@ -168,7 +168,7 @@ typedef std::multimap<std::string,ignition::math::Vector2d> BoundingBox2d;
  * Function prototypes
  */
 
-void spawnObjects();
+ignition::math::Pose3d getRandomCameraPose(const ignition::math::Vector3d & camera_position);
 
 void spawnModelFromFile(
     world_utils::msgs::WorldUtilsRequest & msg,
@@ -178,13 +178,15 @@ void spawnModelFromFile(
     const bool use_custom_textures,
     std::vector<std::string> textures = std::vector<std::string>(),
     const ignition::math::Vector3d & position  = ignition::math::Vector3d(2.5, 2.5, 3.5),
-    const ignition::math::Quaternion<double> & orientation  = ignition::math::Quaternion<double>(0, M_PI/2.0, 0));
+    const ignition::math::Quaternion<double> & orientation  = ignition::math::Quaternion<double>(0, M_PI/2.0, 0),
+    const std::string & name = std::string(""));
 
 
 void spawnRandomObject(
     world_utils::msgs::WorldUtilsRequest & msg,
     std::vector<std::string> textures,
-    double & grid_cell_size,
+    double & grid_cell_size_x,
+    double & grid_cell_size_y,
     int & num_objects,
     std::vector<Object> & objects);
 

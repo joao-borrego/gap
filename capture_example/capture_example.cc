@@ -53,13 +53,18 @@ int box_counter=0;
 int cylinder_counter=0;
 int sphere_counter=0;
 
+const double x_size=5.0;
+const double y_size=5.0;
 
-const unsigned int x_cells = 10;
-const unsigned int y_cells = 10;
-double grid_cell_size = 0.5;
+const unsigned int x_cells = 5;
+const unsigned int y_cells = 5;
+
+double grid_cell_size_x = x_size/x_cells;
+double grid_cell_size_y = y_size/y_cells;
 
 int min_objects = 5;
 int max_objects = 10;
+
 
 std::shared_ptr<CameraInfo> camera_info;
 int main(int argc, char **argv)
@@ -129,14 +134,10 @@ int main(int argc, char **argv)
     }
 
     /* Auxiliary variables */
-    //ignition::math::Quaternion<double> camera_orientation(0, M_PI/2.0, 0);
     ignition::math::Pose3d camera_pose;
     ignition::math::Vector3d camera_position(0, 0, 5.0);
-    ignition::math::Quaternion<double> correct_orientation(ignition::math::Vector3d(0,1,0), -M_PI / 2.0);
-    ignition::math::Quaternion<double> camera_orientation(dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0)); 
+    camera_pose=getRandomCameraPose(camera_position);
 
-    camera_pose.Set (camera_position, (correct_orientation*camera_orientation).Inverse());//CoordPositionAdd(camera_position);
-    camera_pose=camera_pose.RotatePositionAboutOrigin(camera_orientation);
     /* Ensure no objects are spawned on the server */
     std::cout <<"clean" << std::endl;
     clearWorld(pub_world);
@@ -145,7 +146,7 @@ int main(int argc, char **argv)
         usleep(10000);
         queryModelCount(pub_world);
     }
-    sleep(2);
+    usleep(100000);
 
     world_utils::msgs::WorldUtilsRequest msg_basic_objects;
     msg_basic_objects.set_type(SPAWN);
@@ -185,9 +186,9 @@ int main(int argc, char **argv)
         /* DEBUG */
         std::cout << "Scene " << i << " - Number of objects:" << num_objects << std::endl;
         
-	while (pub_world->GetOutgoingCount()>0){
+	/*while (pub_world->GetOutgoingCount()>0){
 		usleep(10000);
-	}
+	}*/
 
         /* Spawn ground + random objects */
 	std::cout << "spawn objects" << std::endl;
@@ -195,7 +196,7 @@ int main(int argc, char **argv)
         msg_random_objects.set_type(SPAWN);
         spawnModelFromFile(msg_random_objects, "models/custom_ground.sdf", false, false, true, textures);
 	objects.clear();
-	spawnRandomObject(msg_random_objects, textures, grid_cell_size, num_objects, objects);
+	spawnRandomObject(msg_random_objects, textures, grid_cell_size_x, grid_cell_size_y, num_objects, objects);
         pub_world->Publish(msg_random_objects);
         
 	while (waitForSpawner(num_objects + 2)){
@@ -305,11 +306,25 @@ int main(int argc, char **argv)
         std::cout <<"clean" << std::endl;
 	clearWorld(pub_world, object_names);
 
-        // TODO - Move camera and light source
         while (waitForSpawner(1)){
             usleep(10000);
             queryModelCount(pub_world);
         }//*/
+
+
+        // TODO - Move camera and light source
+
+
+	camera_pose=getRandomCameraPose(camera_position);
+
+	world_utils::msgs::WorldUtilsRequest msg_move_basic_objects;
+	msg_move_basic_objects.set_type(MOVE);
+	//spawnModelFromFile(msg_move_basic_objects, "models/custom_sun.sdf", true, false, false, textures);
+	std::string camera_name="custom_camera";
+	spawnModelFromFile(msg_move_basic_objects, "models/custom_camera.sdf", false, true, false, textures,  camera_pose.Pos(), camera_pose.Rot(),camera_name);
+
+	pub_world->Publish(msg_move_basic_objects);
+
     }
 
     /* Shut down */
@@ -322,10 +337,17 @@ int main(int argc, char **argv)
     return 0;
 }
 
-/* Spawn objects */
-void spawnObjects()
-{
-        //spawnModelFromFile(pub_world, "models/custom_ground.sdf", false, false, true, textures);
+
+ignition::math::Pose3d getRandomCameraPose(const ignition::math::Vector3d & camera_position) {
+
+        static const ignition::math::Quaternion<double> correct_orientation(ignition::math::Vector3d(0,1,0), -M_PI / 2.0);
+	ignition::math::Quaternion<double> camera_orientation(dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0)); 
+
+        ignition::math::Pose3d camera_pose;
+	camera_pose.Set (camera_position, (correct_orientation*camera_orientation).Inverse());//CoordPositionAdd(camera_position);
+	camera_pose=camera_pose.RotatePositionAboutOrigin(camera_orientation);
+
+	return camera_pose;
 }
 
 void spawnModelFromFile(
@@ -336,7 +358,8 @@ void spawnModelFromFile(
     const bool use_custom_textures,
     std::vector<std::string> textures,
     const ignition::math::Vector3d & position,
-    const ignition::math::Quaternion<double> & orientation
+    const ignition::math::Quaternion<double> & orientation,
+    const std::string &name
     ){
 
     /* Read model sdf string from file */
@@ -363,10 +386,10 @@ void spawnModelFromFile(
     }
 
     if (use_custom_textures){
-    /* Initialize random device */
-    std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_int_distribution<int> dist;
+        /* Initialize random device */
+        std::random_device rd;
+        std::mt19937 mt(rd());
+        std::uniform_int_distribution<int> dist;
         int j=dist(mt) % textures.size();
 
         std::string texture = textures.at(j);
@@ -380,12 +403,18 @@ void spawnModelFromFile(
         object->set_texture_uri(texture_uri.str());
         object->set_texture_name(texture_name.str());
     }
+
+    if(!name.empty())
+    {
+        object->set_name(name);
+    }
 }
 
 void spawnRandomObject(
     world_utils::msgs::WorldUtilsRequest & msg,
     std::vector<std::string> textures,
-    double & grid_cell_size,
+    double & grid_cell_size_x,
+    double & grid_cell_size_y,
     int & num_objects,
     std::vector<Object> & objects){
 
@@ -434,50 +463,59 @@ void spawnRandomObject(
 	    object->set_mass(dist(mt) % 5 + 1.0);
 	    
             /* Sphere/cylinder radius */
-	    double radius=dRand(0.1, grid_cell_size * 0.5);
+	    double radius=dRand(0.1, std::min(grid_cell_size_x,grid_cell_size_y) * 0.5);
 	    object->set_radius(radius);
 
-	    /* Box size */ 
-	    double x_length(dRand(0.1, grid_cell_size));
-	    double y_length(dRand(0.1, grid_cell_size));    
-	    double z_length(dRand(0.1, grid_cell_size));
 
-	    size->set_x(x_length);
-	    size->set_y(y_length);
-	    size->set_z(z_length);
 	    
 	    /* Cylinder/Sphere length */
-	    object->set_length(z_length);
+	    //object->set_length(z_length);
 
 	    /* Pose */
 	    ignition::math::Quaternion<double> object_orientation;
 
 	    if (dRand(0.0, 1.0) < 0.5){
-
 		// Horizontal
-		double yaw = dRand(0.0,M_PI);
-		object_orientation=ignition::math::Quaternion<double> (0.0, M_PI*0.5, yaw);
+
+	        double x_length(dRand(0.5, 1.0));
+	        double y_length(dRand(grid_cell_size_y*0.1, grid_cell_size_y));    
+	        double z_length(dRand(grid_cell_size_x*0.1, grid_cell_size_x));
+
+	        size->set_x(x_length);
+	        size->set_y(y_length);
+	        size->set_z(z_length);
+
+		object_orientation=ignition::math::Quaternion<double> (0.0, M_PI*0.5, dRand(0.0,M_PI));
 
 		if(object_type == CYLINDER_ID || object_type == SPHERE_ID ) {
 		   pos->set_z(radius);
-	       }
-	       else if(object_type == BOX_ID)
+	        }
+	        else if(object_type == BOX_ID)
 		   pos->set_z(x_length*0.5); // height is radius
-	    } else {
+	    }
+            else 
+            {
+	        // Vertical
+	        double x_length(dRand(grid_cell_size_x*0.1, grid_cell_size_x));
+	        double y_length(dRand(grid_cell_size_y*0.1, grid_cell_size_y));    
+	        double z_length(dRand(0.5, 1.0));
 
-	       double roll = dRand(0.0,M_PI);
-	       double pitch = dRand(0.0,M_PI);
+	        size->set_x(x_length);
+	        size->set_y(y_length);
+	        size->set_z(z_length);
 
-	       // Vertical
-	       object_orientation=ignition::math::Quaternion<double> (0.0, 0.0, 0.0);
-	       pos->set_z(z_length*0.5);
-	       if(object_type == CYLINDER_ID || object_type == SPHERE_ID) {
-		   pos->set_z(radius);
-	       }
+	        double roll = dRand(0.0,M_PI);
+	        double pitch = dRand(0.0,M_PI);
+
+	        object_orientation=ignition::math::Quaternion<double> (0.0, 0.0, 0.0);
+	        pos->set_z(z_length*0.5);
+ 	        if(object_type == CYLINDER_ID || object_type == SPHERE_ID) {
+		    pos->set_z(radius);
+	        }
 	    }
 
-	    pos->set_x(x_cell * grid_cell_size + 0.5 * grid_cell_size - x_cells * 0.5 * grid_cell_size);
-	    pos->set_y(y_cell * grid_cell_size + 0.5 * grid_cell_size - y_cells * 0.5 * grid_cell_size);
+	    pos->set_x(x_cell * grid_cell_size_x + 0.5 * grid_cell_size_x - x_cells * 0.5 * grid_cell_size_x);
+	    pos->set_y(y_cell * grid_cell_size_y + 0.5 * grid_cell_size_y - y_cells * 0.5 * grid_cell_size_y);
 
 	    ori=new gazebo::msgs::Quaternion(gazebo::msgs::Convert(object_orientation));
 
@@ -508,21 +546,6 @@ void spawnRandomObject(
 }
 
 
-void moveObject(gazebo::transport::PublisherPtr pub, std::vector<std::string> object_names){
-
-    world_utils::msgs::WorldUtilsRequest msg;
-    msg.set_type(MOVE);
-    // Only remove models that match the string (exclude custom_camera)
-    world_utils::msgs::Object* object = msg.add_object();
-    gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
-    gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
-    gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
-    gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
-    pose->set_allocated_position(pos);
-    pose->set_allocated_orientation(ori);
-    object->set_allocated_pose(pose);
-    pub->Publish(msg);
-}
 
 
 void clearWorld(gazebo::transport::PublisherPtr pub, std::vector<std::string> object_names){

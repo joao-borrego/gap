@@ -3,15 +3,15 @@
   <model name="plugin_ground_plane">
 
     <static>true</static>
-    <pose>2.5 2.5 0 0 0 0</pose>
+    <pose>0 0 0 0 0 0</pose>
 
     <link name="link">
 
-      <collision name="collision">
+      <!--<collision name="collision">
         <geometry>
           <plane>
             <normal>0 0 1</normal>
-            <size>10 10</size>
+            <size>30 30</size>
           </plane>
         </geometry>
         <surface>
@@ -22,14 +22,14 @@
             </ode>
           </friction>
         </surface>
-      </collision>
+      </collision>-->
 
       <visual name="visual">
         <cast_shadows>false</cast_shadows>
         <geometry>
           <plane>
             <normal>0 0 1</normal>
-            <size>10 10</size>
+            <size>30 30</size>
           </plane>
         </geometry>
         <material>

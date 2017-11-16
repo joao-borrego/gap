@@ -145,7 +145,6 @@ namespace gazebo {
                 camera_info->set_depth(this->camera->ImageDepth());
 		msg.set_allocated_camera_info(camera_info);
 
-		std::cout << "YES" << std::endl;
 		this->dataPtr->pub->Publish(msg);
 	}
     }

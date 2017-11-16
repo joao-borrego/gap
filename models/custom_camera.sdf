@@ -7,16 +7,16 @@
 
     <link name="link">
 
-      <collision name="collision">
+      <!--<collision name="collision">
         <geometry>
           <box>
             <size>0.1 0.1 0.1</size>
           </box>
         </geometry>
-      </collision>
+      </collision>-->
       
       <visual name="visual">
-        <cast_shadows>false</cast_shadows>
+        <cast_shadows>true</cast_shadows>
         <geometry>
           <box>
             <size>0.1 0.1 0.1</size>

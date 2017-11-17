@@ -79,10 +79,10 @@ int main(int argc, char **argv)
 
     std::string media_dir = std::string(argv[1]);
     unsigned int scenes = atoi(argv[2]);
-    std::string train_dir = std::string(argv[3]);
+    std::string dataset_dir = std::string(argv[3]);
 	
     /* Create folder for storing training data */
-    boost::filesystem::path traindir(train_dir);
+    boost::filesystem::path traindir(dataset_dir);
     if(boost::filesystem::create_directory(traindir)) {
 	std::cout << "Successfuly created train directory:" << traindir << std::endl;
     }
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
     }
     std::cout << "Done" << std::endl; 
     /* Main loop */
-    for (int i = 0; i < scenes; i++){
+    for (int i = 468; i < scenes; i++){
 
 
         /* Random object number */
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 
 	/* Save annotations */
 	std::cout << "save annotations" << std::endl;
-	storeAnnotations(objects, train_dir, std::to_string(i)+".xml",std::to_string(i)+".jpg");
+	storeAnnotations(objects, dataset_dir, std::to_string(i)+".xml",std::to_string(i)+".jpg");
 
 	/* Visualize data */
 	/*cv::Mat image;
@@ -800,7 +800,7 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
 
 void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name, const std::string & image_name)
 {
-	std::ofstream out(path+file_name);
+	std::ofstream out(path+"Annotations"+file_name);
         out << "<annotation>" << std::endl 
 	    << "  <folder>images</folder>" << std::endl
 	    << "  <filename>"+image_name+"</filename>" << std::endl
@@ -828,7 +828,7 @@ void storeAnnotations(const std::vector<Object> & objects, const std::string & p
 		    << "      <xmin>"<< objects[i].bounding_box.x <<"</xmin>" << std::endl
 		    << "      <ymin>"<< objects[i].bounding_box.y <<"</ymin>" << std::endl
 		    << "      <xmax>"<< objects[i].bounding_box.x + objects[i].bounding_box.width <<"</xmax>" << std::endl
-		    << "      <ymax>"<< objects[i].bounding_box.x + objects[i].bounding_box.height <<"</ymax>" << std::endl
+		    << "      <ymax>"<< objects[i].bounding_box.y + objects[i].bounding_box.height <<"</ymax>" << std::endl
 		    << "    </bndbox>" << std::endl
 		    << "  </object>" << std::endl;
 	}

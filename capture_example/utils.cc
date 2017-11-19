@@ -87,3 +87,7 @@ double getRandomDouble(double min, double max){
     double aux = ((double) uniform_dist(mt_rng)) / (double) RAND_MAX;
     return aux * (max - min) + min;
 }
+
+void shuffleIntVector(std::vector<int> & vector){
+    std::shuffle(vector.begin(), vector.end(), mt_rng);
+}

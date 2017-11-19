@@ -42,8 +42,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc.hpp"
 
-#define DELAY 10000
-
 /*
  * Macros for custom messages
  */
@@ -112,87 +110,102 @@
 
 typedef enum {sphere = 0, cylinder, box} ObjectType;
 
-const int classes_id[3] = {SPHERE, CYLINDER, BOX};
-const char* classes_name[3] = {"sphere", "cylinder", "box"};
-const char* class_instance_names[3] =
+const world_utils::msgs::Object::ModelType classes_id[3] = {SPHERE, CYLINDER, BOX};
+const char classes_name[3][100] = {"sphere", "cylinder", "box"};
+const char class_instance_names[3][100] =
     {"plugin_sphere_", "plugin_cylinder_", "plugin_box_"};
 unsigned int class_instance_counters[3] = {0};
 
-#define SPHERE_ID   0
-#define CYLINDER_ID 1
-#define BOX_ID      2
 
-const std::map<int,std::string> classes_map{
-   {SPHERE_ID,   "sphere"},
-   {CYLINDER_ID, "cylinder"},
-   {BOX_ID,      "box"}
+class BoundingBox3dClass{
+
+    public:
+
+        BoundingBox3dClass(
+            ignition::math::Vector3d & center_,
+            ignition::math::Vector3d & size_
+        ) : center(center_), size(size_){};
+
+        ignition::math::Vector3d center;
+        ignition::math::Vector3d size;
 };
-
-class bounding_box_3d{
-	public:
-	bounding_box_3d(ignition::math::Vector3d & center_,ignition::math::Vector3d & size_) : center(center_), size(size_)
-	{};
-	ignition::math::Vector3d center;
-	ignition::math::Vector3d size;
-};
-
 
 class Object {
-	public:
-	Object(std::string & _name, int & _type) : name(_name), type(_type)
-	{};
 
-	std::string name;
-	int type;
-	cv::Rect bounding_box;
+    public:
+
+        Object(
+            std::string & _name,
+            int & _type,
+            ignition::math::Pose3d _pose
+        ) : name(_name), type(_type), pose(_pose){};
+
+        std::string name;
+        int type;
+        cv::Rect bounding_box;
+        ignition::math::Pose3d pose;
 };
 
 class CameraInfo {
-	public:
-	CameraInfo(double _width, double _height, double _depth) : width(_width), height(_height), depth(_depth)
-	{};
-	double width, height, depth;
-
+    
+    public:
+        CameraInfo(
+            double _width,
+            double _height,
+            double _depth
+        ) : width(_width), height(_height), depth(_depth){};
+    
+        double width, height, depth;
 };
 
 
-/* Message pointer typedefs */
+// Message pointer tyoedefs
 
 typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
     WorldUtilsResponsePtr;
 typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
     CameraUtilsResponsePtr;
 
-typedef std::multimap<std::string,bounding_box_3d> BoundingBox3d;
+// Bounding box maps
+
+typedef std::multimap<std::string,BoundingBox3dClass> BoundingBox3d;
 typedef std::multimap<std::string,ignition::math::Vector2d> BoundingBox2d;
 
 /*
  * Function prototypes
  */
 
-ignition::math::Pose3d getRandomCameraPose(const ignition::math::Vector3d & camera_position);
+ignition::math::Pose3d getRandomCameraPose(
+    const ignition::math::Vector3d & camera_position);
 
-void spawnModelFromFile(
+void addModelToMsg(
     world_utils::msgs::WorldUtilsRequest & msg,
-    const std::string model_path,
+    std::vector<Object> & objects,
+    const std::string & model_path,
     const bool is_light,
-    const bool use_custom_pose,
+    const bool is_random,
     const bool use_custom_textures,
-    std::vector<std::string> textures = std::vector<std::string>(),
-    const ignition::math::Vector3d & position  = ignition::math::Vector3d(2.5, 2.5, 3.5),
-    const ignition::math::Quaternion<double> & orientation  = ignition::math::Quaternion<double>(0, M_PI/2.0, 0),
-    const std::string & name = std::string(""));
+    const int cell_x,
+    const int cell_y,
+    std::vector<std::string> & textures);
 
+void genRandomObjectInGrid(
+    std::vector<Object> & objects,
+    world_utils::msgs::Object *object,
+    const int cell_x,
+    const int cell_y);
 
-void spawnRandomObject(
-    world_utils::msgs::WorldUtilsRequest & msg,
-    std::vector<std::string> textures,
-    double & grid_cell_size_x,
-    double & grid_cell_size_y,
-    int & num_objects,
-    std::vector<Object> & objects);
+void storeAnnotations(
+    const std::vector<Object> & objects,
+    const ignition::math::Pose3d & camera_pose,
+    const std::string & path,
+    const std::string & file_name,
+    const std::string & image_name);
 
-void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name, const std::string & image_name);
+void moveObject(
+    gazebo::transport::PublisherPtr pub,
+    const std::string &name,
+    const ignition::math::Pose3d &pose);
 
 void clearWorld(
     gazebo::transport::PublisherPtr pub,
@@ -210,30 +223,31 @@ bool waitForBoundingBox(int desired_objects);
 
 void queryModelCount(gazebo::transport::PublisherPtr pub);
 
-void queryModelBoundingBox(gazebo::transport::PublisherPtr pub,
-    const std::vector<Object> &objects);
+void queryModelBoundingBox(
+    gazebo::transport::PublisherPtr pub,
+    const std::vector<Object> & objects);
 
 void query2DcameraPoint(
     gazebo::transport::PublisherPtr pub,
-    const std::vector<Object> &objects);
+    const std::vector<Object> & objects);
 
 bool waitFor2DPoints(int desired_points);
 
 void obtain2DBoundingBoxes(
-    std::vector<Object> &objects,
-    std::vector<cv::Rect> &bounding_rectangles);
+    std::vector<Object> & objects,
+    std::vector<cv::Rect> & bounding_rectangles);
 
 void queryCameraParameters(gazebo::transport::PublisherPtr pub);
 
-void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg);
+void onWorldUtilsResponse(WorldUtilsResponsePtr & _msg);
 
 bool waitForCamera();
 
-void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg);
+void onCameraUtilsResponse(CameraUtilsResponsePtr & _msg);
 
 void visualizeData(
-    const std::string &image_dir,
-    const std::string &image_name,
+    const std::string & image_dir,
+    const std::string & image_name,
     int num_objects,
-    BoundingBox2d &points_2d,
-    std::vector<cv::Rect> &bound_rect);
+    BoundingBox2d & points_2d,
+    std::vector<cv::Rect> & bound_rect);

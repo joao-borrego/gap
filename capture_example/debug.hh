@@ -3,6 +3,7 @@
  * @brief Custom debug utilities
  */
 
+#include <iostream>
 #include <string.h>
 
 #define VERBOSE

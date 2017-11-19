@@ -42,3 +42,5 @@ void getFilenamesInDir(std::string &path, std::vector<std::string> &filenames);
 int getRandomInt(int min, int max);
 
 double getRandomDouble(double min, double max);
+
+void shuffleIntVector(std::vector<int> & vector);

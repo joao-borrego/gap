@@ -2,11 +2,11 @@ package camera_utils.msgs;
 
 import "vector2d.proto";
 import "vector3d.proto";
+
 message BoundingBoxCamera
 {
-    /* @brief Type of request */
     /* @brief Bounding box pose */
-    optional gazebo.msgs.Vector2d point = 1;
-    optional gazebo.msgs.Vector3d point3d = 2;
-    optional string                 name            = 3;
+    optional gazebo.msgs.Vector2d 	point 	= 1;
+    optional gazebo.msgs.Vector3d 	point3d = 2;
+    optional string               	name    = 3;
 }

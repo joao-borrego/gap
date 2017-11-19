@@ -36,24 +36,16 @@ std::mutex bounding_box_3d_mutex;
 BoundingBox2d points_2d;
 std::mutex points_2d_mutex;
 
-// TODO - cleanup
-
-std::vector<std::string> object_classes;
+// Grid
 std::vector<int> cells_array;
-
-int box_counter=0;
-int cylinder_counter=0;
-int sphere_counter=0;
-
-const double x_size=5.0;
-const double y_size=5.0;
-
+const double x_size = 5.0;
+const double y_size = 5.0;
 const unsigned int x_cells = 5;
 const unsigned int y_cells = 5;
+double cell_size_x = x_size / x_cells;
+double cell_size_y = y_size / y_cells;
 
-double grid_cell_size_x = x_size/x_cells;
-double grid_cell_size_y = y_size/y_cells;
-
+// Camera properties
 std::shared_ptr<CameraInfo> camera_info;
 
 int main(int argc, char **argv)
@@ -125,11 +117,10 @@ int main(int argc, char **argv)
 
     // Spawn light source and camera
     msg_basic_objects.set_type(SPAWN);
-    spawnModelFromFile(
-        msg_basic_objects, "models/custom_sun.sdf", true, false, false, textures);
-    spawnModelFromFile(
-        msg_basic_objects, "models/custom_camera.sdf", false, true, false, textures,
-        camera_pose.Pos(), camera_pose.Rot());
+    addModelToMsg(msg_basic_objects, objects, "models/custom_sun.sdf",
+        true, false, false, 0, 0, textures);
+    addModelToMsg(msg_basic_objects, objects, "models/custom_camera.sdf",
+        false, false, false, 0, 0, textures);
     pub_world->Publish(msg_basic_objects);
 
     // Wait for CameraUtils plugin to launch and models to spawn
@@ -139,8 +130,8 @@ int main(int argc, char **argv)
         queryModelCount(pub_world);
     }
 
-    // TODO (?) - Create cell grid
-    for (int i = 0;  i < x_cells * y_cells; ++i){
+    // Create cell grid
+    for (int i = 0;  i < x_cells * y_cells; i++){
         cells_array.push_back(i);
     }
 
@@ -159,22 +150,37 @@ int main(int argc, char **argv)
     // Main program loop
     for (int i = start; i < scenes; i++){
 
+        // Move camera
+        camera_pose = getRandomCameraPose(camera_position);
+        moveObject(pub_world, "custom_camera", camera_pose);
+
+        // TODO - Bug first iteration gets garbage. Rethink operation order
+        if (i == start) sleep(1);
+
+        debugPrintTrace("Done moving camera to random position");
+
         // Number of objects to spawn
         num_objects = (getRandomInt(min_objects, max_objects));
 
-        debugPrintTrace("Scene " << i << " - " << num_objects << " objects");
+        debugPrintTrace("Scene (" << i + 1 << "/" << scenes << "): " << num_objects << " objects");
 
         // Spawn ground and random objects
 
         world_utils::msgs::WorldUtilsRequest msg_random_objects;
         msg_random_objects.set_type(SPAWN);
-        spawnModelFromFile(msg_random_objects, "models/custom_ground.sdf", false, false, true, textures);
-        objects.clear();
-        
-        spawnRandomObject(msg_random_objects, textures, grid_cell_size_x, grid_cell_size_y, num_objects, objects);
+        addModelToMsg(msg_random_objects, objects, "models/custom_ground.sdf",
+            false, false, true, 0, 0, textures);
+        shuffleIntVector(cells_array);
+        for (int j = 0; j < num_objects; j++){
+            int cell_num = cells_array[j];
+            int cell_x = floor(cell_num / x_cells);
+            int cell_y = floor(cell_num - cell_x * x_cells);
+            addModelToMsg(msg_random_objects, objects, "",
+                false, true, true, cell_x, cell_y, textures);
+        }
         pub_world->Publish(msg_random_objects);
 
-        // Wait for object count to match object number + sun + camera
+        // Wait for object count to match object number + camera + ground
         while (waitForSpawner(num_objects + 2)){
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             queryModelCount(pub_world);
@@ -213,7 +219,7 @@ int main(int argc, char **argv)
         debugPrintTrace("Done calculating 2D bounding boxes");
         
         // Save annotations to a file
-        storeAnnotations(objects, dataset_dir,
+        storeAnnotations(objects, camera_pose, dataset_dir,
             std::to_string(i)+".xml", std::to_string(i) + ".jpg");
 
         debugPrintTrace("Done saving annotations");
@@ -226,9 +232,11 @@ int main(int argc, char **argv)
         
         debugPrintTrace("Done waiting for camera to capture scene");
 
+        /*
         // Visualize data
         visualizeData("/tmp/camera_utils_output/", std::to_string(i),
             num_objects, points_2d, bound_rect);
+        */
 
         // Clear world - removes objects matching "plugin" prefix
         std::vector<std::string> object_names;
@@ -239,19 +247,9 @@ int main(int argc, char **argv)
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             queryModelCount(pub_world);
         }
+        objects.clear();
 
         debugPrintTrace("Done clearing the world");
-
-        // Move camera
-        /*
-        camera_pose=getRandomCameraPose(camera_position);
-        world_utils::msgs::WorldUtilsRequest msg_move_basic_objects;
-        msg_move_basic_objects.set_type(MOVE);
-        //spawnModelFromFile(msg_move_basic_objects, "models/custom_sun.sdf", true, false, false, textures);
-        std::string camera_name="custom_camera";
-        spawnModelFromFile(msg_move_basic_objects, "models/custom_camera.sdf", false, true, false, textures,  camera_pose.Pos(), camera_pose.Rot(),camera_name);
-        pub_world->Publish(msg_move_basic_objects);
-        */
     }
 
     /* Shut down */
@@ -267,204 +265,178 @@ int main(int argc, char **argv)
 
 ignition::math::Pose3d getRandomCameraPose(const ignition::math::Vector3d & camera_position) {
 
-        static const ignition::math::Quaternion<double> correct_orientation(ignition::math::Vector3d(0,1,0), -M_PI / 2.0);
-    ignition::math::Quaternion<double> camera_orientation(getRandomDouble(0,M_PI / 2.0),getRandomDouble(0,M_PI / 2.0),getRandomDouble(0,M_PI / 2.0));
+    static const ignition::math::Quaternion<double> correct_orientation(
+        ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
+    /*
+    ignition::math::Quaternion<double> camera_orientation(
+        getRandomDouble(0, M_PI / 2.0),
+        getRandomDouble(0, M_PI / 2.0),
+        getRandomDouble(0, M_PI / 2.0));
+    */
+    ignition::math::Quaternion<double> camera_orientation(0,0,0);
 
-        ignition::math::Pose3d camera_pose;
-    camera_pose.Set (camera_position, (correct_orientation*camera_orientation).Inverse());//CoordPositionAdd(camera_position);
+    ignition::math::Pose3d camera_pose;
+    camera_pose.Set(
+        camera_position,
+        (correct_orientation*camera_orientation).Inverse());
     camera_pose=camera_pose.RotatePositionAboutOrigin(camera_orientation);
 
     return camera_pose;
 }
 
-void spawnModelFromFile(
+void addModelToMsg(
     world_utils::msgs::WorldUtilsRequest & msg,
-    const std::string model_path,
+    std::vector<Object> & objects,
+    const std::string & model_path,
     const bool is_light,
-    const bool use_custom_pose,
+    const bool is_random,
     const bool use_custom_textures,
-    std::vector<std::string> textures,
-    const ignition::math::Vector3d & position,
-    const ignition::math::Quaternion<double> & orientation,
-    const std::string &name
-    ){
+    const int cell_x,
+    const int cell_y,
+    std::vector<std::string> & textures){
+    
+    world_utils::msgs::Object *object = msg.add_object();
 
-    /* Read model sdf string from file */
-    std::ifstream infile {model_path};
-    std::string model_sdf { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
-
-    //world_utils::msgs::WorldUtilsRequest msg;
-
-    world_utils::msgs::Object* object = msg.add_object();
-    if (is_light){
-        object->set_model_type(CUSTOM_LIGHT);
+    // Handle model type
+    if (! is_random){
+        
+        // Load sdf model from file
+        std::ifstream infile {model_path};
+        std::string model_sdf { 
+            std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
+        
+        if (is_light){
+            object->set_model_type(CUSTOM_LIGHT);
+        } else {
+            object->set_model_type(CUSTOM);
+        }
+        object->set_sdf(model_sdf);
+    
     } else {
-        object->set_model_type(CUSTOM);
-    }
-    object->set_sdf(model_sdf);
 
-    if (use_custom_pose){
-        gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d(gazebo::msgs::Convert(position));
-        gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion(gazebo::msgs::Convert(orientation));
-        gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
-        pose->set_allocated_position(pos);
-        pose->set_allocated_orientation(ori);
-        object->set_allocated_pose(pose);
+        // Generate random object from possible types
+        genRandomObjectInGrid(objects, object, cell_x, cell_y);
     }
 
+    // Apply custom texture pattern
     if (use_custom_textures){
 
-        int j = getRandomInt(0, textures.size() - 1);
-
-        std::string texture = textures.at(j);
+        int texture_idx  = getRandomInt(0, textures.size() - 1);
+        std::string texture = textures.at(texture_idx);
         std::stringstream texture_uri;
         std::stringstream texture_name;
 
         texture_uri << "file://materials/scripts/" << texture << ".material"
-        << "</uri><uri>file://materials/textures/";
+            << "</uri><uri>file://materials/textures/";
         texture_name << "Plugin/" << texture;
 
         object->set_texture_uri(texture_uri.str());
         object->set_texture_name(texture_name.str());
-    }
-
-    if(!name.empty())
-    {
-        object->set_name(name);
     }
 }
 
-void spawnRandomObject(
-    world_utils::msgs::WorldUtilsRequest & msg,
-    std::vector<std::string> textures,
-    double & grid_cell_size_x,
-    double & grid_cell_size_y,
-    int & num_objects,
-    std::vector<Object> & objects){
+void genRandomObjectInGrid(
+    std::vector<Object> & objects,
+    world_utils::msgs::Object *object,
+    const int cell_x,
+    const int cell_y){
 
-    /* Initialize random device */
-    std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_int_distribution<int> dist;
+    // Variables
+    gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
+    gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
+    gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
+    ignition::math::Quaternion<double> object_orientation;
+    double radius{0.0}, length{0.0};
+    double size_x{0.0}, size_y{0.0}, size_z{0.0};
 
-    msg.set_type(SPAWN);
+    int object_type = getRandomInt(0, 2);
+    object->set_model_type(classes_id[object_type]);
+    std::string object_name = class_instance_names[object_type] + 
+        std::to_string((class_instance_counters[object_type])++);
+    object->set_name(object_name);
 
-    std::mt19937 g(rd());
-    std::shuffle(cells_array.begin(), cells_array.end(), g);
+    // Mass
+    object->set_mass(1);
 
+    // Orientation
+    bool horizontal = (getRandomDouble(0.0, 1.0) < 0.5);
+    if (horizontal && object_type == cylinder){
+        object_orientation = ignition::math::Quaternion<double> (
+            0.0, M_PI * 0.5, getRandomDouble(0.0, M_PI));
+    } else {
+        object_orientation = ignition::math::Quaternion<double> (
+            0.0, 0.0, getRandomDouble(0.0, M_PI));
+    }
+    gazebo::msgs::Set(ori, object_orientation);
+    pose->set_allocated_orientation(ori);
 
-    for(int i=0; i<num_objects;++i)
-    {
-            unsigned int x_cell = floor(cells_array[i] / x_cells);
-            unsigned int y_cell = floor(cells_array[i] - x_cell * x_cells);
-        std::string object_name;
-        int object_type=getRandomInt(0, 2);
-
-        world_utils::msgs::Object* object = msg.add_object();
-        if (object_type == CYLINDER_ID){
-        object->set_model_type(CYLINDER);
-        object_name="plugin_cylinder_"+std::to_string(cylinder_counter++);
-        object->set_name(object_name);
-        }
-        else if(object_type == BOX_ID){
-        object->set_model_type(BOX);
-        object_name="plugin_box_"+std::to_string(box_counter++);
-        object->set_name(object_name);
-        }
-        else if(object_type == SPHERE_ID){
-        object->set_model_type(SPHERE);
-        object_name="plugin_sphere_"+std::to_string(sphere_counter++);
-        object->set_name(object_name);
-        }
-
-        /* External optional fields have to be allocated */
-        gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
-        gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
-        gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
-        gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
-
-        /* Mass */
-        object->set_mass(getRandomInt(1, 5));
-
-            /* Sphere/cylinder radius */
-        double radius=getRandomDouble(0.1, std::min(grid_cell_size_x,grid_cell_size_y) * 0.5);
+    // Dimensions
+    if (object_type == sphere || object_type == cylinder){
+    
+        // Radius
+        radius = getRandomDouble(0.1,
+            std::min(cell_size_x, cell_size_y) * 0.5);
         object->set_radius(radius);
 
-
-
-        /* Cylinder/Sphere length */
-        //object->set_length(z_length);
-
-        /* Pose */
-        ignition::math::Quaternion<double> object_orientation;
-
-        if (getRandomDouble(0.0, 1.0) < 0.5){
-        // Horizontal
-
-            double x_length(getRandomDouble(0.5, 1.0));
-            double y_length(getRandomDouble(grid_cell_size_y*0.1, grid_cell_size_y));
-            double z_length(getRandomDouble(grid_cell_size_x*0.1, grid_cell_size_x));
-
-            size->set_x(x_length);
-            size->set_y(y_length);
-            size->set_z(z_length);
-
-        object_orientation=ignition::math::Quaternion<double> (0.0, M_PI*0.5, getRandomDouble(0.0,M_PI));
-
-        if(object_type == CYLINDER_ID || object_type == SPHERE_ID ) {
-           pos->set_z(radius);
+        // Cylinder length
+        if (object_type == cylinder){
+            if (horizontal){
+                length = getRandomDouble(0.1, std::min(cell_size_x, cell_size_y) * 0.5);
+            } else {
+                length = getRandomDouble(0.5, 1.0);    
             }
-            else if(object_type == BOX_ID)
-           pos->set_z(x_length*0.5); // height is radius
+            object->set_length(length);
         }
-            else
-            {
-            // Vertical
-            double x_length(getRandomDouble(grid_cell_size_x*0.1, grid_cell_size_x));
-            double y_length(getRandomDouble(grid_cell_size_y*0.1, grid_cell_size_y));
-            double z_length(getRandomDouble(0.5, 1.0));
+    
+    } else if (object_type == box){
 
-            size->set_x(x_length);
-            size->set_y(y_length);
-            size->set_z(z_length);
+        gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
 
-            double roll = getRandomDouble(0.0,M_PI);
-            double pitch = getRandomDouble(0.0,M_PI);
+        // TODO fix collisions - Box size
+        size_x = getRandomDouble(cell_size_x * 0.1, cell_size_x);
+        size_y = getRandomDouble(cell_size_y * 0.1, cell_size_y);
+        size_z = getRandomDouble(0.5, 1.0);
 
-            object_orientation=ignition::math::Quaternion<double> (0.0, 0.0, 0.0);
-            pos->set_z(z_length*0.5);
-            if(object_type == CYLINDER_ID || object_type == SPHERE_ID) {
-            pos->set_z(radius);
-            }
-        }
-
-        pos->set_x(x_cell * grid_cell_size_x + 0.5 * grid_cell_size_x - x_cells * 0.5 * grid_cell_size_x);
-        pos->set_y(y_cell * grid_cell_size_y + 0.5 * grid_cell_size_y - y_cells * 0.5 * grid_cell_size_y);
-
-        ori=new gazebo::msgs::Quaternion(gazebo::msgs::Convert(object_orientation));
-
-        /* Material script */
-        int j = getRandomInt(0, textures.size() - 1);
-
-        std::string texture = textures.at(j);
-        std::stringstream texture_uri;
-        std::stringstream texture_name;
-
-        texture_uri << "file://materials/scripts/" << texture << ".material"
-        << "</uri><uri>file://materials/textures/";
-        texture_name << "Plugin/" << texture;
-
-        object->set_texture_uri(texture_uri.str());
-        object->set_texture_name(texture_name.str());
-
-        /* Associate dynamic fields */
-        pose->set_allocated_position(pos);
-        pose->set_allocated_orientation(ori);
-        object->set_allocated_pose(pose);
+        size->set_x(size_x);
+        size->set_y(size_y);
+        size->set_z(size_z);
         object->set_allocated_box_size(size);
-
-            objects.push_back( Object(object_name,object_type));
     }
+
+    // Position
+    pos->set_x(cell_x * cell_size_x + 0.5 * cell_size_x - x_cells * 0.5 * cell_size_x);
+    pos->set_y(cell_y * cell_size_y + 0.5 * cell_size_y - y_cells * 0.5 * cell_size_y);
+    
+    if (object_type == sphere || object_type == cylinder){
+
+        pos->set_z(radius);
+
+    } else if (object_type == box){
+        
+        pos->set_z(size_z * 0.5);
+    }
+    pose->set_allocated_position(pos);
+
+    // Pose
+    object->set_allocated_pose(pose);
+
+    objects.push_back( Object(object_name, object_type, gazebo::msgs::ConvertIgn(*pose)));
+}
+
+void moveObject(
+    gazebo::transport::PublisherPtr pub,
+    const std::string &name,
+    const ignition::math::Pose3d &pose){
+
+    world_utils::msgs::WorldUtilsRequest msg;
+    msg.set_type(MOVE);
+    world_utils::msgs::Object *object = msg.add_object();
+    object->set_name(name);
+
+    gazebo::msgs::Pose *pose_msg = new gazebo::msgs::Pose();
+    gazebo::msgs::Set(pose_msg, pose);
+    object->set_allocated_pose(pose_msg);
+    pub->Publish(msg);
 }
 
 void clearWorld(
@@ -627,9 +599,9 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
             ignition::math::Vector3d bb_size =
                 gazebo::msgs::ConvertIgn(_msg->bounding_box(i).bb_size());
 
-            bounding_box_3d bb(bb_center, bb_size);
+            BoundingBox3dClass bb(bb_center, bb_size);
             std::lock_guard<std::mutex> lock(bounding_box_3d_mutex);
-            bbs_3d.insert( std::pair<std::string,bounding_box_3d>(
+            bbs_3d.insert( std::pair<std::string,BoundingBox3dClass>(
                 _msg->bounding_box(i).name(), bb) );
         }
     }
@@ -684,11 +656,12 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
 
 void storeAnnotations(
     const std::vector<Object> &objects,
+    const ignition::math::Pose3d & camera_pose,
     const std::string &path,
     const std::string &file_name,
     const std::string &image_name){
 
-    std::ofstream out(path+"/Annotations"+file_name);
+    std::ofstream out(path+"/"+file_name);
 
     out << "<annotation>\n"
         << "  <folder>images</folder>\n"
@@ -696,7 +669,8 @@ void storeAnnotations(
         << "  <source>\n"
         << "    <database>The SHAPE2017 Database</database>\n"
         << "    <annotation>SHAPE SHAPE2017</annotation>\n"
-        << "    <image>"+ image_name +"</image>\n"
+        << "    <image>" << image_name <<"</image>\n"
+        << "    <pose>" << camera_pose <<"</pose>\n"
         << "  </source>\n"
         << "  <size>\n"
         << "    <width>"  << camera_info->width  << "</width>\n"
@@ -707,8 +681,8 @@ void storeAnnotations(
 
     for(unsigned int i=0; i<objects.size(); ++i){
         out << "  <object>\n"
-            << "    <name>" << classes_map.find(objects[i].type)->second << "</name>\n"
-            << "    <pose>top</pose>\n"
+            << "    <name>" << classes_name[objects[i].type] << "</name>\n"
+            << "    <pose>" << objects[i].pose << "</pose>\n"
             << "    <truncated>0</truncated>\n"
             << "    <difficult>1</difficult>\n"
             << "    <bndbox>\n"
@@ -755,9 +729,9 @@ void visualizeData(
         }
         
         // Create a window for display
-        cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE );
-        // Show image and ait for keystroke
+        cv::namedWindow("Display window", cv::WINDOW_KEEPRATIO);
+        // Show image and wait for keystroke
         cv::imshow("Display window", image );
-        cv::waitKey(500);
+        cv::waitKey(0);
     }
 }

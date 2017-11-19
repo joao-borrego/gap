@@ -130,12 +130,13 @@ class bounding_box_3d{
 
 class Object {
 	public:
-	Object(std::string & _name, int & _type) : name(_name), type(_type)
+	Object(std::string & _name, int & _type,ignition::math::Pose3d _pose) : name(_name), type(_type),pose(_pose)
 	{};
 
 	std::string name;
 	int type;
 	cv::Rect bounding_box;
+	ignition::math::Pose3d pose;
 };
 
 class CameraInfo {
@@ -190,7 +191,7 @@ void spawnRandomObject(
     int & num_objects,
     std::vector<Object> & objects);
 
-void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name, const std::string & image_name);
+void storeAnnotations(const std::vector<Object> & objects, const ignition::math::Pose3d & camera_pose, const std::string & path, const std::string & file_name, const std::string & image_name);
 
 void clearWorld(gazebo::transport::PublisherPtr pub,  std::vector<std::string> object_names = std::vector<std::string>());
 

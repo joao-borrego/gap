@@ -28,7 +28,8 @@ link_directories(
 # Camera utils plugin client
 add_executable (
     capture_example
-    capture_example.cc)
+    capture_example.cc
+    utils.cc)
 target_link_libraries(
     capture_example
     camera_utils_msgs

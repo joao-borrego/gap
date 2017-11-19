@@ -1,8 +1,8 @@
 package world_utils.msgs;
 
-
-import "bounding_box.proto";
 import "object.proto";
+import "bounding_box.proto";
+
 message WorldUtilsRequest
 {
     /* @brief Type of request */
@@ -41,9 +41,9 @@ message WorldUtilsRequest
     /* @brief Type of request */
     required Type                   type            = 1;
     /* @brief Object of request */
-    repeated Object                 object            = 2;
+    repeated Object                 object          = 2;
     /* @brief World physics state */
     optional bool                   state           = 3;
     /* @brief Bounding box */
-    repeated BoundingBox            bounding_box       = 4;
+    repeated BoundingBox            bounding_box    = 4;
 }

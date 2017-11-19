@@ -9,8 +9,9 @@
 #include <gazebo/gazebo_client.hh>
 #endif
 
-/* Program options */
-#include<boost/program_options.hpp>
+/* Utilities */
+#include "utils.hh"
+
 /* I/O streams */
 #include <iostream>
 /* File streams */
@@ -20,11 +21,12 @@
 /* For protecting variables */
 #include <mutex>
 /* For sleeps */
-#include <unistd.h>
+#include <chrono>
+#include <thread>
+/* TODO */
+#include <Eigen/Dense>
 
-/*
- * Custom messages
- */
+/* Custom messages */
 
 /* Camera utils request */
 #include "camera_utils_request.pb.h"
@@ -35,27 +37,32 @@
 /* World utils response */
 #include "world_utils_response.pb.h"
 
+/* OpenCV 2 */
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc.hpp"
+
+#define DELAY 10000
+
 /*
  * Macros for custom messages
  */
 
 /* Camera utils */
 
+/** Request for camera object info */
+#define CAMERA_INFO_REQUEST     camera_utils::msgs::CameraUtilsRequest::CAMERA_INFO
 /** Request to capture a frame and save it to disk */
-#define CAMERA_INFO_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAMERA_INFO
-#define CAMERA_INFO_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAMERA_INFO
+#define CAPTURE_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAPTURE
+/** Request for projection of 3D point in world to 2D camera reference plane */
+#define CAMERA_POINT_REQUEST    camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
 
-#define CAPTURE_REQUEST          camera_utils::msgs::CameraUtilsRequest::CAPTURE
-#define CAPTURE_RESPONSE         camera_utils::msgs::CameraUtilsResponse::CAPTURE
+// TODO
+#define CAMERA_INFO_RESPONSE    camera_utils::msgs::CameraUtilsResponse::CAMERA_INFO
+#define CAPTURE_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAPTURE
+#define CAMERA_POINT_RESPONSE   camera_utils::msgs::CameraUtilsResponse::CAMERA_POINT
 
-#define CAMERA_POINT_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
-#define CAMERA_POINT_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAMERA_POINT
 /* World utils */
-
-/* Request */
 
 /** Spawn entity */
 #define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
@@ -72,22 +79,16 @@
 
 /** Spawn sphere object */
 #define SPHERE          world_utils::msgs::Object::SPHERE
-
 /** Spawn cylinder object */
 #define CYLINDER        world_utils::msgs::Object::CYLINDER
-
 /** Spawn box object */
 #define BOX             world_utils::msgs::Object::BOX
-
 /** Spawn custom object */
 #define CUSTOM          world_utils::msgs::Object::CUSTOM
-
 /** Spawn custom light object */
 #define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
 /** Spawn a model included in gazebo model path */
 #define MODEL           world_utils::msgs::Object::MODEL
-
-/* Response */
 
 /** Provide world state information */
 #define INFO            world_utils::msgs::WorldUtilsResponse::INFO
@@ -108,16 +109,24 @@
 #define WORLD_UTILS_RESPONSE_TOPIC  "~/gazebo-utils/world_utils/response"
 
 /* Classes */
-#define CYLINDER_ID       1
-#define SPHERE_ID       0
-#define BOX_ID       2
+
+typedef enum {sphere = 0, cylinder, box} ObjectType;
+
+const int classes_id[3] = {SPHERE, CYLINDER, BOX};
+const char* classes_name[3] = {"sphere", "cylinder", "box"};
+const char* class_instance_names[3] =
+    {"plugin_sphere_", "plugin_cylinder_", "plugin_box_"};
+unsigned int class_instance_counters[3] = {0};
+
+#define SPHERE_ID   0
+#define CYLINDER_ID 1
+#define BOX_ID      2
+
 const std::map<int,std::string> classes_map{
+   {SPHERE_ID,   "sphere"},
    {CYLINDER_ID, "cylinder"},
-   {SPHERE_ID, "sphere"},
-   {BOX_ID, "box"}
+   {BOX_ID,      "box"}
 };
-
-
 
 class bounding_box_3d{
 	public:
@@ -154,15 +163,8 @@ typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
 typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
     CameraUtilsResponsePtr;
 
-
 typedef std::multimap<std::string,bounding_box_3d> BoundingBox3d;
 typedef std::multimap<std::string,ignition::math::Vector2d> BoundingBox2d;
-
-
-
-
-
-
 
 /*
  * Function prototypes
@@ -192,7 +194,9 @@ void spawnRandomObject(
 
 void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name, const std::string & image_name);
 
-void clearWorld(gazebo::transport::PublisherPtr pub,  std::vector<std::string> object_names = std::vector<std::string>());
+void clearWorld(
+    gazebo::transport::PublisherPtr pub,
+    std::vector<std::string> &object_names);
 
 void changePhysics(gazebo::transport::PublisherPtr pub, bool enable);
 
@@ -202,14 +206,22 @@ void captureScene(gazebo::transport::PublisherPtr pub, int idx);
 
 bool waitForSpawner(int desired_objects);
 
+bool waitForBoundingBox(int desired_objects);
+
 void queryModelCount(gazebo::transport::PublisherPtr pub);
 
 void queryModelBoundingBox(gazebo::transport::PublisherPtr pub,
-    const std::vector<Object> & objects);
+    const std::vector<Object> &objects);
 
 void query2DcameraPoint(
     gazebo::transport::PublisherPtr pub,
-    const std::vector<Object> & objects);
+    const std::vector<Object> &objects);
+
+bool waitFor2DPoints(int desired_points);
+
+void obtain2DBoundingBoxes(
+    std::vector<Object> &objects,
+    std::vector<cv::Rect> &bounding_rectangles);
 
 void queryCameraParameters(gazebo::transport::PublisherPtr pub);
 
@@ -218,3 +230,10 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg);
 bool waitForCamera();
 
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg);
+
+void visualizeData(
+    const std::string &image_dir,
+    const std::string &image_name,
+    int num_objects,
+    BoundingBox2d &points_2d,
+    std::vector<cv::Rect> &bound_rect);

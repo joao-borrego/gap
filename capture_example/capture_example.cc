@@ -79,10 +79,8 @@ int main(int argc, char **argv)
 
     std::string media_dir = std::string(argv[1]);
     unsigned int scenes = atoi(argv[2]);
-    unsigned int initial_iter = atoi(argv[3]);
-    std::string dataset_dir = std::string(argv[4]);
-
-
+    std::string dataset_dir = std::string(argv[3]);
+	
     /* Create folder for storing training data */
     boost::filesystem::path traindir(dataset_dir);
     if(boost::filesystem::create_directory(traindir)) {
@@ -179,7 +177,7 @@ int main(int argc, char **argv)
     }
     std::cout << "Done" << std::endl; 
     /* Main loop */
-    for (int i = initial_iter; i < scenes; i++){
+    for (int i = 468; i < scenes; i++){
 
 
         /* Random object number */
@@ -268,7 +266,7 @@ int main(int argc, char **argv)
 
 	/* Save annotations */
 	std::cout << "save annotations" << std::endl;
-	storeAnnotations(objects, camera_pose, dataset_dir, std::to_string(i)+".xml",std::to_string(i)+".jpg");
+	storeAnnotations(objects, dataset_dir, std::to_string(i)+".xml",std::to_string(i)+".jpg");
 
 	/* Visualize data */
 	/*cv::Mat image;
@@ -343,8 +341,8 @@ int main(int argc, char **argv)
 ignition::math::Pose3d getRandomCameraPose(const ignition::math::Vector3d & camera_position) {
 
         static const ignition::math::Quaternion<double> correct_orientation(ignition::math::Vector3d(0,1,0), -M_PI / 2.0);
-	//ignition::math::Quaternion<double> camera_orientation(dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0)); 
-	ignition::math::Quaternion<double> camera_orientation(0,0,0); 
+	ignition::math::Quaternion<double> camera_orientation(dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0)); 
+
         ignition::math::Pose3d camera_pose;
 	camera_pose.Set (camera_position, (correct_orientation*camera_orientation).Inverse());//CoordPositionAdd(camera_position);
 	camera_pose=camera_pose.RotatePositionAboutOrigin(camera_orientation);
@@ -541,7 +539,7 @@ void spawnRandomObject(
 	    object->set_allocated_pose(pose);
 	    object->set_allocated_box_size(size);
 
-            objects.push_back( Object(object_name,object_type,gazebo::msgs::ConvertIgn(*pose)));
+            objects.push_back( Object(object_name,object_type));
     }
 
 
@@ -800,17 +798,16 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
 }
 
 
-void storeAnnotations(const std::vector<Object> & objects, const ignition::math::Pose3d & camera_pose, const std::string & path, const std::string & file_name, const std::string & image_name)
+void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name, const std::string & image_name)
 {
-	std::ofstream out(path+"Annotations/"+file_name);
+	std::ofstream out(path+"Annotations"+file_name);
         out << "<annotation>" << std::endl 
 	    << "  <folder>images</folder>" << std::endl
 	    << "  <filename>"+image_name+"</filename>" << std::endl
             << "  <source>"<<std::endl
 	    << "    <database>The SHAPE2017 Database</database>"<< std::endl
 	    << "    <annotation>SHAPE SHAPE2017</annotation>" << std::endl 
-            << "    <image>" << image_name <<"</image>" << std::endl
-            << "    <pose>" << camera_pose <<"</pose>" << std::endl
+            << "    <image>"+ image_name +"</image>" << std::endl
             << "  </source>" << std::endl
             << "  <size>" << std::endl
             << "    <width>"  << camera_info->width  << "</width>"  << std::endl
@@ -824,7 +821,7 @@ void storeAnnotations(const std::vector<Object> & objects, const ignition::math:
 	{
 		out << "  <object>" << std::endl
 		    << "    <name>" << classes_map.find(objects[i].type)->second << "</name>" << std::endl
-		    << "    <pose>"<< objects[i].pose<<"</pose>" << std::endl
+		    << "    <pose>top</pose>" << std::endl
 		    << "    <truncated>0</truncated>" << std::endl
 		    << "    <difficult>1</difficult>" << std::endl
 		    << "    <bndbox>" << std::endl

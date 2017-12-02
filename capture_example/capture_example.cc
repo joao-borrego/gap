@@ -151,27 +151,23 @@ int main(int argc, char **argv)
     for (int i = start; i < scenes; i++){
 
 
+        // Number of objects to spawn
+        num_objects = (getRandomInt(min_objects, max_objects));
+        debugPrintTrace("Scene (" << i + 1 << "/" << scenes << "): " << num_objects << " objects");
+
         // Move camera
         camera_pose = getRandomCameraPose(camera_position);
         moveObject(pub_world, "custom_camera", camera_pose);
-
-        // TODO - Bug first iteration gets garbage. Rethink operation order
-        if (i == start) sleep(1);
-
         debugPrintTrace("Done moving camera to random position");
-
-
-        // Number of objects to spawn
-        num_objects = (getRandomInt(min_objects, max_objects));
-
-        debugPrintTrace("Scene (" << i + 1 << "/" << scenes << "): " << num_objects << " objects");
+        std::cout << "\t(" << camera_pose << ")\n";
 
         // Spawn ground and random objects
-
         world_utils::msgs::WorldUtilsRequest msg_random_objects;
         msg_random_objects.set_type(SPAWN);
+        // Ground
         addModelToMsg(msg_random_objects, objects, "models/custom_ground.sdf",
             false, false, true, 0, 0, textures);
+        // Random objects
         shuffleIntVector(cells_array);
         for (int j = 0; j < num_objects; j++){
             int cell_num = cells_array[j];
@@ -180,6 +176,7 @@ int main(int argc, char **argv)
             addModelToMsg(msg_random_objects, objects, "",
                 false, true, true, cell_x, cell_y, textures);
         }
+        // TODO - Random lights
         pub_world->Publish(msg_random_objects);
 
         // Wait for object count to match object number + camera + ground
@@ -188,12 +185,10 @@ int main(int argc, char **argv)
             queryModelCount(pub_world);
         }
 
-        /*
         // Wait for all messages to be sent
         while (pub_world->GetOutgoingCount() > 0){
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
-        */
 
         // Get 3D bounding boxes from WorldUtils 
         bbs_3d.clear();
@@ -209,7 +204,7 @@ int main(int argc, char **argv)
         points_2d.clear();
         query2DcameraPoint(pub_camera, objects);
         
-        while(waitFor2DPoints(8 * num_objects)){
+        while (waitFor2DPoints(8 * num_objects)){
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
@@ -253,6 +248,7 @@ int main(int argc, char **argv)
         objects.clear();
 
         debugPrintTrace("Done clearing random objects");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     // Clean up
@@ -282,13 +278,12 @@ ignition::math::Pose3d getRandomCameraPose(const ignition::math::Vector3d & came
 
     static const ignition::math::Quaternion<double> correct_orientation(
         ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
-    /*
+ 
     ignition::math::Quaternion<double> camera_orientation(
-        getRandomDouble(0, M_PI / 2.0),
-        getRandomDouble(0, M_PI / 2.0),
-        getRandomDouble(0, M_PI / 2.0));
-    */
-    ignition::math::Quaternion<double> camera_orientation(0,0,0);
+        getRandomDouble(0, M_PI / 3.0),
+        getRandomDouble(0, M_PI / 3.0),
+        getRandomDouble(0, M_PI / 3.0));
+    //ignition::math::Quaternion<double> camera_orientation(0,0,0);
 
     ignition::math::Pose3d camera_pose;
     camera_pose.Set(

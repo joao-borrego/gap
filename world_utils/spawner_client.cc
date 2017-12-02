@@ -90,7 +90,7 @@ int main(int _argc, char **_argv)
         msg.set_type(SPAWN);
 
         int model_aux = rand() % 3;
-	world_utils::msgs::Object* object = msg.add_object();
+	    world_utils::msgs::Object* object = msg.add_object();
         if(model_aux == 0){
             object->set_model_type(CYLINDER);
         }
@@ -104,18 +104,32 @@ int main(int _argc, char **_argv)
         std::string command = input_stream.str();
         if (command == "remove"){
             msg.set_type(REMOVE);
-        } else if (command == "custom"){
+            object->set_name("plugin");
+        } else if (command == "remove_light"){
+            msg.set_type(REMOVE);
+            object->set_model_type(CUSTOM_LIGHT);
+            object->set_name("plugin");
+
+        } else if (command == "ground"){
             object->set_model_type(CUSTOM);
             std::ifstream infile { "models/custom_ground.sdf" };
             std::string model_sdf { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
             object->set_sdf(model_sdf);
-        } else if (command == "model"){
+        } else if (command == "light"){
+            object->set_model_type(CUSTOM_LIGHT);
+            std::ifstream infile { "models/custom_sun.sdf" };
+            std::string model_sdf { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
+            object->set_sdf(model_sdf);
+        }
+        /*
+        else if (command == "model"){
             object->set_model_type(MODEL);
             object->set_name("kinect");
         } else if (command == "move"){
             msg.set_type(MOVE);
             object->set_name("kinect");
         }
+        */
 
         /* External optional fields have to be allocated */
         gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
@@ -159,10 +173,12 @@ int main(int _argc, char **_argv)
         object->set_texture_name(texture_name.str());
 
         /* Associate dynamic fields */
-        pose->set_allocated_position(pos);
-        pose->set_allocated_orientation(ori);
-        object->set_allocated_pose(pose);
-        object->set_allocated_box_size(size);
+        if (command != "ground"){
+            pose->set_allocated_position(pos);
+            pose->set_allocated_orientation(ori);
+            object->set_allocated_pose(pose);
+            object->set_allocated_box_size(size);
+        }
 
         /* Send the message */
         pub->Publish(msg);

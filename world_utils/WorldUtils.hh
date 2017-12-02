@@ -134,7 +134,6 @@ namespace gazebo {
             int sphere_counter      {0};
             int cylinder_counter    {0};
             int box_counter         {0};
-            /* TODO - Implement */
             int light_counter       {0};
 
         /* Public methods */
@@ -178,7 +177,7 @@ namespace gazebo {
              *
              * @param      match  The substring to be matched
              */
-            void clearMatching(const std::string &match);
+            void clearMatching(const std::string &match, const bool is_light);
 
             /**
              * @brief      Generates SDF string for sphere object

@@ -185,7 +185,7 @@ namespace gazebo {
 		            sdf::SDF sdf_light;
 		            sdf_light.SetFromString(new_model_str);
 		            msgs::Light msg = msgs::LightFromSDF(sdf_light.Root()->GetElement("light"));
-		            msg.set_name("plugin_light");
+		            msg.set_name("plugin_light" + std::to_string(this->light_counter++));
 		            this->factory_light_pub->Publish(msg,true);
 		        } else {
 		            msgs::Factory msg;
@@ -197,18 +197,24 @@ namespace gazebo {
 		}
 
 	} else if (type == MOVE) {
-			for (int i=0; i< _msg->object_size();++i)
-			{
-			    model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
+		for (int i=0; i< _msg->object_size();++i)
+		{
+		    model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
 
-			    if (_msg->object(i).has_name() && _msg->object(i).has_pose()){
+		    if (_msg->object(i).has_name() && _msg->object(i).has_pose()){
 				msgs::Pose m_pose = _msg->object(i).pose();
 				ignition::math::Pose3d pose = msgs::ConvertIgn(m_pose);
-				physics::ModelPtr model = this->world->GetModel(_msg->object(i).name());
-				model->SetWorldPose(pose);
-			    }
+				
+				if (model_type == CUSTOM_LIGHT){
+					physics::LightPtr light = this->world->Light(_msg->object(i).name());
+					light->SetWorldPose(pose);
+				} else {	
+					physics::ModelPtr model = this->world->GetModel(_msg->object(i).name());
+					model->SetWorldPose(pose);
+				}
+		    }
 
-			}
+		}
 
 	} else if (type == REMOVE){
 		if(_msg->object_size()>0)
@@ -217,11 +223,11 @@ namespace gazebo {
 			    model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
 
 			    if (_msg->object(i).has_name()){
-				/* Clear specific object(s) */
-				clearMatching(_msg->object(i).name());
+					/* Clear specific object(s) */
+					clearMatching(_msg->object(i).name() , (model_type == CUSTOM_LIGHT));
 			    } else {
-				/* Clear everything */
-				clearWorld();
+					/* Clear everything */
+					clearWorld();
 			    }
 			}
 		else
@@ -289,20 +295,33 @@ namespace gazebo {
         this->world->Clear();
     }
 
-    void WorldUtils::clearMatching(const std::string &match){
+    void WorldUtils::clearMatching(const std::string &match, const bool is_light){
 
-        int model_count = this->world->GetModelCount();
-        std::string model_name;
+        std::string entity_name;
         std::string match_str = match;
         gazebo::msgs::Request *msg;
 
-        for (int idx = 0; idx < model_count; idx++){
-            physics::ModelPtr model = this->world->GetModel(idx);
-            model_name = model->GetName();
-            if (model_name.find(match_str) != std::string::npos){
-                msg = gazebo::msgs::CreateRequest("entity_delete", model_name);
-                request_pub->Publish(*msg, true);
-            }
+        if (is_light){
+
+        	physics::Light_V lights = this->world->Lights();
+        	for (auto &l : lights){
+        		entity_name = l->GetName();
+	        	if (entity_name.find(match_str) != std::string::npos){
+	                msg = gazebo::msgs::CreateRequest("entity_delete", entity_name);
+        			request_pub->Publish(*msg, true);
+	            }
+        	}
+
+        } else {
+
+        	physics::Model_V models = this->world->GetModels();
+        	for (auto &m : models){
+        		entity_name = m->GetName();
+	        	if (entity_name.find(match_str) != std::string::npos){
+	        		msg = gazebo::msgs::CreateRequest("entity_delete", entity_name);
+        			request_pub->Publish(*msg, true);
+	        	}
+        	}
         }
 
         delete msg;

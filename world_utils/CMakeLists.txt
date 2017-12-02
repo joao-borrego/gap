@@ -3,37 +3,31 @@ cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 FIND_PACKAGE( Boost 1.40 COMPONENTS system REQUIRED )
 set (CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
 
+# Find packages
 include (FindPkgConfig)
 if (PKG_CONFIG_FOUND)
   pkg_check_modules(GAZEBO gazebo)
   pkg_check_modules(SDF sdformat)
 endif()
-include_directories(
-  ${GAZEBO_INCLUDE_DIRS}
-  ${SDF_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_BINARY_DIR}/msgs
-  )
-link_directories(
-    ${GAZEBO_LIBRARY_DIRS}
-    ${CMAKE_CURRENT_BINARY_DIR}/msgs)
-add_subdirectory(msgs)
+# Include and link Gazebo and SDF libraries
+include_directories(${GAZEBO_INCLUDE_DIRS} ${SDF_INCLUDE_DIRS})
+link_directories(${GAZEBO_LIBRARY_DIRS})
+
+# Include custom messages
+include_directories(${PROJECT_BINARY_DIR}/msgs/WorldUtils)
+link_directories(${PROJECT_BINARY_DIR}/msgs/WorldUtils)
 
 # Gazebo world utils plugin
-add_library(WorldUtils SHARED WorldUtils.cc )
-target_link_libraries(
-    WorldUtils
+add_library(WorldUtils SHARED WorldUtils.cc)
+target_link_libraries(WorldUtils
     world_utils_msgs
     ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(
-    WorldUtils
+add_dependencies(WorldUtils
     world_utils_msgs)
 
 # Spawner client
-add_executable (
-    spawner_client
-    spawner_client.cc)
-target_link_libraries(
-    spawner_client
+add_executable (spawner_client spawner_client.cc)
+target_link_libraries(spawner_client
     world_utils_msgs
     ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
 add_dependencies(

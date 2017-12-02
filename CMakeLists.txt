@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 
 # Project name
-project(gazebo-utils)
+project(GazeboUtils)
 
 # Project version
 set (GAZEBO_UTILS_MAJOR_VERSION 0)
@@ -27,6 +27,12 @@ find_package(gazebo REQUIRED)
 find_package(Boost 1.40 COMPONENTS system REQUIRED)
 
 # Build project
+
+# Messages
+
+add_subdirectory(msgs)
+
+# Plugins
 
 # World plugin
 add_subdirectory(world_utils)

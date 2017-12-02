@@ -1,6 +1,5 @@
 package camera_utils.msgs;
 
-import "vector3d.proto";
 import "bounding_box_camera.proto";
 
 message CameraUtilsRequest

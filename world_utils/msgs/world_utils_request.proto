@@ -39,7 +39,7 @@ message WorldUtilsRequest
 
 
     /* @brief Type of request */
-    required Type                   type            = 1;
+    optional Type                   type            = 1;
     /* @brief Object of request */
     repeated Object                 object          = 2;
     /* @brief World physics state */

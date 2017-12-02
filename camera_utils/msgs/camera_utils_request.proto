@@ -18,7 +18,7 @@ message CameraUtilsRequest
     }
 
     /** Type of request */
-    required Type               type            = 1;
+    optional Type               type            = 1;
     /** Name of the file corresponding to the acquired frame */
     optional string             file_name       = 2;
     /** Path to the output folder */

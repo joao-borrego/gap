@@ -52,8 +52,7 @@ namespace gazebo {
             gzerr << "[CameraUtils] Invalid sensor pointer." << std::endl;
 
         /* Camera sensor */
-        this->parentSensor =
-            std::dynamic_pointer_cast<sensors::CameraSensor>(_sensor);
+        this->parentSensor = std::dynamic_pointer_cast<sensors::CameraSensor>(_sensor);
         this->camera = this->parentSensor->Camera();
         this->width = this->camera->ImageWidth();
         this->height = this->camera->ImageHeight();
@@ -111,42 +110,42 @@ namespace gazebo {
 
             this->next_file_name = output_dir + file_name;
             this->save_on_update = true;
+        
+        } else if (_msg->type() == CAMERA_POINT_REQUEST){
+
+            camera_utils::msgs::CameraUtilsResponse msg;
+            msg.set_success(false);
+            msg.set_type(CAMERA_POINT_RESPONSE);
+            
+            for (int i = 0; i < _msg->bounding_box_size(); i++){
+                ignition::math::Vector3d point_3d = gazebo::msgs::ConvertIgn(
+                    _msg->bounding_box(i).point3d());
+
+                ignition::math::Vector2i point_2d = this->camera->Project(point_3d);
+                gazebo::msgs::Vector2d *bb = new gazebo::msgs::Vector2d();
+                bb->set_x(point_2d.X());
+                bb->set_y(point_2d.Y());
+                camera_utils::msgs::BoundingBoxCamera* bounding_box = 
+                    msg.add_bounding_box();
+                bounding_box->set_name(_msg->bounding_box(i).name());
+                bounding_box->set_allocated_point(bb);
+            }
+            this->dataPtr->pub->Publish(msg);
+    
+        } else if (_msg->type() == CAMERA_INFO_REQUEST){
+
+            camera_utils::msgs::CameraUtilsResponse msg;
+            msg.set_type(CAMERA_INFO_RESPONSE);
+            msg.set_success(true);
+            camera_utils::msgs::CameraInfo* camera_info =
+                new camera_utils::msgs::CameraInfo();
+            camera_info->set_width(this->camera->ViewportWidth ());
+            camera_info->set_height(this->camera->ViewportHeight());
+            camera_info->set_depth(this->camera->ImageDepth());
+            msg.set_allocated_camera_info(camera_info);
+
+            this->dataPtr->pub->Publish(msg);
         }
-	else if(_msg->type() == CAMERA_POINT_REQUEST)
-	{
-		camera_utils::msgs::CameraUtilsResponse msg;
-		msg.set_success(false);
-    		msg.set_type(CAMERA_POINT_RESPONSE);		
-		for(int i(0); i<_msg->bounding_box_size();++i)
-		{
-			ignition::math::Vector3d point_3d = gazebo::msgs::ConvertIgn(_msg->bounding_box(i).point3d());
-
-			ignition::math::Vector2i point_2d = this->camera->Project (point_3d);
-
-		        gazebo::msgs::Vector2d *bb = new gazebo::msgs::Vector2d();
-			bb->set_x(point_2d.X());
-			bb->set_y(point_2d.Y());
-	    		camera_utils::msgs::BoundingBoxCamera* bounding_box = msg.add_bounding_box();
-			bounding_box->set_name(_msg->bounding_box(i).name());
-			bounding_box->set_allocated_point(bb);
-		}
-
-		this->dataPtr->pub->Publish(msg);
-        	
-	}
-	else if(_msg->type() == CAMERA_INFO_REQUEST)
-	{
-		camera_utils::msgs::CameraUtilsResponse msg;
-    		msg.set_type(CAMERA_INFO_RESPONSE);
-		msg.set_success(true);		
-		camera_utils::msgs::CameraInfo* camera_info= new camera_utils::msgs::CameraInfo();
-                camera_info->set_width(this->camera->ViewportWidth ());
-                camera_info->set_height(this->camera->ViewportHeight());
-                camera_info->set_depth(this->camera->ImageDepth());
-		msg.set_allocated_camera_info(camera_info);
-
-		this->dataPtr->pub->Publish(msg);
-	}
     }
 
     void CameraUtils::OnNewFrame(
@@ -162,8 +161,8 @@ namespace gazebo {
 
             bool success = this->camera->SaveFrame(next_file_name);
 
-	    if(success) std::cout << "[CameraUtils] Saving frame as [" <<next_file_name << "]" << std::endl;
-	    else std::cout << "[CameraUtils] FAILED saving frame as [" <<next_file_name << "]" << std::endl;
+        if(success) std::cout << "[CameraUtils] Saving frame as [" <<next_file_name << "]" << std::endl;
+        else std::cout << "[CameraUtils] FAILED saving frame as [" <<next_file_name << "]" << std::endl;
 
             camera_utils::msgs::CameraUtilsResponse msg;
             msg.set_success(success);

@@ -210,20 +210,18 @@ namespace gazebo {
 
     } else if (type == REMOVE){
 
-        if(_msg->object_size() > 0)
+        if (_msg->object_size() > 0){
 
             for (int i = 0; i < _msg->object_size(); i++){
                 
                 if (_msg->object(i).has_name()){
                     // Clear specific objects
                     clearMatching(_msg->object(i).name());
-                } else {
-                    // Clear everything
-                    clearWorld();
                 }
             }
-        else
+        } else {
             clearWorld();
+        }
     } 
 
 

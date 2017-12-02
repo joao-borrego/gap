@@ -150,6 +150,7 @@ int main(int argc, char **argv)
     // Main program loop
     for (int i = start; i < scenes; i++){
 
+
         // Move camera
         camera_pose = getRandomCameraPose(camera_position);
         moveObject(pub_world, "custom_camera", camera_pose);
@@ -158,6 +159,7 @@ int main(int argc, char **argv)
         if (i == start) sleep(1);
 
         debugPrintTrace("Done moving camera to random position");
+
 
         // Number of objects to spawn
         num_objects = (getRandomInt(min_objects, max_objects));
@@ -201,6 +203,7 @@ int main(int argc, char **argv)
         }
 
         debugPrintTrace("Done waiting for 3D bounding boxes");
+
 
         // Get 2D projection of the defining 8 points of the 3D bounding box
         points_2d.clear();
@@ -249,8 +252,18 @@ int main(int argc, char **argv)
         }
         objects.clear();
 
-        debugPrintTrace("Done clearing the world");
+        debugPrintTrace("Done clearing random objects");
     }
+
+    // Clean up
+    std::vector<std::string> object_names;
+    // Every spawned object will match "_"
+    object_names.push_back("_");
+    clearWorld(pub_world, object_names);
+
+    sub_world.reset();
+    sub_camera.reset();
+    node->Fini();
 
     /* Shut down */
     #if GAZEBO_MAJOR_VERSION < 6
@@ -258,6 +271,8 @@ int main(int argc, char **argv)
     #else
     gazebo::client::shutdown();
     #endif
+
+    debugPrintTrace("All scenes generated sucessfully! Exiting...");
 
     return 0;
 }
@@ -445,7 +460,7 @@ void clearWorld(
 
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(REMOVE);
-    for (int i = 0; i<object_names.size();++i){
+    for (int i = 0; i < object_names.size();++i){
         world_utils::msgs::Object* object = msg.add_object();
         object->set_name(object_names[i]);
     }
@@ -502,7 +517,7 @@ void queryModelBoundingBox(
     
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(STATUS);
-    for (int i = 0;i<objects.size();++i){
+    for (int i = 0; i < objects.size(); i++){
         world_utils::msgs::BoundingBox* bounding_box = msg.add_bounding_box();
         bounding_box->set_name(objects[i].name);
     }
@@ -532,7 +547,7 @@ void query2DcameraPoint(
     
         for (BoundingBox3d::iterator it=ret.first; it!=ret.second; ++it){
 
-            // Generate all prossible combinations for center +- coordinate
+            // Generate all possible combinations for center +- coordinate
             for (int x = 1; x >= -1; x -= 2){
                 for (int y = 1; y >= -1; y -= 2){
                     for (int z = 1; z >= -1; z -= 2){

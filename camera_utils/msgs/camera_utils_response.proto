@@ -18,9 +18,9 @@ message CameraUtilsResponse
     }
 
     /** Type of request */
-    required Type               type            = 1;
+    optional Type               type            = 1;
     /** Success */
-    required bool               success         = 2;
+    optional bool               success         = 2;
     /* @brief Model name */
     optional string             name            = 3;
     /* @brief Bounding box */

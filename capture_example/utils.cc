@@ -6,7 +6,7 @@ const std::string getUsage(const char* argv_0){
         "options: -s number of scenes to generate\n"  +
         "         -i index of the first scene\n" +
         "         -m media directory\n" +
-        "         -d output dataset directory";
+        "         -d output dataset directory\n";
 }
 
 void parseArgs(

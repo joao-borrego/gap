@@ -7,7 +7,7 @@
 
     <link name="link">
 
-      <!--<collision name="collision">
+      <collision name="collision">
         <geometry>
           <plane>
             <normal>0 0 1</normal>
@@ -22,7 +22,7 @@
             </ode>
           </friction>
         </surface>
-      </collision>-->
+      </collision>
 
       <visual name="visual">
         <cast_shadows>false</cast_shadows>

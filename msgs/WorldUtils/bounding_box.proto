@@ -4,11 +4,10 @@ import "vector3d.proto";
 
 message BoundingBox
 {
-    /* @brief Type of request */
-    /* @brief Bounding box pose */
+    /* @brief Bounding box center */
     optional gazebo.msgs.Vector3d   bb_center       = 1;
     /* @brief Bounding box dimensions */
     optional gazebo.msgs.Vector3d   bb_size         = 2;
-
+    /* @brief Object name */
     optional string                 name            = 3;
 }

@@ -1,8 +1,8 @@
 package camera_utils.msgs;
 
-
 import "bounding_box_camera.proto";
 import "camera_info.proto";
+
 message CameraUtilsResponse
 {
     /** Type of request */
@@ -12,21 +12,21 @@ message CameraUtilsResponse
         /** Change output directory */
         DIR             = 2;
         /** From 3d to 2d camera point */
-        CAMERA_POINT         = 3;
+        CAMERA_POINT    = 3;
         /** Get camera info */
-        CAMERA_INFO         = 4;
+        CAMERA_INFO     = 4;
     }
 
     /** Type of request */
-    required Type   type        = 1;
+    optional Type               type            = 1;
     /** Success */
-    required bool success = 2;
+    optional bool               success         = 2;
     /* @brief Model name */
-    optional string                 name            = 3;
+    optional string             name            = 3;
     /* @brief Bounding box */
-    repeated BoundingBoxCamera            bounding_box       = 4;
+    repeated BoundingBoxCamera  bounding_box    = 4;
     /* @brief Camera Info */
-    optional CameraInfo            camera_info       = 5;
+    optional CameraInfo         camera_info     = 5;
 
 
 }

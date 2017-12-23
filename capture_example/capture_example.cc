@@ -1,15 +1,15 @@
 /**
  * @file capture_example.hh
- * 
+ *
  * @brief Example application using object spawner and camera plugins
- * 
- * This example spawns randomly generated objects and captures images from 
+ *
+ * This example spawns randomly generated objects and captures images from
  * a camera in a given position.
- * 
+ *
  * It requires that
  * - gazebo-utils/media folder is adequatly populated with different materials
  * - gazebo-utils/model folder has the custom_camera.sdf, custom_sun.sdf and custom_ground.sdf models
- * - output_dir exists 
+ * - output_dir exists
  *
  * @param[in]  _argc  The number of command-line arguments
  * @param      _argv  The argv The value of the command-line arguments
@@ -18,314 +18,248 @@
  */
 
 #include "capture_example.hh"
-#include <Eigen/Dense>
-#include <boost/filesystem.hpp>
 
-namespace fs = boost::filesystem;
+// Global variables
 
-double dRand(double fMin, double fMax)
-{
-    /* Initialize random device */
-    std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_int_distribution<int> dist;
-
-    double f = (double) dist(mt) / RAND_MAX;
-    return fMin + f * (fMax - fMin);
-}
-
-/** Protect access to object_count */
-std::mutex object_count_mutex;
-int object_count{0};
-/** Protect access to camera success */
-std::mutex camera_success_mutex;
-int camera_success{0};
-
-
-BoundingBox3d bbs_3d;
-BoundingBox2d points_2d;
-
+// Objects
 std::vector<Object> objects;
-std::vector<std::string> object_classes;
+// Object count on server
+int object_count{0};
+std::mutex object_count_mutex;
+// Camera ready
+bool camera_ready{false};
+std::mutex camera_ready_mutex;
+// 3D bounding boxes
+BoundingBox3d bbs_3d;
+std::mutex bounding_box_3d_mutex;
+// 2D projections of 3D points
+BoundingBox2d points_2d;
+std::mutex points_2d_mutex;
+
+// Grid
 std::vector<int> cells_array;
-
-int box_counter=0;
-int cylinder_counter=0;
-int sphere_counter=0;
-
-const double x_size=5.0;
-const double y_size=5.0;
-
+const double x_size = 5.0;
+const double y_size = 5.0;
 const unsigned int x_cells = 5;
 const unsigned int y_cells = 5;
+double cell_size_x = x_size / x_cells;
+double cell_size_y = y_size / y_cells;
 
-double grid_cell_size_x = x_size/x_cells;
-double grid_cell_size_y = y_size/y_cells;
-
-int min_objects = 5;
-int max_objects = 10;
-
-
+// Camera properties
 std::shared_ptr<CameraInfo> camera_info;
+
 int main(int argc, char **argv)
 {
+    // Command-line arguments
+    unsigned int scenes{0};
+    unsigned int start{0};
+    std::string media_dir;
+    std::string dataset_dir;
 
-    /* TODO - Process options */
-    if (argc < 4)
-    {
-        std::cout << "invalid number of arguments"<< std::endl;
-        exit(-1);
-    }
+    // Aux variables
 
-    std::string media_dir = std::string(argv[1]);
-    unsigned int scenes = atoi(argv[2]);
-    std::string dataset_dir = std::string(argv[3]);
-	
-    /* Create folder for storing training data */
-    boost::filesystem::path traindir(dataset_dir);
-    if(boost::filesystem::create_directory(traindir)) {
-	std::cout << "Successfuly created train directory:" << traindir << std::endl;
-    }
+    // Vector of texture filenames
+    std::string materials_dir;
+    std::string scripts_dir;
+    std::vector<std::string> textures;
+    // Camera pose
+    ignition::math::Pose3d camera_pose;
+    ignition::math::Vector3d camera_position(0, 0, 5.0);
+    // Msg for initial objects
+    world_utils::msgs::WorldUtilsRequest msg_basic_objects;
+    // Random objects
+    int num_objects{0};
+    int min_objects{5}, max_objects{10};
 
+    // Parse command-line args
+    parseArgs(argc, argv, scenes, start, media_dir, dataset_dir);
 
-    std::string materials_dir   = media_dir + "/materials";
-    std::string scripts_dir     = media_dir + "/materials/scripts";
+    // Create folder for storing output folder
+    createDirectory(dataset_dir);
 
-    /* Initialize random device */
-    std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_int_distribution<int> dist;
+    // Create a vector with the name of every texture in the textures dir
+    materials_dir = media_dir + "/materials";
+    scripts_dir = materials_dir + "/scripts";
+    getFilenamesInDir(scripts_dir, textures);
 
-    /* Load gazebo as a client */
+    // Load gazebo as a client
     #if GAZEBO_MAJOR_VERSION < 6
     gazebo::setupClient(argc, argv);
     #else
     gazebo::client::setup(argc, argv);
     #endif
 
-    /* Create the communication node */
+    // Optional verification for Google Protocol Buffers version
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+    // Create the communication node
     gazebo::transport::NodePtr node(new gazebo::transport::Node());
     node->Init();
 
-    /* Publish to the object spawner request topic */
+    // Publish to the object spawner request topic
     gazebo::transport::PublisherPtr pub_world =
         node->Advertise<world_utils::msgs::WorldUtilsRequest>(WORLD_UTILS_TOPIC);
-
-    /* Subscribe to the object spawner reply topic and link callback function */
+    // Subscribe to the object spawner reply topic and link callback function
     gazebo::transport::SubscriberPtr sub_world =
         node->Subscribe(WORLD_UTILS_RESPONSE_TOPIC, onWorldUtilsResponse);
-
-    /* Publish to the camera topic */
+    // Publish to the camera topic
     gazebo::transport::PublisherPtr pub_camera =
         node->Advertise<camera_utils::msgs::CameraUtilsRequest>(CAMERA_UTILS_TOPIC);
-
-     /* Subscribe to the camera utils reply topic and link callback function */
+    // Subscribe to the camera utils reply topic and link callback function
     gazebo::transport::SubscriberPtr sub_camera =
         node->Subscribe(CAMERA_UTILS_RESPONSE_TOPIC, onCameraUtilsResponse);
 
-    /* Wait for a subscriber to connect */
+    // Wait for the WorldUtils plugin to launch */
     pub_world->WaitForConnection();
 
-    /* Create a vector with the name of every texture in the textures dir */
-    std::vector<std::string> textures;
-    for (auto &p : fs::directory_iterator(scripts_dir)){
-        std::string aux(fs::basename(p));
-        textures.push_back(aux.c_str());
-    }
+    // Generate a random camera pose
+    camera_pose = getRandomCameraPose(camera_position);
 
-    /* Auxiliary variables */
-    ignition::math::Pose3d camera_pose;
-    ignition::math::Vector3d camera_position(0, 0, 5.0);
-    camera_pose=getRandomCameraPose(camera_position);
-
-    /* Ensure no objects are spawned on the server */
-    std::cout <<"clean" << std::endl;
-    clearWorld(pub_world);
-    //clearWorld(pub_world,"plugin");
-    while (waitForSpawner(0)){
-        usleep(10000);
-        queryModelCount(pub_world);
-    }
-    usleep(100000);
-
-    world_utils::msgs::WorldUtilsRequest msg_basic_objects;
+    // Spawn light source and camera
     msg_basic_objects.set_type(SPAWN);
-    spawnModelFromFile(msg_basic_objects, "models/custom_sun.sdf", true, false, false, textures);
-    spawnModelFromFile(msg_basic_objects, "models/custom_camera.sdf", false, true, false, textures,  camera_pose.Pos(), camera_pose.Rot());
+    addModelToMsg(msg_basic_objects, objects, "models/custom_sun.sdf",
+        true, false, false, 0, 0, textures);
+    addModelToMsg(msg_basic_objects, objects, "models/custom_camera.sdf",
+        false, false, false, 0, 0, textures);
     pub_world->Publish(msg_basic_objects);
 
+    // Wait for CameraUtils plugin to launch and models to spawn
     pub_camera->WaitForConnection();
-    
     while (waitForSpawner(1)){
-      usleep(10000);
-      queryModelCount(pub_world);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        queryModelCount(pub_world);
     }
 
-    /* Create cell grid */
-
-    for (int i = 0;  i < x_cells * y_cells; ++i){
-      cells_array.push_back(i);
+    // Create cell grid
+    for (int i = 0;  i < x_cells * y_cells; i++){
+        cells_array.push_back(i);
     }
-    
-    /* Disable physics */
+
+    // Disable world physics
     changePhysics(pub_world, false);
 
-    std::cout << "Query camera parameters" << std::endl; 
+    // Query camera parameters
+    debugPrintTrace("Query camera parameters");
     queryCameraParameters(pub_camera);
     while (waitForCamera()){
-       usleep(10000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-    std::cout << "Done" << std::endl; 
-    /* Main loop */
-    for (int i = 468; i < scenes; i++){
+
+    debugPrintTrace("Initialisation complete");
+
+    // Main program loop
+    for (int i = start; i < scenes; i++){
 
 
-        /* Random object number */
-        int num_objects = (dist(mt) % max_objects) + min_objects;
+        // Number of objects to spawn
+        num_objects = (getRandomInt(min_objects, max_objects));
+        debugPrintTrace("Scene (" << i + 1 << "/" << scenes << "): " << num_objects << " objects");
 
-        /* DEBUG */
-        std::cout << "Scene " << i << " - Number of objects:" << num_objects << std::endl;
-        
-	/*while (pub_world->GetOutgoingCount()>0){
-		usleep(10000);
-	}*/
+        // Move camera
+        camera_pose = getRandomCameraPose(camera_position);
+        moveObject(pub_world, "custom_camera", camera_pose);
+        debugPrintTrace("Done moving camera to random position");
+        std::cout << "\t(" << camera_pose << ")\n";
 
-        /* Spawn ground + random objects */
-	std::cout << "spawn objects" << std::endl;
+        // Spawn ground and random objects
         world_utils::msgs::WorldUtilsRequest msg_random_objects;
         msg_random_objects.set_type(SPAWN);
-        spawnModelFromFile(msg_random_objects, "models/custom_ground.sdf", false, false, true, textures);
-	objects.clear();
-	spawnRandomObject(msg_random_objects, textures, grid_cell_size_x, grid_cell_size_y, num_objects, objects);
+        // Ground
+        addModelToMsg(msg_random_objects, objects, "models/custom_ground.sdf",
+            false, false, true, 0, 0, textures);
+        // Random objects
+        shuffleIntVector(cells_array);
+        for (int j = 0; j < num_objects; j++){
+            int cell_num = cells_array[j];
+            int cell_x = floor(cell_num / x_cells);
+            int cell_y = floor(cell_num - cell_x * x_cells);
+            addModelToMsg(msg_random_objects, objects, "",
+                false, true, true, cell_x, cell_y, textures);
+        }
+        // TODO - Random lights
         pub_world->Publish(msg_random_objects);
-        
-	while (waitForSpawner(num_objects + 2)){
-            usleep(10000);
+
+        // Wait for object count to match object number + camera + ground
+        while (waitForSpawner(num_objects + 2)){
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             queryModelCount(pub_world);
         }
 
-	while (pub_world->GetOutgoingCount()>0){
-	    usleep(10000);
-	}
-	sleep(1.0);
-	std::cout << "done" << std::endl; 
+        // Wait for all messages to be sent
+        while (pub_world->GetOutgoingCount() > 0){
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
 
-        /* Capture the scene and save it to a file */
-	std::cout << "capture scene" << std::endl;
+        // Get 3D bounding boxes from WorldUtils 
+        bbs_3d.clear();
+        queryModelBoundingBox(pub_world, objects);
+        while (waitForBoundingBox(num_objects)){
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+
+        debugPrintTrace("Done waiting for 3D bounding boxes");
+
+
+        // Get 2D projection of the defining 8 points of the 3D bounding box
+        points_2d.clear();
+        query2DcameraPoint(pub_camera, objects);
+        
+        while (waitFor2DPoints(8 * num_objects)){
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+
+        debugPrintTrace("Done waiting for 2D point projections");
+
+        // Obtain 2D bounding boxes
+        std::vector<cv::Rect> bound_rect(num_objects);
+        obtain2DBoundingBoxes(objects, bound_rect);
+
+        debugPrintTrace("Done calculating 2D bounding boxes");
+        
+        // Save annotations to a file
+        storeAnnotations(objects, camera_pose, dataset_dir,
+            std::to_string(i)+".xml", std::to_string(i) + ".jpg");
+
+        debugPrintTrace("Done saving annotations");
+
+        // Capture the scene and save it to a file
         captureScene(pub_camera, i);
         while (waitForCamera()){
-
-            usleep(10000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
-	std::cout << "done" << std::endl;
+        
+        debugPrintTrace("Done waiting for camera to capture scene");
 
-        /* Get 3d bounding boxes */
-	std::cout << "getting 3d bounding boxes..." << std::endl;
-        bbs_3d.clear();
-	queryModelBoundingBox(pub_world, objects);
-	if(bbs_3d.size()!=num_objects)
-	{
-		while (bbs_3d.size()!=num_objects){
-		    usleep(10000);
-		}
-	}
-	std::cout << "done" << std::endl;
+        /*
+        // Visualize data
+        visualizeData("/tmp/camera_utils_output/", std::to_string(i),
+            num_objects, points_2d, bound_rect);
+        */
 
-	/* Get 2D image points given 3d bounding box (8 3d points) */
-	std::cout << "getting 2d bounding boxes..." << std::endl;
-	points_2d.clear();
-	query2DcameraPoint(pub_camera,objects);
-	if(points_2d.size()!=8*num_objects)
-	{
-		while (points_2d.size()<num_objects){
-		    usleep(10000);
-		}
-	}
-	std::cout << "done" << std::endl;
-
-	/* Get bounding boxes */
-	std::vector<cv::Rect> boundRect( num_objects );
-
-	for(int j=0;j<num_objects;++j)
-	{
-		std::pair <BoundingBox2d::iterator, BoundingBox2d::iterator> ret;
-		ret = points_2d.equal_range(objects[j].name);
-		std::vector<cv::Point> contours_poly( 8 );
-		int p=0;
-
-		for (std::multimap<std::string,ignition::math::Vector2d>::iterator it=ret.first; it!=ret.second; ++it)
-		{	
-			contours_poly[p++]=cv::Point(it->second.X(),it->second.Y());
-		}
-
-       		boundRect[j]=cv::boundingRect( cv::Mat(contours_poly) );
-
-		objects[j].bounding_box=boundRect[j];
-	}
-
-
-	/* Save annotations */
-	std::cout << "save annotations" << std::endl;
-	storeAnnotations(objects, dataset_dir, std::to_string(i)+".xml",std::to_string(i)+".jpg");
-
-	/* Visualize data */
-	/*cv::Mat image;
-	image = cv::imread("/tmp/camera_utils_output/"+std::to_string(i)+".png", CV_LOAD_IMAGE_COLOR);   // Read the file
-
-	if(! image.data )                              // Check for invalid input
-	{
-           std::cout <<  "Could not open or find the image" << std::endl ;
-           return -1;
-	}
-
-	for(int j=0;j<num_objects;++j)
-	{
-		std::pair <BoundingBox2d::iterator, BoundingBox2d::iterator> ret;
-		ret = points_2d.equal_range(objects[j].name);
-
-		for (std::multimap<std::string,ignition::math::Vector2d>::iterator it=ret.first; it!=ret.second; ++it)
-		{
-
-			cv::circle(image, cv::Point(it->second.X(),it->second.Y()), 5, cv::Scalar(255,0,1));
-		}
-       		rectangle( image, boundRect[j].tl(), boundRect[j].br(), cv::Scalar(255,0,1), 2, 8, 0 );
-	}
-	cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
-	cv::imshow( "Display window", image );                   // Show our image inside it.
-	cv::waitKey(1000);                                          // Wait for a keystroke in the window*/
-
-	/* Clear the world */
-	std::vector<std::string> object_names;
-	object_names.push_back("plugin_ground_plane");
-	for(int j=0; j < num_objects;++j)
-	{
-		object_names.push_back(objects[j].name);
-
-	}
-
-        std::cout <<"clean" << std::endl;
-	clearWorld(pub_world, object_names);
+        // Clear world - removes objects matching "plugin" prefix
+        std::vector<std::string> object_names;
+        object_names.push_back("plugin");
+        clearWorld(pub_world, object_names);
 
         while (waitForSpawner(1)){
-            usleep(10000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             queryModelCount(pub_world);
-        }//*/
+        }
+        objects.clear();
 
-
-        // TODO - Move camera and light source
-
-
-	camera_pose=getRandomCameraPose(camera_position);
-
-	world_utils::msgs::WorldUtilsRequest msg_move_basic_objects;
-	msg_move_basic_objects.set_type(MOVE);
-	//spawnModelFromFile(msg_move_basic_objects, "models/custom_sun.sdf", true, false, false, textures);
-	std::string camera_name="custom_camera";
-	spawnModelFromFile(msg_move_basic_objects, "models/custom_camera.sdf", false, true, false, textures,  camera_pose.Pos(), camera_pose.Rot(),camera_name);
-
-	pub_world->Publish(msg_move_basic_objects);
-
+        debugPrintTrace("Done clearing random objects");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    // Clean up
+    std::vector<std::string> object_names;
+    // Every spawned object will match "_"
+    object_names.push_back("_");
+    clearWorld(pub_world, object_names);
+
+    sub_world.reset();
+    sub_camera.reset();
+    node->Fini();
 
     /* Shut down */
     #if GAZEBO_MAJOR_VERSION < 6
@@ -334,230 +268,196 @@ int main(int argc, char **argv)
     gazebo::client::shutdown();
     #endif
 
+    debugPrintTrace("All scenes generated sucessfully! Exiting...");
+
     return 0;
 }
 
 
 ignition::math::Pose3d getRandomCameraPose(const ignition::math::Vector3d & camera_position) {
 
-        static const ignition::math::Quaternion<double> correct_orientation(ignition::math::Vector3d(0,1,0), -M_PI / 2.0);
-	ignition::math::Quaternion<double> camera_orientation(dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0),dRand(0,M_PI / 2.0)); 
+    static const ignition::math::Quaternion<double> correct_orientation(
+        ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
+ 
+    ignition::math::Quaternion<double> camera_orientation(
+        getRandomDouble(0, M_PI / 3.0),
+        getRandomDouble(0, M_PI / 3.0),
+        getRandomDouble(0, M_PI / 3.0));
+    //ignition::math::Quaternion<double> camera_orientation(0,0,0);
 
-        ignition::math::Pose3d camera_pose;
-	camera_pose.Set (camera_position, (correct_orientation*camera_orientation).Inverse());//CoordPositionAdd(camera_position);
-	camera_pose=camera_pose.RotatePositionAboutOrigin(camera_orientation);
+    ignition::math::Pose3d camera_pose;
+    camera_pose.Set(
+        camera_position,
+        (correct_orientation*camera_orientation).Inverse());
+    camera_pose=camera_pose.RotatePositionAboutOrigin(camera_orientation);
 
-	return camera_pose;
+    return camera_pose;
 }
 
-void spawnModelFromFile(
+void addModelToMsg(
     world_utils::msgs::WorldUtilsRequest & msg,
-    const std::string model_path,
+    std::vector<Object> & objects,
+    const std::string & model_path,
     const bool is_light,
-    const bool use_custom_pose,
+    const bool is_random,
     const bool use_custom_textures,
-    std::vector<std::string> textures,
-    const ignition::math::Vector3d & position,
-    const ignition::math::Quaternion<double> & orientation,
-    const std::string &name
-    ){
-
-    /* Read model sdf string from file */
-    std::ifstream infile {model_path};
-    std::string model_sdf { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
+    const int cell_x,
+    const int cell_y,
+    std::vector<std::string> & textures){
     
-    //world_utils::msgs::WorldUtilsRequest msg;
+    world_utils::msgs::Object *object = msg.add_object();
 
-    world_utils::msgs::Object* object = msg.add_object();
-    if (is_light){
-        object->set_model_type(CUSTOM_LIGHT);
+    // Handle model type
+    if (! is_random){
+        
+        // Load sdf model from file
+        std::ifstream infile {model_path};
+        std::string model_sdf { 
+            std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
+        
+        if (is_light){
+            object->set_model_type(CUSTOM_LIGHT);
+        } else {
+            object->set_model_type(CUSTOM);
+        }
+        object->set_sdf(model_sdf);
+    
     } else {
-        object->set_model_type(CUSTOM);
-    }
-    object->set_sdf(model_sdf);
 
-    if (use_custom_pose){
-        gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d(gazebo::msgs::Convert(position));
-        gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion(gazebo::msgs::Convert(orientation));
-        gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
-        pose->set_allocated_position(pos);
-        pose->set_allocated_orientation(ori);
-        object->set_allocated_pose(pose);
+        // Generate random object from possible types
+        genRandomObjectInGrid(objects, object, cell_x, cell_y);
     }
 
+    // Apply custom texture pattern
     if (use_custom_textures){
-        /* Initialize random device */
-        std::random_device rd;
-        std::mt19937 mt(rd());
-        std::uniform_int_distribution<int> dist;
-        int j=dist(mt) % textures.size();
 
-        std::string texture = textures.at(j);
+        int texture_idx  = getRandomInt(0, textures.size() - 1);
+        std::string texture = textures.at(texture_idx);
         std::stringstream texture_uri;
         std::stringstream texture_name;
 
         texture_uri << "file://materials/scripts/" << texture << ".material"
-        << "</uri><uri>file://materials/textures/";
+            << "</uri><uri>file://materials/textures/";
         texture_name << "Plugin/" << texture;
 
         object->set_texture_uri(texture_uri.str());
         object->set_texture_name(texture_name.str());
     }
-
-    if(!name.empty())
-    {
-        object->set_name(name);
-    }
 }
 
-void spawnRandomObject(
-    world_utils::msgs::WorldUtilsRequest & msg,
-    std::vector<std::string> textures,
-    double & grid_cell_size_x,
-    double & grid_cell_size_y,
-    int & num_objects,
-    std::vector<Object> & objects){
+void genRandomObjectInGrid(
+    std::vector<Object> & objects,
+    world_utils::msgs::Object *object,
+    const int cell_x,
+    const int cell_y){
 
-    /* Initialize random device */
-    std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_int_distribution<int> dist;
+    // Variables
+    gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
+    gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
+    gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
+    ignition::math::Quaternion<double> object_orientation;
+    double radius{0.0}, length{0.0};
+    double size_x{0.0}, size_y{0.0}, size_z{0.0};
 
-    msg.set_type(SPAWN);
+    int object_type = getRandomInt(0, 2);
+    object->set_model_type(classes_id[object_type]);
+    std::string object_name = class_instance_names[object_type] + 
+        std::to_string((class_instance_counters[object_type])++);
+    object->set_name(object_name);
 
-    std::mt19937 g(rd());
-    std::shuffle(cells_array.begin(), cells_array.end(), g);
- 
-	
-    for(int i=0; i<num_objects;++i)
-    {
-            unsigned int x_cell = floor(cells_array[i] / x_cells);
-            unsigned int y_cell = floor(cells_array[i] - x_cell * x_cells);
-	    std::string object_name;
-	    int object_type=dist(mt) % 3;
+    // Mass
+    object->set_mass(1);
 
-	    world_utils::msgs::Object* object = msg.add_object();
-	    if (object_type == CYLINDER_ID){
-		object->set_model_type(CYLINDER);
-		object_name="plugin_cylinder_"+std::to_string(cylinder_counter++);
-		object->set_name(object_name);
-	    }
-	    else if(object_type == BOX_ID){
-		object->set_model_type(BOX);
-		object_name="plugin_box_"+std::to_string(box_counter++);
-		object->set_name(object_name);
-	    }
-	    else if(object_type == SPHERE_ID){
-		object->set_model_type(SPHERE);
-		object_name="plugin_sphere_"+std::to_string(sphere_counter++);
-		object->set_name(object_name);
-	    }
+    // Orientation
+    bool horizontal = (getRandomDouble(0.0, 1.0) < 0.5);
+    if (horizontal && object_type == cylinder){
+        object_orientation = ignition::math::Quaternion<double> (
+            0.0, M_PI * 0.5, getRandomDouble(0.0, M_PI));
+    } else {
+        object_orientation = ignition::math::Quaternion<double> (
+            0.0, 0.0, getRandomDouble(0.0, M_PI));
+    }
+    gazebo::msgs::Set(ori, object_orientation);
+    pose->set_allocated_orientation(ori);
 
-	    /* External optional fields have to be allocated */
-	    gazebo::msgs::Vector3d *pos = new gazebo::msgs::Vector3d();
-	    gazebo::msgs::Quaternion *ori = new gazebo::msgs::Quaternion();
-	    gazebo::msgs::Pose *pose = new gazebo::msgs::Pose();
-	    gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
+    // Dimensions
+    if (object_type == sphere || object_type == cylinder){
     
-	    /* Mass */
-	    object->set_mass(dist(mt) % 5 + 1.0);
-	    
-            /* Sphere/cylinder radius */
-	    double radius=dRand(0.1, std::min(grid_cell_size_x,grid_cell_size_y) * 0.5);
-	    object->set_radius(radius);
+        // Radius
+        radius = getRandomDouble(0.1,
+            std::min(cell_size_x, cell_size_y) * 0.5);
+        object->set_radius(radius);
 
+        // Cylinder length
+        if (object_type == cylinder){
+            if (horizontal){
+                length = getRandomDouble(0.1, std::min(cell_size_x, cell_size_y) * 0.5);
+            } else {
+                length = getRandomDouble(0.5, 1.0);    
+            }
+            object->set_length(length);
+        }
+    
+    } else if (object_type == box){
 
-	    
-	    /* Cylinder/Sphere length */
-	    //object->set_length(z_length);
+        gazebo::msgs::Vector3d *size = new gazebo::msgs::Vector3d();
 
-	    /* Pose */
-	    ignition::math::Quaternion<double> object_orientation;
+        // TODO fix collisions - Box size
+        size_x = getRandomDouble(cell_size_x * 0.1, cell_size_x);
+        size_y = getRandomDouble(cell_size_y * 0.1, cell_size_y);
+        size_z = getRandomDouble(0.5, 1.0);
 
-	    if (dRand(0.0, 1.0) < 0.5){
-		// Horizontal
-
-	        double x_length(dRand(0.5, 1.0));
-	        double y_length(dRand(grid_cell_size_y*0.1, grid_cell_size_y));    
-	        double z_length(dRand(grid_cell_size_x*0.1, grid_cell_size_x));
-
-	        size->set_x(x_length);
-	        size->set_y(y_length);
-	        size->set_z(z_length);
-
-		object_orientation=ignition::math::Quaternion<double> (0.0, M_PI*0.5, dRand(0.0,M_PI));
-
-		if(object_type == CYLINDER_ID || object_type == SPHERE_ID ) {
-		   pos->set_z(radius);
-	        }
-	        else if(object_type == BOX_ID)
-		   pos->set_z(x_length*0.5); // height is radius
-	    }
-            else 
-            {
-	        // Vertical
-	        double x_length(dRand(grid_cell_size_x*0.1, grid_cell_size_x));
-	        double y_length(dRand(grid_cell_size_y*0.1, grid_cell_size_y));    
-	        double z_length(dRand(0.5, 1.0));
-
-	        size->set_x(x_length);
-	        size->set_y(y_length);
-	        size->set_z(z_length);
-
-	        double roll = dRand(0.0,M_PI);
-	        double pitch = dRand(0.0,M_PI);
-
-	        object_orientation=ignition::math::Quaternion<double> (0.0, 0.0, 0.0);
-	        pos->set_z(z_length*0.5);
- 	        if(object_type == CYLINDER_ID || object_type == SPHERE_ID) {
-		    pos->set_z(radius);
-	        }
-	    }
-
-	    pos->set_x(x_cell * grid_cell_size_x + 0.5 * grid_cell_size_x - x_cells * 0.5 * grid_cell_size_x);
-	    pos->set_y(y_cell * grid_cell_size_y + 0.5 * grid_cell_size_y - y_cells * 0.5 * grid_cell_size_y);
-
-	    ori=new gazebo::msgs::Quaternion(gazebo::msgs::Convert(object_orientation));
-
-	    /* Material script */
-	    int j = dist(mt) % textures.size();
-
-	    std::string texture = textures.at(j);
-	    std::stringstream texture_uri;
-	    std::stringstream texture_name;
-
-	    texture_uri << "file://materials/scripts/" << texture << ".material"
-	    << "</uri><uri>file://materials/textures/";
-	    texture_name << "Plugin/" << texture;
-
-	    object->set_texture_uri(texture_uri.str());
-	    object->set_texture_name(texture_name.str());
-
-	    /* Associate dynamic fields */
-	    pose->set_allocated_position(pos);
-	    pose->set_allocated_orientation(ori);
-	    object->set_allocated_pose(pose);
-	    object->set_allocated_box_size(size);
-
-            objects.push_back( Object(object_name,object_type));
+        size->set_x(size_x);
+        size->set_y(size_y);
+        size->set_z(size_z);
+        object->set_allocated_box_size(size);
     }
 
+    // Position
+    pos->set_x(cell_x * cell_size_x + 0.5 * cell_size_x - x_cells * 0.5 * cell_size_x);
+    pos->set_y(cell_y * cell_size_y + 0.5 * cell_size_y - y_cells * 0.5 * cell_size_y);
+    
+    if (object_type == sphere || object_type == cylinder){
 
+        pos->set_z(radius);
+
+    } else if (object_type == box){
+        
+        pos->set_z(size_z * 0.5);
+    }
+    pose->set_allocated_position(pos);
+
+    // Pose
+    object->set_allocated_pose(pose);
+
+    objects.push_back( Object(object_name, object_type, gazebo::msgs::ConvertIgn(*pose)));
 }
 
+void moveObject(
+    gazebo::transport::PublisherPtr pub,
+    const std::string &name,
+    const ignition::math::Pose3d &pose){
 
+    world_utils::msgs::WorldUtilsRequest msg;
+    msg.set_type(MOVE);
+    world_utils::msgs::Object *object = msg.add_object();
+    object->set_name(name);
 
+    gazebo::msgs::Pose *pose_msg = new gazebo::msgs::Pose();
+    gazebo::msgs::Set(pose_msg, pose);
+    object->set_allocated_pose(pose_msg);
+    pub->Publish(msg);
+}
 
-void clearWorld(gazebo::transport::PublisherPtr pub, std::vector<std::string> object_names){
+void clearWorld(
+    gazebo::transport::PublisherPtr pub,
+    std::vector<std::string> &object_names){
 
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(REMOVE);
-    // Only remove models that match the string (exclude custom_camera)
-
-    for(int i(0); i<object_names.size();++i)
-    {
+    for (int i = 0; i < object_names.size();++i){
         world_utils::msgs::Object* object = msg.add_object();
- 	object->set_name(object_names[i]);
+        object->set_name(object_names[i]);
     }
     pub->Publish(msg);
 }
@@ -576,7 +476,6 @@ void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable){
     pub->Publish(msg);
 }
 
-
 void captureScene(gazebo::transport::PublisherPtr pub, int j){
     camera_utils::msgs::CameraUtilsRequest msg;
     msg.set_type(CAPTURE_REQUEST);
@@ -590,144 +489,110 @@ void queryCameraParameters(gazebo::transport::PublisherPtr pub){
     pub->Publish(msg,false);
 }
 
-
-/* Handle object count */
+// Handle model count
 
 bool waitForSpawner(int desired_objects){
+    
     std::lock_guard<std::mutex> lock(object_count_mutex);
-
-    if (desired_objects == object_count)
-        return false;
-    return true;
+    return (desired_objects != object_count);
 }
 
 void queryModelCount(gazebo::transport::PublisherPtr pub){
+    
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(STATUS);
     pub->Publish(msg,false);
 }
 
+// Handle 3d bounding boxes
+
 void queryModelBoundingBox(
     gazebo::transport::PublisherPtr pub,
     const std::vector<Object> & objects){
+    
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(STATUS);
-    for(int i(0);i<objects.size();++i)
-    {
-   		world_utils::msgs::BoundingBox* bounding_box = msg.add_bounding_box();
-                bounding_box->set_name(objects[i].name);
+    for (int i = 0; i < objects.size(); i++){
+        world_utils::msgs::BoundingBox* bounding_box = msg.add_bounding_box();
+        bounding_box->set_name(objects[i].name);
     }
 
     pub->Publish(msg,false);
 }
 
+bool waitForBoundingBox(int desired_objects){
+
+    std::lock_guard<std::mutex> lock(bounding_box_3d_mutex);
+    return (bbs_3d.size() != desired_objects);
+}
+
+// Handle 2d point projections
+
 void query2DcameraPoint(
     gazebo::transport::PublisherPtr pub,
-    const std::vector<Object> & objects
-   ){
-    	camera_utils::msgs::CameraUtilsRequest msg;
-    	msg.set_type(CAMERA_POINT_REQUEST);
+    const std::vector<Object> &objects){
 
-	for(int j=0;j<objects.size();++j)
-	{
-		std::pair <BoundingBox3d::iterator, BoundingBox3d::iterator> ret;
-		ret = bbs_3d.equal_range(objects[j].name);
+    camera_utils::msgs::CameraUtilsRequest msg;
+    msg.set_type(CAMERA_POINT_REQUEST);
 
-		for (BoundingBox3d::iterator it=ret.first; it!=ret.second; ++it)
-		{
+    for (int i = 0; i < objects.size(); i++){
 
-			ignition::math::Vector3d point_1=it->second.center; point_1.X()+=it->second.size.X()*0.5; point_1.Y()+=it->second.size.Y()*0.5; point_1.Z()+=it->second.size.Z()*0.5;
-			ignition::math::Vector3d point_2=it->second.center; point_2.X()+=it->second.size.X()*0.5; point_2.Y()+=it->second.size.Y()*0.5; point_2.Z()-=it->second.size.Z()*0.5;
-			ignition::math::Vector3d point_3=it->second.center; point_3.X()+=it->second.size.X()*0.5; point_3.Y()-=it->second.size.Y()*0.5; point_3.Z()+=it->second.size.Z()*0.5;
-			ignition::math::Vector3d point_4=it->second.center; point_4.X()+=it->second.size.X()*0.5; point_4.Y()-=it->second.size.Y()*0.5; point_4.Z()-=it->second.size.Z()*0.5;
-			ignition::math::Vector3d point_5=it->second.center; point_5.X()-=it->second.size.X()*0.5; point_5.Y()+=it->second.size.Y()*0.5; point_5.Z()+=it->second.size.Z()*0.5;
-			ignition::math::Vector3d point_6=it->second.center; point_6.X()-=it->second.size.X()*0.5; point_6.Y()+=it->second.size.Y()*0.5; point_6.Z()-=it->second.size.Z()*0.5;
-			ignition::math::Vector3d point_7=it->second.center; point_7.X()-=it->second.size.X()*0.5; point_7.Y()-=it->second.size.Y()*0.5; point_7.Z()+=it->second.size.Z()*0.5;
-			ignition::math::Vector3d point_8=it->second.center; point_8.X()-=it->second.size.X()*0.5; point_8.Y()-=it->second.size.Y()*0.5; point_8.Z()-=it->second.size.Z()*0.5;
+        std::pair <BoundingBox3d::iterator, BoundingBox3d::iterator> ret;
+        ret = bbs_3d.equal_range(objects[i].name);
+    
+        for (BoundingBox3d::iterator it=ret.first; it!=ret.second; ++it){
 
-			/* point 1 */
-			gazebo::msgs::Vector3d *point_msg_1 = new gazebo::msgs::Vector3d();
-			point_msg_1->set_x(point_1.X());
-			point_msg_1->set_y(point_1.Y());
-			point_msg_1->set_z(point_1.Z());
+            // Generate all possible combinations for center +- coordinate
+            for (int x = 1; x >= -1; x -= 2){
+                for (int y = 1; y >= -1; y -= 2){
+                    for (int z = 1; z >= -1; z -= 2){
 
-	    		camera_utils::msgs::BoundingBoxCamera* bounding_box_1 = msg.add_bounding_box();
-			bounding_box_1->set_name(objects[j].name);
-			bounding_box_1->set_allocated_point3d(point_msg_1);
+                        ignition::math::Vector3d point = it->second.center;
+                        point.X() += x * it->second.size.X() / 2.0;
+                        point.Y() += y * it->second.size.Y() / 2.0;
+                        point.Z() += z * it->second.size.Z() / 2.0;
 
-			/* point 2 */
-			gazebo::msgs::Vector3d *point_msg_2 = new gazebo::msgs::Vector3d();
-			point_msg_2->set_x(point_2.X());
-			point_msg_2->set_y(point_2.Y());
-			point_msg_2->set_z(point_2.Z());
+                        gazebo::msgs::Vector3d *point_msg = new gazebo::msgs::Vector3d();
+                        point_msg->set_x(point.X());
+                        point_msg->set_y(point.Y());
+                        point_msg->set_z(point.Z());
 
-	    		camera_utils::msgs::BoundingBoxCamera* bounding_box_2 = msg.add_bounding_box();
-			bounding_box_2->set_name(objects[j].name);
-			bounding_box_2->set_allocated_point3d(point_msg_2);
+                        camera_utils::msgs::BoundingBoxCamera *bounding_box = 
+                            msg.add_bounding_box();
+                        bounding_box->set_name(objects[i].name);
+                        bounding_box->set_allocated_point3d(point_msg);
+                    }
+                }
+            }
+        }
+    }
+    pub->Publish(msg,false);
+}
 
-			/* point 3 */
-			gazebo::msgs::Vector3d *point_msg_3 = new gazebo::msgs::Vector3d();
-			point_msg_3->set_x(point_3.X());
-			point_msg_3->set_y(point_3.Y());
-			point_msg_3->set_z(point_3.Z());
+bool waitFor2DPoints(int desired_points){
 
-	    		camera_utils::msgs::BoundingBoxCamera* bounding_box_3 = msg.add_bounding_box();
-			bounding_box_3->set_name(objects[j].name);
-			bounding_box_3->set_allocated_point3d(point_msg_3);
+    std::lock_guard<std::mutex> lock(points_2d_mutex);
+    return (points_2d.size() != desired_points);
+}
 
-			/* point 4 */
-			gazebo::msgs::Vector3d *point_msg_4 = new gazebo::msgs::Vector3d();
-			point_msg_4->set_x(point_4.X());
-			point_msg_4->set_y(point_4.Y());
-			point_msg_4->set_z(point_4.Z());
+void obtain2DBoundingBoxes(
+    std::vector<Object> &objects,
+    std::vector<cv::Rect> &bounding_rectangles){
 
-	    		camera_utils::msgs::BoundingBoxCamera* bounding_box_4 = msg.add_bounding_box();
-			bounding_box_4->set_name(objects[j].name);
-			bounding_box_4->set_allocated_point3d(point_msg_4);
+    for (int i = 0; i < objects.size(); i++){
 
-			/* point 5 */
-			gazebo::msgs::Vector3d *point_msg_5 = new gazebo::msgs::Vector3d();
-			point_msg_5->set_x(point_5.X());
-			point_msg_5->set_y(point_5.Y());
-			point_msg_5->set_z(point_5.Z());
+        std::pair <BoundingBox2d::iterator, BoundingBox2d::iterator> ret;
+        ret = points_2d.equal_range(objects[i].name);
+        std::vector<cv::Point> contours_poly(8);
+        int p = 0;
 
-	    		camera_utils::msgs::BoundingBoxCamera* bounding_box_5 = msg.add_bounding_box();
-			bounding_box_5->set_name(objects[j].name);
-			bounding_box_5->set_allocated_point3d(point_msg_5);
-
-			/* point 6 */
-			gazebo::msgs::Vector3d *point_msg_6 = new gazebo::msgs::Vector3d();
-			point_msg_6->set_x(point_6.X());
-			point_msg_6->set_y(point_6.Y());
-			point_msg_6->set_z(point_6.Z());
-
-	    		camera_utils::msgs::BoundingBoxCamera* bounding_box_6 = msg.add_bounding_box();
-			bounding_box_6->set_name(objects[j].name);
-			bounding_box_6->set_allocated_point3d(point_msg_6);
-
-			/* point 7 */
-			gazebo::msgs::Vector3d *point_msg_7 = new gazebo::msgs::Vector3d();
-			point_msg_7->set_x(point_7.X());
-			point_msg_7->set_y(point_7.Y());
-			point_msg_7->set_z(point_7.Z());
-
-	    		camera_utils::msgs::BoundingBoxCamera* bounding_box_7 = msg.add_bounding_box();
-			bounding_box_7->set_name(objects[j].name);
-			bounding_box_7->set_allocated_point3d(point_msg_7);
-
-			/* point 8 */
-			gazebo::msgs::Vector3d *point_msg_8 = new gazebo::msgs::Vector3d();
-			point_msg_8->set_x(point_8.X());
-			point_msg_8->set_y(point_8.Y());
-			point_msg_8->set_z(point_8.Z());
-
-	    		camera_utils::msgs::BoundingBoxCamera* bounding_box_8 = msg.add_bounding_box();
-			bounding_box_8->set_name(objects[j].name);
-			bounding_box_8->set_allocated_point3d(point_msg_8);
-		}
-	}
-
-	pub->Publish(msg,false);
+        for (std::multimap<std::string,ignition::math::Vector2d>::iterator
+            it = ret.first; it != ret.second; it++){
+                contours_poly[p++]=cv::Point(it->second.X(),it->second.Y());
+        }
+        bounding_rectangles[i] = cv::boundingRect(cv::Mat(contours_poly));
+        objects[i].bounding_box = bounding_rectangles[i];
+    }
 }
 
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
@@ -738,101 +603,145 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
         }
     } else if (_msg->type() == PROPERTIES){
 
-        for(int i(0); i<_msg->bounding_box_size();++i){
-            ignition::math::Vector3d bb_center = gazebo::msgs::ConvertIgn(_msg->bounding_box(i).bb_center());
-            ignition::math::Vector3d bb_size = gazebo::msgs::ConvertIgn(_msg->bounding_box(i).bb_size());
+        for (int i = 0; i < _msg->bounding_box_size(); i++){
+            ignition::math::Vector3d bb_center =
+                gazebo::msgs::ConvertIgn(_msg->bounding_box(i).bb_center());
+            ignition::math::Vector3d bb_size =
+                gazebo::msgs::ConvertIgn(_msg->bounding_box(i).bb_size());
 
-            bounding_box_3d bb(bb_center, bb_size);
-	    bbs_3d.insert( std::pair<std::string,bounding_box_3d>(_msg->bounding_box(i).name(), bb) );
+            BoundingBox3dClass bb(bb_center, bb_size);
+            std::lock_guard<std::mutex> lock(bounding_box_3d_mutex);
+            bbs_3d.insert( std::pair<std::string,BoundingBox3dClass>(
+                _msg->bounding_box(i).name(), bb) );
         }
     }
 }
 
-/* Handle camera success */
 bool waitForCamera(){
 
-    std::lock_guard<std::mutex> lock(camera_success_mutex);
+    std::lock_guard<std::mutex> lock(camera_ready_mutex);
 
-    if (camera_success){
-        camera_success = false;
+    if (camera_ready){
+        camera_ready = false;
         return false;
     }
     return true;
 }
 
-
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg){
 
-    if (_msg->type()==CAMERA_POINT_RESPONSE){
+    if (_msg->type() == CAMERA_POINT_RESPONSE){
 
-        for(int i(0); i<_msg->bounding_box_size();++i){
-        	ignition::math::Vector2d point_2d = gazebo::msgs::ConvertIgn(_msg->bounding_box(i).point());
+        for (int i = 0; i <_msg->bounding_box_size(); ++i){
+            ignition::math::Vector2d point_2d =
+                gazebo::msgs::ConvertIgn(_msg->bounding_box(i).point());
+            points_2d.insert( std::pair<std::string,ignition::math::Vector2d>
+                (_msg->bounding_box(i).name(), point_2d) );
+        }
 
-    		points_2d.insert( std::pair<std::string,ignition::math::Vector2d>(_msg->bounding_box(i).name(), point_2d) );
-	}
-    }
-    else if (_msg->type()==CAPTURE_RESPONSE){
-        std::lock_guard<std::mutex> lock(camera_success_mutex);
+    } else if (_msg->type() == CAPTURE_RESPONSE){
 
-	if(_msg->success())
-	{
-    		std::cout << "capture response" << std::endl;
-       		camera_success = true;    
-	}
-    }
-    else if(_msg->type()==CAMERA_INFO_RESPONSE)
-    {
-        std::lock_guard<std::mutex> lock(camera_success_mutex);
+        if (_msg->success()){
+            std::lock_guard<std::mutex> lock(camera_ready_mutex);
+            camera_ready = true;
+        }
 
-	if(_msg->success())
-	{
-		std::cout << "camera info response" << std::endl;
-       		camera_success = true;   
-		camera_info=std::shared_ptr<CameraInfo> (new CameraInfo(_msg->camera_info().width(), _msg->camera_info().height(), _msg->camera_info().depth()) );
-	}
-    }
-    else {
-        std::cout << "Camera could not save to file! Exiting..." << std::endl;
+    } else if (_msg->type() == CAMERA_INFO_RESPONSE){
+
+        if (_msg->success()){
+            std::lock_guard<std::mutex> lock(camera_ready_mutex);
+            camera_ready = true;
+            camera_info = std::shared_ptr<CameraInfo>(new CameraInfo(
+                _msg->camera_info().width(),
+                _msg->camera_info().height(),
+                _msg->camera_info().depth()) );
+        }
+
+    } else {
+
+        std::cerr << "CameraUtils plugin error! Exiting..." << std::endl;
         exit(EXIT_FAILURE);
     }
 }
 
+void storeAnnotations(
+    const std::vector<Object> &objects,
+    const ignition::math::Pose3d & camera_pose,
+    const std::string &path,
+    const std::string &file_name,
+    const std::string &image_name){
 
-void storeAnnotations(const std::vector<Object> & objects, const std::string & path, const std::string & file_name, const std::string & image_name)
-{
-	std::ofstream out(path+"Annotations"+file_name);
-        out << "<annotation>" << std::endl 
-	    << "  <folder>images</folder>" << std::endl
-	    << "  <filename>"+image_name+"</filename>" << std::endl
-            << "  <source>"<<std::endl
-	    << "    <database>The SHAPE2017 Database</database>"<< std::endl
-	    << "    <annotation>SHAPE SHAPE2017</annotation>" << std::endl 
-            << "    <image>"+ image_name +"</image>" << std::endl
-            << "  </source>" << std::endl
-            << "  <size>" << std::endl
-            << "    <width>"  << camera_info->width  << "</width>"  << std::endl
-            << "    <height>" << camera_info->height << "</height>" << std::endl
-            << "    <depth>"  << camera_info->depth  << "</depth>"  << std::endl
-            << "  </size>" << std::endl
-            << "  <segmented>1</segmented>" << std::endl;
+    std::ofstream out(path+"/"+file_name);
 
+    out << "<annotation>\n"
+        << "  <folder>images</folder>\n"
+        << "  <filename>"+image_name+"</filename>\n"
+        << "  <source>\n"
+        << "    <database>The SHAPE2017 Database</database>\n"
+        << "    <annotation>SHAPE SHAPE2017</annotation>\n"
+        << "    <image>" << image_name <<"</image>\n"
+        << "    <pose>" << camera_pose <<"</pose>\n"
+        << "  </source>\n"
+        << "  <size>\n"
+        << "    <width>"  << camera_info->width  << "</width>\n"
+        << "    <height>" << camera_info->height << "</height>\n"
+        << "    <depth>"  << camera_info->depth  << "</depth>\n"
+        << "  </size>\n"
+        << "  <segmented>1</segmented>\n";
 
-	for(unsigned int i=0; i<objects.size(); ++i) 
-	{
-		out << "  <object>" << std::endl
-		    << "    <name>" << classes_map.find(objects[i].type)->second << "</name>" << std::endl
-		    << "    <pose>top</pose>" << std::endl
-		    << "    <truncated>0</truncated>" << std::endl
-		    << "    <difficult>1</difficult>" << std::endl
-		    << "    <bndbox>" << std::endl
-		    << "      <xmin>"<< objects[i].bounding_box.x <<"</xmin>" << std::endl
-		    << "      <ymin>"<< objects[i].bounding_box.y <<"</ymin>" << std::endl
-		    << "      <xmax>"<< objects[i].bounding_box.x + objects[i].bounding_box.width <<"</xmax>" << std::endl
-		    << "      <ymax>"<< objects[i].bounding_box.y + objects[i].bounding_box.height <<"</ymax>" << std::endl
-		    << "    </bndbox>" << std::endl
-		    << "  </object>" << std::endl;
-	}
+    for(unsigned int i=0; i<objects.size(); ++i){
+        out << "  <object>\n"
+            << "    <name>" << classes_name[objects[i].type] << "</name>\n"
+            << "    <pose>" << objects[i].pose << "</pose>\n"
+            << "    <truncated>0</truncated>\n"
+            << "    <difficult>1</difficult>\n"
+            << "    <bndbox>\n"
+            << "      <xmin>"<< objects[i].bounding_box.x <<"</xmin>\n"
+            << "      <ymin>"<< objects[i].bounding_box.y <<"</ymin>\n"
+            << "      <xmax>"<< objects[i].bounding_box.x + objects[i].bounding_box.width <<"</xmax>\n"
+            << "      <ymax>"<< objects[i].bounding_box.y + objects[i].bounding_box.height <<"</ymax>\n"
+            << "    </bndbox>\n"
+            << "  </object>\n";
+    }
 
-	out << "</annotation>";
-        out.close();
+    out << "</annotation>";
+    out.close();
+}
+
+void visualizeData(
+    const std::string &image_dir,
+    const std::string &image_name,
+    int num_objects,
+    BoundingBox2d &points_2d,
+    std::vector<cv::Rect> &bound_rect){
+    
+    std::string filename = image_dir + image_name + ".png";
+    // Read image from file
+    cv::Mat image = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+    // Check if image is valid
+    if (!image.data){
+       std::cerr <<  "Could not open '" << filename << "'" << std::endl;
+    } else {
+
+        for (int i = 0; i < num_objects; i++){
+
+            std::pair <BoundingBox2d::iterator, BoundingBox2d::iterator> ret;
+            ret = points_2d.equal_range(objects[i].name);
+
+            for (std::multimap<std::string,ignition::math::Vector2d>::iterator
+                it = ret.first; it!=ret.second; it++){
+
+                cv::circle(image, cv::Point(it->second.X(),it->second.Y()),
+                    5, cv::Scalar(255, 0, 1));
+            }
+            cv::rectangle(image, bound_rect[i].tl(), bound_rect[i].br(),
+                cv::Scalar(255,0,1), 2, 8, 0 );
+        }
+        
+        // Create a window for display
+        cv::namedWindow("Display window", cv::WINDOW_KEEPRATIO);
+        // Show image and wait for keystroke
+        cv::imshow("Display window", image );
+        cv::waitKey(0);
+    }
 }

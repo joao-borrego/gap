@@ -13,7 +13,7 @@ message WorldUtilsResponse
     }
 
     /* @brief Type of request */
-    required Type                   type            = 1;
+    optional Type                   type            = 1;
     /* @brief Object count */
     optional int32                  object_count    = 2;
     /* @brief Object name */

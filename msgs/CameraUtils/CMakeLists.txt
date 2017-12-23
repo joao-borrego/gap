@@ -1,5 +1,6 @@
 find_package(Protobuf REQUIRED)
 
+# Obtain Protobuf import directories
 set(PROTOBUF_IMPORT_DIRS)
 foreach(ITR ${GAZEBO_INCLUDE_DIRS})
   if(ITR MATCHES ".*gazebo-[0-9.]+$")
@@ -7,17 +8,23 @@ foreach(ITR ${GAZEBO_INCLUDE_DIRS})
   endif()
 endforeach()
 
+# Obtain set of proto messages definitions
 set (msgs
-  #Custom messages
+  # Custom messages
   camera_info.proto
   bounding_box_camera.proto
   camera_utils_request.proto
   camera_utils_response.proto
+  # Message dependencies
   ${PROTOBUF_IMPORT_DIRS}/header.proto
   ${PROTOBUF_IMPORT_DIRS}/time.proto
   ${PROTOBUF_IMPORT_DIRS}/vector3d.proto
   ${PROTOBUF_IMPORT_DIRS}/vector2d.proto
 )
+
+# Generate Protobuf sources
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
+# Compile shared library
 add_library(camera_utils_msgs SHARED ${PROTO_SRCS})
+# Link Protobuf library
 target_link_libraries(camera_utils_msgs ${PROTOBUF_LIBRARY})

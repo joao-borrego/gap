@@ -190,13 +190,18 @@ int main(int argc, char **argv)
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
+	// Get 3D bounding boxes
+	//For each object
+	//{
+	
+	/*
         // Get 3D bounding boxes from WorldUtils 
         bbs_3d.clear();
         queryModelBoundingBox(pub_world, objects);
         while (waitForBoundingBox(num_objects)){
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
-
+	*/
         debugPrintTrace("Done waiting for 3D bounding boxes");
 
 
@@ -230,11 +235,11 @@ int main(int argc, char **argv)
         
         debugPrintTrace("Done waiting for camera to capture scene");
 
-        /*
+        
         // Visualize data
         visualizeData("/tmp/camera_utils_output/", std::to_string(i),
             num_objects, points_2d, bound_rect);
-        */
+        
 
         // Clear world - removes objects matching "plugin" prefix
         std::vector<std::string> object_names;
@@ -380,6 +385,8 @@ void genRandomObjectInGrid(
     gazebo::msgs::Set(ori, object_orientation);
     pose->set_allocated_orientation(ori);
 
+    std::vector<double> parameters;
+
     // Dimensions
     if (object_type == sphere || object_type == cylinder){
     
@@ -387,6 +394,8 @@ void genRandomObjectInGrid(
         radius = getRandomDouble(0.1,
             std::min(cell_size_x, cell_size_y) * 0.5);
         object->set_radius(radius);
+
+	parameters.push_back(radius);
 
         // Cylinder length
         if (object_type == cylinder){
@@ -396,6 +405,7 @@ void genRandomObjectInGrid(
                 length = getRandomDouble(0.5, 1.0);    
             }
             object->set_length(length);
+	    parameters.push_back(length);
         }
     
     } else if (object_type == box){
@@ -411,6 +421,9 @@ void genRandomObjectInGrid(
         size->set_y(size_y);
         size->set_z(size_z);
         object->set_allocated_box_size(size);
+        parameters.push_back(size_x);
+        parameters.push_back(size_y);
+        parameters.push_back(size_z);
     }
 
     // Position
@@ -430,7 +443,7 @@ void genRandomObjectInGrid(
     // Pose
     object->set_allocated_pose(pose);
 
-    objects.push_back( Object(object_name, object_type, gazebo::msgs::ConvertIgn(*pose)));
+    objects.push_back( Object(object_name, object_type, gazebo::msgs::ConvertIgn(*pose), parameters));
 }
 
 void moveObject(

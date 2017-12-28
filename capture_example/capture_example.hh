@@ -116,7 +116,8 @@ const char class_instance_names[3][100] =
     {"plugin_sphere_", "plugin_cylinder_", "plugin_box_"};
 unsigned int class_instance_counters[3] = {0};
 
-
+const double ANGLE_STEP=10.0;
+const double TOTAL_STEPS=360.0/ANGLE_STEP;
 class BoundingBox3dClass{
 
     public:
@@ -137,13 +138,45 @@ class Object {
         Object(
             std::string & _name,
             int & _type,
-            ignition::math::Pose3d _pose
-        ) : name(_name), type(_type), pose(_pose){};
+            ignition::math::Pose3d _pose,
+	    const std::vector<double> & _parameters
+        ) : name(_name), type(_type), pose(_pose), parameters(_parameters){
+		// Generate surface points from object parameters
+
+		if(type==cylinder)
+		{
+
+			double radius=parameters[0];
+			for(int a=0; a<TOTAL_STEPS;++a)
+			{
+				float x,y,z;
+				x=cos(ANGLE_STEP*a)*fabs(radius);
+				y=sin(ANGLE_STEP*a)*fabs(radius);
+				for(int h=0; h < height_samples; ++h)
+				{
+					z=(float)height_step*h;
+					pcl::PointXYZ point(x,y,z);
+					cloud.push_back(point);
+				}
+			}
+		}
+		else if(type==sphere)
+		{
+			std::cout << "sphere" << std::endl;
+		}
+		else if(type==box)
+		{
+			std::cout << "box" << std::endl;
+		}
+		
+	};
 
         std::string name;
         int type;
         cv::Rect bounding_box;
         ignition::math::Pose3d pose;
+	std::vector<double> parameters;
+	std::vector<double> object_points;
 };
 
 class CameraInfo {

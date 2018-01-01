@@ -145,24 +145,33 @@ class Object {
 
 		if(type==cylinder)
 		{
-
-			double radius=parameters[0];
+			double radius=fabs(parameters[0]);
 			for(int a=0; a<TOTAL_STEPS;++a)
 			{
 				float x,y,z;
-				x=cos(ANGLE_STEP*a)*fabs(radius);
-				y=sin(ANGLE_STEP*a)*fabs(radius);
-				for(int h=0; h < height_samples; ++h)
-				{
-					z=(float)height_step*h;
-					pcl::PointXYZ point(x,y,z);
-					cloud.push_back(point);
-				}
+				x=cos(ANGLE_STEP*a)*radius;
+				y=sin(ANGLE_STEP*a)*radius;
+
+				z=0.5;
+				ignition::math::Vector3d point_bottom(x,y,z);
+				object_points.push_back(point_bottom);
+				z=-0.5;
+				ignition::math::Vector3d point_top(x,y,z);
+				object_points.push_back(point_top);
 			}
 		}
 		else if(type==sphere)
 		{
-			std::cout << "sphere" << std::endl;
+			double radius=fabs(parameters[0]);
+			for(int a=0; a<TOTAL_STEPS;++a)
+			{
+				for(int b=0; b<TOTAL_STEPS;++b)
+				{
+					float x,y,z;
+					x=cos(ANGLE_STEP*a)*radius;
+					y=sin(ANGLE_STEP*a)*radius;
+				}
+			}
 		}
 		else if(type==box)
 		{
@@ -176,7 +185,7 @@ class Object {
         cv::Rect bounding_box;
         ignition::math::Pose3d pose;
 	std::vector<double> parameters;
-	std::vector<double> object_points;
+	std::vector<ignition::math::Vector3d> object_points;
 };
 
 class CameraInfo {

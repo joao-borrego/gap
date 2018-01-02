@@ -29,9 +29,6 @@ std::mutex object_count_mutex;
 // Camera ready
 bool camera_ready{false};
 std::mutex camera_ready_mutex;
-// 3D bounding boxes
-BoundingBox3d bbs_3d;
-std::mutex bounding_box_3d_mutex;
 // 2D projections of 3D points
 BoundingBox2d points_2d;
 std::mutex points_2d_mutex;
@@ -147,6 +144,7 @@ int main(int argc, char **argv)
 
     debugPrintTrace("Initialisation complete");
 
+
     // Main program loop
     for (int i = start; i < scenes; i++){
 
@@ -190,18 +188,7 @@ int main(int argc, char **argv)
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
-	// Get 3D bounding boxes
-	//For each object
-	//{
-	
-	/*
-        // Get 3D bounding boxes from WorldUtils 
-        bbs_3d.clear();
-        queryModelBoundingBox(pub_world, objects);
-        while (waitForBoundingBox(num_objects)){
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-	*/
+
         debugPrintTrace("Done waiting for 3D bounding boxes");
 
 
@@ -209,7 +196,10 @@ int main(int argc, char **argv)
         points_2d.clear();
         query2DcameraPoint(pub_camera, objects);
         
-        while (waitFor2DPoints(8 * num_objects)){
+	int desired_points=0;
+	for(int aux=0;aux<objects.size();++aux)	desired_points+=objects[aux].object_points.size();
+		
+        while (waitFor2DPoints(desired_points)){
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
@@ -228,6 +218,7 @@ int main(int argc, char **argv)
         debugPrintTrace("Done saving annotations");
 
         // Capture the scene and save it to a file
+    	std::this_thread::sleep_for(std::chrono::milliseconds(500));
         captureScene(pub_camera, i);
         while (waitForCamera()){
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -237,7 +228,7 @@ int main(int argc, char **argv)
 
         
         // Visualize data
-        visualizeData("/tmp/camera_utils_output/", std::to_string(i),
+        visualizeData("/home/rui/gazebo-utils/train/SHAPES2017/images/", std::to_string(i),
             num_objects, points_2d, bound_rect);
         
 
@@ -285,9 +276,9 @@ ignition::math::Pose3d getRandomCameraPose(const ignition::math::Vector3d & came
         ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
  
     ignition::math::Quaternion<double> camera_orientation(
-        getRandomDouble(0, M_PI / 3.0),
-        getRandomDouble(0, M_PI / 3.0),
-        getRandomDouble(0, M_PI / 3.0));
+        getRandomDouble(0, M_PI / 5.0),
+        getRandomDouble(0, M_PI / 5.0),
+        getRandomDouble(0, M_PI / 5.0));
     //ignition::math::Quaternion<double> camera_orientation(0,0,0);
 
     ignition::math::Pose3d camera_pose;
@@ -431,8 +422,10 @@ void genRandomObjectInGrid(
     pos->set_y(cell_y * cell_size_y + 0.5 * cell_size_y - y_cells * 0.5 * cell_size_y);
     
     if (object_type == sphere || object_type == cylinder){
-
-        pos->set_z(radius);
+    	if (!horizontal&& object_type == cylinder)
+        	pos->set_z(length * 0.5);
+	else
+        	pos->set_z(radius);
 
     } else if (object_type == box){
         
@@ -533,11 +526,7 @@ void queryModelBoundingBox(
     pub->Publish(msg,false);
 }
 
-bool waitForBoundingBox(int desired_objects){
 
-    std::lock_guard<std::mutex> lock(bounding_box_3d_mutex);
-    return (bbs_3d.size() != desired_objects);
-}
 
 // Handle 2d point projections
 
@@ -549,35 +538,18 @@ void query2DcameraPoint(
     msg.set_type(CAMERA_POINT_REQUEST);
 
     for (int i = 0; i < objects.size(); i++){
+	for(int j = 0; j < objects[i].object_points.size(); ++j)
+	{
+                gazebo::msgs::Vector3d *point_msg = new gazebo::msgs::Vector3d();
+                point_msg->set_x(objects[i].object_points[j](0));
+                point_msg->set_y(objects[i].object_points[j](1));
+                point_msg->set_z(objects[i].object_points[j](2));
+                camera_utils::msgs::BoundingBoxCamera *bounding_box = 
+                    msg.add_bounding_box();
+                bounding_box->set_name(objects[i].name);
+                bounding_box->set_allocated_point3d(point_msg);
+	}
 
-        std::pair <BoundingBox3d::iterator, BoundingBox3d::iterator> ret;
-        ret = bbs_3d.equal_range(objects[i].name);
-    
-        for (BoundingBox3d::iterator it=ret.first; it!=ret.second; ++it){
-
-            // Generate all possible combinations for center +- coordinate
-            for (int x = 1; x >= -1; x -= 2){
-                for (int y = 1; y >= -1; y -= 2){
-                    for (int z = 1; z >= -1; z -= 2){
-
-                        ignition::math::Vector3d point = it->second.center;
-                        point.X() += x * it->second.size.X() / 2.0;
-                        point.Y() += y * it->second.size.Y() / 2.0;
-                        point.Z() += z * it->second.size.Z() / 2.0;
-
-                        gazebo::msgs::Vector3d *point_msg = new gazebo::msgs::Vector3d();
-                        point_msg->set_x(point.X());
-                        point_msg->set_y(point.Y());
-                        point_msg->set_z(point.Z());
-
-                        camera_utils::msgs::BoundingBoxCamera *bounding_box = 
-                            msg.add_bounding_box();
-                        bounding_box->set_name(objects[i].name);
-                        bounding_box->set_allocated_point3d(point_msg);
-                    }
-                }
-            }
-        }
     }
     pub->Publish(msg,false);
 }
@@ -596,7 +568,7 @@ void obtain2DBoundingBoxes(
 
         std::pair <BoundingBox2d::iterator, BoundingBox2d::iterator> ret;
         ret = points_2d.equal_range(objects[i].name);
-        std::vector<cv::Point> contours_poly(8);
+        std::vector<cv::Point> contours_poly(objects[i].object_points.size());
         int p = 0;
 
         for (std::multimap<std::string,ignition::math::Vector2d>::iterator
@@ -621,11 +593,6 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
                 gazebo::msgs::ConvertIgn(_msg->bounding_box(i).bb_center());
             ignition::math::Vector3d bb_size =
                 gazebo::msgs::ConvertIgn(_msg->bounding_box(i).bb_size());
-
-            BoundingBox3dClass bb(bb_center, bb_size);
-            std::lock_guard<std::mutex> lock(bounding_box_3d_mutex);
-            bbs_3d.insert( std::pair<std::string,BoundingBox3dClass>(
-                _msg->bounding_box(i).name(), bb) );
         }
     }
 }

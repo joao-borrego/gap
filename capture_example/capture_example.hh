@@ -107,14 +107,6 @@
 #define WORLD_UTILS_RESPONSE_TOPIC  "~/gazebo-utils/world_utils/response"
 
 
-/*
- * PCL (TEMP) 
- */
-
-#include <pcl/common/transforms.h>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
 
 /* Classes */
 
@@ -162,18 +154,22 @@ class Object {
 				float x,y,z;
 				x=cos(ANGLE_STEP*a)*radius;
 				y=sin(ANGLE_STEP*a)*radius;
-
 				z=0.5*length;
+
 				//ignition::math::Vector3d point_bottom(x,y,z);
 				//object_points.push_back(point_bottom);
-				pcl::PointXYZ point1(x,y,z);
+				//pcl::PointXYZ point1(x,y,z);
+				Eigen::Vector4f point1;
+				point1 << x,y,z,1.0;
 				object_points.push_back(point1);
 
 
 				z=-0.5*length;
 				//ignition::math::Vector3d point_top(x,y,z);
 				//object_points.push_back(point_top);
-				pcl::PointXYZ point2(x,y,z);
+				//pcl::PointXYZ point2(x,y,z);
+				Eigen::Vector4f point2; 
+				point2 << x,y,z,1.0;
 				object_points.push_back(point2);
 			}
 		}
@@ -191,7 +187,9 @@ class Object {
 
 					//ignition::math::Vector3d point(x,y,z);
 					//object_points.push_back(point);
-					pcl::PointXYZ point(x,y,z);
+					//pcl::PointXYZ point(x,y,z);
+					Eigen::Vector4f point;
+					point << x,y,z,1.0;
 					object_points.push_back(point);
 				}
 			}
@@ -210,15 +208,16 @@ class Object {
 					for(int f=-1;f<2;f=f+2)
 					{
 						x=i*size_x/2.0;y=j*size_y/2.0;z=f*size_z/2.0;
-						pcl::PointXYZ point(x,y,z);
+						//pcl::PointXYZ point(x,y,z);
+						Eigen::Vector4f point;
+						point << x,y,z,1.0;
 						object_points.push_back(point);
 					}
 				}
 			}
-
-			std::cout << "box" << std::endl;
 		}
 
+		// Transform Ignition to Eigen
 		Eigen::Matrix3f rot;
 		rot=Eigen::Quaternionf(pose.Rot().W(),pose.Rot().X(),pose.Rot().Y(),pose.Rot().Z());
 
@@ -226,7 +225,11 @@ class Object {
 		transf.block(0,0,3,3)=rot;
 		transf.block(0,3,3,1)=Eigen::Vector3f(pose.Pos().X(),pose.Pos().Y(),pose.Pos().Z());
 
-		pcl::transformPointCloud (object_points, object_points,transf);
+		for(int i=0; i<object_points.size();++i)
+		{
+			object_points[i]=transf*object_points[i];
+			
+		}
 		
 	};
 
@@ -235,7 +238,8 @@ class Object {
         cv::Rect bounding_box;
         ignition::math::Pose3d pose;
 	std::vector<double> parameters;
-	pcl::PointCloud<pcl::PointXYZ> object_points;
+	//pcl::PointCloud<pcl::PointXYZ> object_points;
+	std::vector<Eigen::Vector4f> object_points;
 };
 
 class CameraInfo {
@@ -310,8 +314,6 @@ void pauseWorld(gazebo::transport::PublisherPtr pub, bool enable);
 void captureScene(gazebo::transport::PublisherPtr pub, int idx);
 
 bool waitForSpawner(int desired_objects);
-
-bool waitForBoundingBox(int desired_objects);
 
 void queryModelCount(gazebo::transport::PublisherPtr pub);
 

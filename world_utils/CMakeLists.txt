@@ -1,6 +1,6 @@
 # 2.8.8 required to use PROTOBUF_IMPORT_DIRS
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
-FIND_PACKAGE( Boost 1.40 COMPONENTS system REQUIRED )
+FIND_PACKAGE( Boost COMPONENTS system REQUIRED )
 set (CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
 
 # Find packages

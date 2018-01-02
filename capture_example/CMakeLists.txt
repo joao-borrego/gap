@@ -4,6 +4,11 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 find_package(gazebo REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(PCL 1.7 REQUIRED)
+
+include_directories(include ${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+
 
 include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})

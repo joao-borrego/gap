@@ -24,7 +24,7 @@ include(safeguards)
 
 # Check dependencies
 find_package(gazebo REQUIRED)
-find_package(Boost 1.40 COMPONENTS system REQUIRED)
+find_package(Boost COMPONENTS system REQUIRED)
 
 # Build project
 

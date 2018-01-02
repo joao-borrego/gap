@@ -54,7 +54,7 @@
         <plugin name='camera_utils' filename='libCameraUtils.so'>
           <!-- Output directory -->
           <!-- TODO - Change! -->
-          <output_dir>/home/rui/gazebo-utils/train/SHAPES2017/images/</output_dir>
+          <output_dir>/tmp/gazebo-utils/train/SHAPES2017/images/</output_dir>
           <!-- Output image extension -->
           <extension>.png</extension>
         </plugin>

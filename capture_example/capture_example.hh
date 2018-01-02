@@ -271,8 +271,14 @@ typedef std::multimap<std::string,ignition::math::Vector2d> BoundingBox2d;
  * Function prototypes
  */
 
-ignition::math::Pose3d getRandomCameraPose(
-    const ignition::math::Vector3d & camera_position);
+ignition::math::Pose3d getRandomDomePose(
+    const ignition::math::Vector3d & camera_position,
+    const double min_r,
+    const double max_r,
+    const double min_p,
+    const double max_p,
+    const double min_y,
+    const double max_y);
 
 void addModelToMsg(
     world_utils::msgs::WorldUtilsRequest & msg,
@@ -301,6 +307,7 @@ void storeAnnotations(
 void moveObject(
     gazebo::transport::PublisherPtr pub,
     const std::string &name,
+    const bool is_light,
     const ignition::math::Pose3d &pose);
 
 void clearWorld(

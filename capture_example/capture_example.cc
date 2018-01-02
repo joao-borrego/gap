@@ -51,7 +51,9 @@ int main(int argc, char **argv)
     unsigned int scenes{0};
     unsigned int start{0};
     std::string media_dir;
+    std::string imgs_dir;
     std::string dataset_dir;
+    bool debug {false};
 
     // Aux variables
 
@@ -62,6 +64,10 @@ int main(int argc, char **argv)
     // Camera pose
     ignition::math::Pose3d camera_pose;
     ignition::math::Vector3d camera_position(0, 0, 5.0);
+    // Light pose
+    ignition::math::Pose3d light_pose;
+    ignition::math::Vector3d light_position(0, 0, 5.0);
+
     // Msg for initial objects
     world_utils::msgs::WorldUtilsRequest msg_basic_objects;
     // Random objects
@@ -69,7 +75,7 @@ int main(int argc, char **argv)
     int min_objects{5}, max_objects{10};
 
     // Parse command-line args
-    parseArgs(argc, argv, scenes, start, media_dir, dataset_dir);
+    parseArgs(argc, argv, scenes, start, media_dir, imgs_dir, dataset_dir, debug);
 
     // Create folder for storing output folder
     createDirectory(dataset_dir);
@@ -109,9 +115,6 @@ int main(int argc, char **argv)
     // Wait for the WorldUtils plugin to launch */
     pub_world->WaitForConnection();
 
-    // Generate a random camera pose
-    camera_pose = getRandomCameraPose(camera_position);
-
     // Spawn light source and camera
     msg_basic_objects.set_type(SPAWN);
     addModelToMsg(msg_basic_objects, objects, "models/custom_sun.sdf",
@@ -144,7 +147,6 @@ int main(int argc, char **argv)
 
     debugPrintTrace("Initialisation complete");
 
-
     // Main program loop
     for (int i = start; i < scenes; i++){
 
@@ -153,11 +155,21 @@ int main(int argc, char **argv)
         num_objects = (getRandomInt(min_objects, max_objects));
         debugPrintTrace("Scene (" << i + 1 << "/" << scenes << "): " << num_objects << " objects");
 
+        double min, max;
+
         // Move camera
-        camera_pose = getRandomCameraPose(camera_position);
-        moveObject(pub_world, "custom_camera", camera_pose);
+        min = 0; max = M_PI / 5.0;
+        camera_pose = getRandomDomePose(camera_position, min, max, min, max, min, max);
+        moveObject(pub_world, "custom_camera", false, camera_pose);
         debugPrintTrace("Done moving camera to random position");
         std::cout << "\t(" << camera_pose << ")\n";
+
+        // Move light
+        min = 0; max = M_PI / 3.0;
+        light_pose = getRandomDomePose(light_position, min, max, min, max, min, max);
+        moveObject(pub_world, "plugin_light0", true, light_pose);
+        debugPrintTrace("Done moving light source to random position");
+        std::cout << "\t(" << light_pose << ")\n";
 
         // Spawn ground and random objects
         world_utils::msgs::WorldUtilsRequest msg_random_objects;
@@ -174,7 +186,6 @@ int main(int argc, char **argv)
             addModelToMsg(msg_random_objects, objects, "",
                 false, true, true, cell_x, cell_y, textures);
         }
-        // TODO - Random lights
         pub_world->Publish(msg_random_objects);
 
         // Wait for object count to match object number + camera + ground
@@ -188,17 +199,15 @@ int main(int argc, char **argv)
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
-
-        debugPrintTrace("Done waiting for 3D bounding boxes");
-
-
         // Get 2D projection of the defining 8 points of the 3D bounding box
         points_2d.clear();
         query2DcameraPoint(pub_camera, objects);
         
-	int desired_points=0;
-	for(int aux=0;aux<objects.size();++aux)	desired_points+=objects[aux].object_points.size();
-		
+        int desired_points = 0;
+        for (int aux = 0; aux < objects.size(); ++aux) {
+            desired_points += objects[aux].object_points.size();
+        }
+            
         while (waitFor2DPoints(desired_points)){
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
@@ -218,7 +227,7 @@ int main(int argc, char **argv)
         debugPrintTrace("Done saving annotations");
 
         // Capture the scene and save it to a file
-    	std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         captureScene(pub_camera, i);
         while (waitForCamera()){
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -228,9 +237,10 @@ int main(int argc, char **argv)
 
         
         // Visualize data
-        visualizeData("/home/rui/gazebo-utils/train/SHAPES2017/images/", std::to_string(i),
-            num_objects, points_2d, bound_rect);
-        
+        if (debug){
+            visualizeData(imgs_dir, std::to_string(i), num_objects, points_2d, bound_rect);            
+        }
+
 
         // Clear world - removes objects matching "plugin" prefix
         std::vector<std::string> object_names;
@@ -269,25 +279,31 @@ int main(int argc, char **argv)
     return 0;
 }
 
-
-ignition::math::Pose3d getRandomCameraPose(const ignition::math::Vector3d & camera_position) {
+ignition::math::Pose3d getRandomDomePose(
+    const ignition::math::Vector3d & camera_position,
+    const double min_r,
+    const double max_r,
+    const double min_p,
+    const double max_p,
+    const double min_y,
+    const double max_y) {
 
     static const ignition::math::Quaternion<double> correct_orientation(
         ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
  
-    ignition::math::Quaternion<double> camera_orientation(
-        getRandomDouble(0, M_PI / 5.0),
-        getRandomDouble(0, M_PI / 5.0),
-        getRandomDouble(0, M_PI / 5.0));
-    //ignition::math::Quaternion<double> camera_orientation(0,0,0);
+    ignition::math::Quaternion<double> original_orientation(
+        getRandomDouble(min_r, max_r),
+        getRandomDouble(min_p, max_p),
+        getRandomDouble(min_y, max_y));
+    //ignition::math::Quaternion<double> original_orientation(0,0,0);
 
-    ignition::math::Pose3d camera_pose;
-    camera_pose.Set(
+    ignition::math::Pose3d new_pose;
+    new_pose.Set(
         camera_position,
-        (correct_orientation*camera_orientation).Inverse());
-    camera_pose=camera_pose.RotatePositionAboutOrigin(camera_orientation);
+        (correct_orientation*original_orientation).Inverse());
+    new_pose = new_pose.RotatePositionAboutOrigin(original_orientation);
 
-    return camera_pose;
+    return new_pose;
 }
 
 void addModelToMsg(
@@ -386,7 +402,7 @@ void genRandomObjectInGrid(
             std::min(cell_size_x, cell_size_y) * 0.5);
         object->set_radius(radius);
 
-	parameters.push_back(radius);
+    parameters.push_back(radius);
 
         // Cylinder length
         if (object_type == cylinder){
@@ -396,7 +412,7 @@ void genRandomObjectInGrid(
                 length = getRandomDouble(0.5, 1.0);    
             }
             object->set_length(length);
-	    parameters.push_back(length);
+        parameters.push_back(length);
         }
     
     } else if (object_type == box){
@@ -422,10 +438,10 @@ void genRandomObjectInGrid(
     pos->set_y(cell_y * cell_size_y + 0.5 * cell_size_y - y_cells * 0.5 * cell_size_y);
     
     if (object_type == sphere || object_type == cylinder){
-    	if (!horizontal&& object_type == cylinder)
-        	pos->set_z(length * 0.5);
-	else
-        	pos->set_z(radius);
+        if (!horizontal&& object_type == cylinder)
+            pos->set_z(length * 0.5);
+    else
+            pos->set_z(radius);
 
     } else if (object_type == box){
         
@@ -442,12 +458,16 @@ void genRandomObjectInGrid(
 void moveObject(
     gazebo::transport::PublisherPtr pub,
     const std::string &name,
+    const bool is_light,
     const ignition::math::Pose3d &pose){
 
     world_utils::msgs::WorldUtilsRequest msg;
     msg.set_type(MOVE);
     world_utils::msgs::Object *object = msg.add_object();
     object->set_name(name);
+    if (is_light){
+        object->set_model_type(CUSTOM_LIGHT);
+    }
 
     gazebo::msgs::Pose *pose_msg = new gazebo::msgs::Pose();
     gazebo::msgs::Set(pose_msg, pose);
@@ -538,18 +558,17 @@ void query2DcameraPoint(
     msg.set_type(CAMERA_POINT_REQUEST);
 
     for (int i = 0; i < objects.size(); i++){
-	for(int j = 0; j < objects[i].object_points.size(); ++j)
-	{
-                gazebo::msgs::Vector3d *point_msg = new gazebo::msgs::Vector3d();
-                point_msg->set_x(objects[i].object_points[j](0));
-                point_msg->set_y(objects[i].object_points[j](1));
-                point_msg->set_z(objects[i].object_points[j](2));
-                camera_utils::msgs::BoundingBoxCamera *bounding_box = 
-                    msg.add_bounding_box();
-                bounding_box->set_name(objects[i].name);
-                bounding_box->set_allocated_point3d(point_msg);
-	}
-
+        for(int j = 0; j < objects[i].object_points.size(); ++j)
+        {
+            gazebo::msgs::Vector3d *point_msg = new gazebo::msgs::Vector3d();
+            point_msg->set_x(objects[i].object_points[j](0));
+            point_msg->set_y(objects[i].object_points[j](1));
+            point_msg->set_z(objects[i].object_points[j](2));
+            camera_utils::msgs::BoundingBoxCamera *bounding_box = 
+                msg.add_bounding_box();
+            bounding_box->set_name(objects[i].name);
+            bounding_box->set_allocated_point3d(point_msg);
+        }
     }
     pub->Publish(msg,false);
 }

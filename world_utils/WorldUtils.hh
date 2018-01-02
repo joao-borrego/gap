@@ -64,17 +64,17 @@ namespace WorldUtils {
 #define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
 
 /** Spawn sphere object */
-#define SPHERE          world_utils::msgs::WorldUtilsRequest::SPHERE
+#define SPHERE          world_utils::msgs::Object::SPHERE
 /** Spawn cylinder object */
-#define CYLINDER        world_utils::msgs::WorldUtilsRequest::CYLINDER
+#define CYLINDER        world_utils::msgs::Object::CYLINDER
 /** Spawn box object */
-#define BOX             world_utils::msgs::WorldUtilsRequest::BOX
+#define BOX             world_utils::msgs::Object::BOX
 /** Spawn custom object */
-#define CUSTOM          world_utils::msgs::WorldUtilsRequest::CUSTOM
+#define CUSTOM          world_utils::msgs::Object::CUSTOM
 /** Spawn custom light object */
-#define CUSTOM_LIGHT    world_utils::msgs::WorldUtilsRequest::CUSTOM_LIGHT
+#define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
 /** Spawn a model included in gazebo model path */
-#define MODEL           world_utils::msgs::WorldUtilsRequest::MODEL
+#define MODEL           world_utils::msgs::Object::MODEL
 
 /* Response */
 
@@ -134,7 +134,6 @@ namespace gazebo {
             int sphere_counter      {0};
             int cylinder_counter    {0};
             int box_counter         {0};
-            /* TODO - Implement */
             int light_counter       {0};
 
         /* Public methods */
@@ -178,7 +177,7 @@ namespace gazebo {
              *
              * @param      match  The substring to be matched
              */
-            void clearMatching(const std::string &match);
+            void clearMatching(const std::string &match, const bool is_light);
 
             /**
              * @brief      Generates SDF string for sphere object

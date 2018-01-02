@@ -270,9 +270,11 @@ typedef std::multimap<std::string,ignition::math::Vector2d> BoundingBox2d;
 /*
  * Function prototypes
  */
+ignition::math::Pose3d getRandomLightPose(const ignition::math::Vector3d & light_position);
 
 ignition::math::Pose3d getRandomDomePose(
     const ignition::math::Vector3d & camera_position,
+    const double angle_offset,
     const double min_r,
     const double max_r,
     const double min_p,

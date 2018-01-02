@@ -159,14 +159,14 @@ int main(int argc, char **argv)
 
         // Move camera
         min = 0; max = M_PI / 5.0;
-        camera_pose = getRandomDomePose(camera_position, min, max, min, max, min, max);
+        camera_pose = getRandomDomePose(camera_position,  - M_PI / 2.0, min, max, min, max, min, max);
         moveObject(pub_world, "custom_camera", false, camera_pose);
         debugPrintTrace("Done moving camera to random position");
         std::cout << "\t(" << camera_pose << ")\n";
 
         // Move light
-        min = 0; max = M_PI / 3.0;
-        light_pose = getRandomDomePose(light_position, min, max, min, max, min, max);
+        min = -0.1; max = 0.1;
+        light_pose = getRandomLightPose(light_position);
         moveObject(pub_world, "plugin_light0", true, light_pose);
         debugPrintTrace("Done moving light source to random position");
         std::cout << "\t(" << light_pose << ")\n";
@@ -279,8 +279,24 @@ int main(int argc, char **argv)
     return 0;
 }
 
+
+ignition::math::Pose3d getRandomLightPose(const ignition::math::Vector3d & light_position) {
+
+        //static const ignition::math::Quaternion<double> correct_orientation(ignition::math::Vector3d(0,0,0), M_PI / 2.0);
+	ignition::math::Quaternion<double> light_orientation(getRandomDouble(-M_PI / 3.0,M_PI / 3.0),getRandomDouble(-M_PI / 3.0,M_PI / 3.0),getRandomDouble(-M_PI / 3.0,M_PI / 3.0)); 
+	//ignition::math::Quaternion<double> light_orientation(0,0,0); 
+        ignition::math::Pose3d camera_pose;
+	camera_pose.Set (light_position, (light_orientation).Inverse());//CoordPositionAdd(light_position);
+	camera_pose=camera_pose.RotatePositionAboutOrigin(light_orientation);
+
+	return camera_pose;
+}
+
+
+
 ignition::math::Pose3d getRandomDomePose(
     const ignition::math::Vector3d & camera_position,
+    const double angle_offset,
     const double min_r,
     const double max_r,
     const double min_p,
@@ -289,7 +305,7 @@ ignition::math::Pose3d getRandomDomePose(
     const double max_y) {
 
     static const ignition::math::Quaternion<double> correct_orientation(
-        ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
+        ignition::math::Vector3d(0,1,0), angle_offset);
  
     ignition::math::Quaternion<double> original_orientation(
         getRandomDouble(min_r, max_r),

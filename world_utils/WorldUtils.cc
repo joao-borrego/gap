@@ -207,10 +207,10 @@ namespace gazebo {
                 ignition::math::Pose3d pose = msgs::ConvertIgn(m_pose);
                 
                 if (model_type == CUSTOM_LIGHT){
-                    physics::LightPtr light = this->world->Light(_msg->object(i).name());
+                    physics::LightPtr light = this->world->LightByName(_msg->object(i).name());
                     if (light) light->SetWorldPose(pose);
                 } else {    
-                    physics::ModelPtr model = this->world->GetModel(_msg->object(i).name());
+                    physics::ModelPtr model = this->world->ModelByName(_msg->object(i).name());
                     if (model) model->SetWorldPose(pose);
                 }
             }
@@ -239,8 +239,8 @@ namespace gazebo {
     else if (type == PHYSICS){
 
             bool state = (_msg->has_state())?
-                _msg->state() : !this->world->GetEnablePhysicsEngine();
-            this->world->EnablePhysicsEngine(state);
+                _msg->state() : !this->world->PhysicsEnabled();
+            this->world->SetPhysicsEnabled(state);
 
         } else if (type == PAUSE){
 
@@ -253,42 +253,11 @@ namespace gazebo {
             world_utils::msgs::WorldUtilsResponse msg;
             
             if (_msg->bounding_box_size() > 0){
-                for(int i = 0; i<_msg->bounding_box_size(); i++){
-                    physics::ModelPtr model =
-                        this->world->GetModel(_msg->bounding_box(i).name());
-                    if (model == NULL){
-                        // TODO - better error check
-                        return;
-                    }
-                    
-                    math::Box bb = model->GetBoundingBox();
-                    gazebo::msgs::Vector3d *bb_center_msg = new gazebo::msgs::Vector3d();
-                    gazebo::msgs::Vector3d *bb_size_msg = new gazebo::msgs::Vector3d();
-
-                    ignition::math::Vector3d bb_center = bb.GetCenter().Ign();
-                    ignition::math::Vector3d bb_size = bb.GetSize().Ign();
-
-                    bb_center_msg->set_x(bb_center.X());
-                    bb_center_msg->set_y(bb_center.Y());
-                    bb_center_msg->set_z(bb_center.Z());
-                    bb_size_msg->set_x(bb_size.X());
-                    bb_size_msg->set_y(bb_size.Y());
-                    bb_size_msg->set_z(bb_size.Z());
-
-                    world_utils::msgs::BoundingBox* bounding_box = msg.add_bounding_box();
-                    bounding_box->set_allocated_bb_center(bb_center_msg);
-                    bounding_box->set_allocated_bb_size(bb_size_msg);
-                    bounding_box->set_name(_msg->bounding_box(i).name());
-                }
-                
                 msg.set_type(PROPERTIES);
                 pub->Publish(msg);
             
             } else {
-                
-                int model_count = this->world->GetModelCount();
                 msg.set_type(INFO);
-                msg.set_object_count(model_count);
                 pub->Publish(msg,true);
             }
         }
@@ -319,7 +288,7 @@ namespace gazebo {
 
         } else {
 
-            physics::Model_V models = this->world->GetModels();
+            physics::Model_V models = this->world->Models();
             for (auto &m : models){
                 entity_name = m->GetName();
                 if (entity_name.find(match_str) != std::string::npos){

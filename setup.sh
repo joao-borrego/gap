@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Source gazebo environment (and surpress not found error)
-source /usr/share/gazebo-7/setup.sh &>/dev/null
-source /usr/share/gazebo-8/setup.sh &>/dev/null
+source /usr/local/share/gazebo-9/setup.sh
 
 # Libraries
 

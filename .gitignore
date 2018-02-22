@@ -1,3 +1,9 @@
+# Binaries
 build/
+
+# Textures
 media/
+
+# Dataset
 dataset/
+train/

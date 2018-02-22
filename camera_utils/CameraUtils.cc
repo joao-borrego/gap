@@ -131,6 +131,8 @@ namespace gazebo {
                 bounding_box->set_allocated_point(bb);
             }
             this->dataPtr->pub->Publish(msg);
+
+            std::cout << "[CameraUtils] Received request for projection of " << _msg->bounding_box_size() << " points" << std::endl;
     
         } else if (_msg->type() == CAMERA_INFO_REQUEST){
 

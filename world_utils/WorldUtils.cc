@@ -180,19 +180,10 @@ namespace gazebo {
                     new_model_str = model_str.str();
                 }
 
-                /* Send the model to the gazebo factory */
-                if (model_type == CUSTOM_LIGHT) {
-                    sdf::SDF sdf_light;
-                    sdf_light.SetFromString(new_model_str);
-                    msgs::Light msg = msgs::LightFromSDF(sdf_light.Root()->GetElement("light"));
-                    msg.set_name("plugin_light" + std::to_string(this->light_counter++));
-                    this->factory_light_pub->Publish(msg,true);
-                } else {
-                    msgs::Factory msg;
-                    msg.set_sdf(new_model_str);
-                    this->factory_pub->Publish(msg,true);
-                }
-
+                // Insert model in 
+                sdf::SDF objectSDF;
+                objectSDF.SetFromString(new_model_str);
+                this->world->InsertModelSDF(objectSDF);
             }
         }
 
@@ -250,18 +241,14 @@ namespace gazebo {
 
         } else if (type == STATUS){
 
+            // TODO: Add Light count
             world_utils::msgs::WorldUtilsResponse msg;
-            
-            if (_msg->bounding_box_size() > 0){
-                msg.set_type(PROPERTIES);
-                pub->Publish(msg);
-            
-            } else {
-                msg.set_type(INFO);
-                pub->Publish(msg,true);
-            }
+            int model_count = this->world->ModelCount();
+            msg.set_type(INFO);
+            msg.set_object_count(model_count);
+            pub->Publish(msg,true);
         }
-    
+
     }
 
     void WorldUtils::clearWorld(){

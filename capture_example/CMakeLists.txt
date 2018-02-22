@@ -32,7 +32,8 @@ link_directories(
 add_executable (
   capture_example
   capture_example.cc
-  utils.cc)
+  utils.cc
+  object.cc)
 target_link_libraries(
   capture_example
   camera_utils_msgs

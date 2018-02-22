@@ -11,6 +11,8 @@
 
 /* Utilities */
 #include "utils.hh"
+/* Object class */
+#include "object.hh"
 
 /* I/O streams */
 #include <iostream>
@@ -118,8 +120,12 @@ const char class_instance_names[3][100] =
     {"plugin_sphere_", "plugin_cylinder_", "plugin_box_"};
 unsigned int class_instance_counters[3] = {0};
 
-const double ANGLE_STEP=10.0;
-const double TOTAL_STEPS=360.0/ANGLE_STEP;
+const double ANGLE_STEP_C = 45.0;
+const double TOTAL_STEPS_C = 360.0 / ANGLE_STEP_C;
+
+const double ANGLE_STEP_S = 30.0;
+const double TOTAL_STEPS_S = 360.0 / ANGLE_STEP_S;
+
 class BoundingBox3dClass{
 
     public:
@@ -141,105 +147,93 @@ class Object {
             std::string & _name,
             int & _type,
             ignition::math::Pose3d _pose,
-	    const std::vector<double> & _parameters
+        const std::vector<double> & _parameters
         ) : name(_name), type(_type), pose(_pose), parameters(_parameters){
-		// Generate surface points from object parameters
 
-		if(type==cylinder)
-		{
-			double radius=fabs(parameters[0]);
-			double length=fabs(parameters[1]);
-			for(int a=0; a<TOTAL_STEPS;++a)
-			{
-				float x,y,z;
-				x=cos(ANGLE_STEP*a)*radius;
-				y=sin(ANGLE_STEP*a)*radius;
-				z=0.5*length;
+        // Generate surface points from object parameters
+        if (type == cylinder) {
 
-				//ignition::math::Vector3d point_bottom(x,y,z);
-				//object_points.push_back(point_bottom);
-				//pcl::PointXYZ point1(x,y,z);
-				Eigen::Vector4f point1;
-				point1 << x,y,z,1.0;
-				object_points.push_back(point1);
+            double radius = fabs(parameters[0]);
+            double length = fabs(parameters[1]);
+            
+            // Generate points on the circular edge of the cylinder
+            for(int i = 0; i < TOTAL_STEPS_C ; i++){
 
+                float x,y,z;
+                x = cos(ANGLE_STEP_C * i) * radius;
+                y = sin(ANGLE_STEP_C * i) * radius;
+                z = 0.5*length;
 
-				z=-0.5*length;
-				//ignition::math::Vector3d point_top(x,y,z);
-				//object_points.push_back(point_top);
-				//pcl::PointXYZ point2(x,y,z);
-				Eigen::Vector4f point2; 
-				point2 << x,y,z,1.0;
-				object_points.push_back(point2);
-			}
-		}
-		else if(type==sphere)
-		{
-			double radius=fabs(parameters[0]);
-			for(int a=0; a<TOTAL_STEPS;++a)
-			{
-				for(int b=0; b<TOTAL_STEPS;++b)
-				{
-					float x,y,z;
-					x=radius*sin(ANGLE_STEP*a)*cos(ANGLE_STEP*b);
-					y=radius*sin(ANGLE_STEP*a)*sin(ANGLE_STEP*b);
-					z=radius*cos(ANGLE_STEP*a);
+                Eigen::Vector4f point1;
+                point1 << x, y, z, 1.0;
+                object_points.push_back(point1);
 
-					//ignition::math::Vector3d point(x,y,z);
-					//object_points.push_back(point);
-					//pcl::PointXYZ point(x,y,z);
-					Eigen::Vector4f point;
-					point << x,y,z,1.0;
-					object_points.push_back(point);
-				}
-			}
-		}
-		else if(type==box)
-		{
-			double size_x=fabs(parameters[0]);
-			double size_y=fabs(parameters[1]);
-			double size_z=fabs(parameters[2]);
+                z= -0.5*length;
+                Eigen::Vector4f point2; 
+                point2 << x, y, z, 1.0;
+                object_points.push_back(point2);
+            }
 
-			float x,y,z;
-			for(int i=-1;i<2;i=i+2)
-			{
-				for(int j=-1;j<2;j=j+2)
-				{
-					for(int f=-1;f<2;f=f+2)
-					{
-						x=i*size_x/2.0;y=j*size_y/2.0;z=f*size_z/2.0;
-						//pcl::PointXYZ point(x,y,z);
-						Eigen::Vector4f point;
-						point << x,y,z,1.0;
-						object_points.push_back(point);
-					}
-				}
-			}
-		}
+        } else if (type == sphere) {
 
-		// Transform Ignition to Eigen
-		Eigen::Matrix3f rot;
-		rot=Eigen::Quaternionf(pose.Rot().W(),pose.Rot().X(),pose.Rot().Y(),pose.Rot().Z());
+            double radius = fabs(parameters[0]);
+            
+            for (int i = 0; i < TOTAL_STEPS_S; i++){
+                for (int j = 0; j < TOTAL_STEPS_S; j++){
+                    
+                    float x,y,z;
+                    x = radius*sin(ANGLE_STEP_S*i)*cos(ANGLE_STEP_S*j);
+                    y = radius*sin(ANGLE_STEP_S*i)*sin(ANGLE_STEP_S*j);
+                    z = radius*cos(ANGLE_STEP_S*i);
 
-		Eigen::Matrix4f transf;
-		transf.block(0,0,3,3)=rot;
-		transf.block(0,3,3,1)=Eigen::Vector3f(pose.Pos().X(),pose.Pos().Y(),pose.Pos().Z());
+                    Eigen::Vector4f point;
+                    point << x, y, z, 1.0;
+                    object_points.push_back(point);
+                }
+            }
+        
+        } else if (type == box) {
 
-		for(int i=0; i<object_points.size();++i)
-		{
-			object_points[i]=transf*object_points[i];
-			
-		}
-		
-	};
+            double size_x = fabs(parameters[0]);
+            double size_y = fabs(parameters[1]);
+            double size_z = fabs(parameters[2]);
 
-        std::string name;
-        int type;
-        cv::Rect bounding_box;
-        ignition::math::Pose3d pose;
-	std::vector<double> parameters;
-	//pcl::PointCloud<pcl::PointXYZ> object_points;
-	std::vector<Eigen::Vector4f> object_points;
+            float x,y,z;
+            for (int i=-1; i < 2 ; i+= 2){
+                for (int j=-1; j < 2; j+= 2){
+                    for (int k=-1; k < 2; k+= 2){
+
+                        x = i * size_x / 2.0;
+                        y = j * size_y / 2.0;
+                        z = k * size_z / 2.0;
+                        Eigen::Vector4f point;
+                        point << x, y, z, 1.0;
+                        object_points.push_back(point);
+                    }
+                }
+            }
+        }
+
+        // Transform Ignition to Eigen
+        Eigen::Matrix3f rot;
+        rot=Eigen::Quaternionf(pose.Rot().W(),pose.Rot().X(),pose.Rot().Y(),pose.Rot().Z());
+
+        Eigen::Matrix4f transf;
+        transf.block(0,0,3,3) = rot;
+        transf.block(0,3,3,1) = Eigen::Vector3f(pose.Pos().X(),pose.Pos().Y(),pose.Pos().Z());
+
+        for (int i = 0; i < object_points.size(); i++){
+            object_points[i] = transf * object_points[i];
+        }
+
+    };
+
+    std::string name;
+    int type;
+    cv::Rect bounding_box;
+    ignition::math::Pose3d pose;
+    std::vector<double> parameters;
+    std::vector<Eigen::Vector4f> object_points;
 };
 
 class CameraInfo {

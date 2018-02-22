@@ -85,13 +85,8 @@ int main(int argc, char **argv)
     scripts_dir = materials_dir + "/scripts";
     getFilenamesInDir(scripts_dir, textures);
 
-    // Load gazebo as a client
-    #if GAZEBO_MAJOR_VERSION < 6
-    gazebo::setupClient(argc, argv);
-    #else
+    // Setup Gazebo client
     gazebo::client::setup(argc, argv);
-    #endif
-
     // Optional verification for Google Protocol Buffers version
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -115,6 +110,8 @@ int main(int argc, char **argv)
     // Wait for the WorldUtils plugin to launch */
     pub_world->WaitForConnection();
 
+    debugPrintTrace("Connected to Gazebo Server");
+
     // Spawn light source and camera
     msg_basic_objects.set_type(SPAWN);
     addModelToMsg(msg_basic_objects, objects, "models/custom_sun.sdf",
@@ -125,10 +122,13 @@ int main(int argc, char **argv)
 
     // Wait for CameraUtils plugin to launch and models to spawn
     pub_camera->WaitForConnection();
+
     while (waitForSpawner(1)){
+        debugPrint("\r");
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         queryModelCount(pub_world);
     }
+    debugPrintTrace("Done waiting for ground to spawn");
 
     // Create cell grid
     for (int i = 0;  i < x_cells * y_cells; i++){
@@ -137,9 +137,9 @@ int main(int argc, char **argv)
 
     // Disable world physics
     changePhysics(pub_world, false);
+    debugPrintTrace("Disable physics engine");
 
     // Query camera parameters
-    debugPrintTrace("Query camera parameters");
     queryCameraParameters(pub_camera);
     while (waitForCamera()){
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -149,7 +149,6 @@ int main(int argc, char **argv)
 
     // Main program loop
     for (int i = start; i < scenes; i++){
-
 
         // Number of objects to spawn
         num_objects = (getRandomInt(min_objects, max_objects));
@@ -188,16 +187,20 @@ int main(int argc, char **argv)
         }
         pub_world->Publish(msg_random_objects);
 
+        debugPrintTrace("Done spawning objects");
+
         // Wait for object count to match object number + camera + ground
         while (waitForSpawner(num_objects + 2)){
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
             queryModelCount(pub_world);
         }
 
+        /*
         // Wait for all messages to be sent
         while (pub_world->GetOutgoingCount() > 0){
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
+        */
 
         // Get 2D projection of the defining 8 points of the 3D bounding box
         points_2d.clear();
@@ -209,7 +212,7 @@ int main(int argc, char **argv)
         }
             
         while (waitFor2DPoints(desired_points)){
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
 
         debugPrintTrace("Done waiting for 2D point projections");
@@ -227,20 +230,18 @@ int main(int argc, char **argv)
         debugPrintTrace("Done saving annotations");
 
         // Capture the scene and save it to a file
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         captureScene(pub_camera, i);
+
         while (waitForCamera()){
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
-        
+
         debugPrintTrace("Done waiting for camera to capture scene");
 
-        
         // Visualize data
         if (debug){
             visualizeData(imgs_dir, std::to_string(i), num_objects, points_2d, bound_rect);            
         }
-
 
         // Clear world - removes objects matching "plugin" prefix
         std::vector<std::string> object_names;
@@ -248,13 +249,15 @@ int main(int argc, char **argv)
         clearWorld(pub_world, object_names);
 
         while (waitForSpawner(1)){
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
             queryModelCount(pub_world);
         }
         objects.clear();
 
         debugPrintTrace("Done clearing random objects");
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        
+        if (i % 100 == 0)
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
 
     // Clean up
@@ -282,14 +285,18 @@ int main(int argc, char **argv)
 
 ignition::math::Pose3d getRandomLightPose(const ignition::math::Vector3d & light_position) {
 
-        //static const ignition::math::Quaternion<double> correct_orientation(ignition::math::Vector3d(0,0,0), M_PI / 2.0);
-	ignition::math::Quaternion<double> light_orientation(getRandomDouble(-M_PI / 3.0,M_PI / 3.0),getRandomDouble(-M_PI / 3.0,M_PI / 3.0),getRandomDouble(-M_PI / 3.0,M_PI / 3.0)); 
-	//ignition::math::Quaternion<double> light_orientation(0,0,0); 
-        ignition::math::Pose3d camera_pose;
-	camera_pose.Set (light_position, (light_orientation).Inverse());//CoordPositionAdd(light_position);
-	camera_pose=camera_pose.RotatePositionAboutOrigin(light_orientation);
+    //static const ignition::math::Quaternion<double> correct_orientation(ignition::math::Vector3d(0,0,0), M_PI / 2.0);
+    ignition::math::Quaternion<double> light_orientation(
+        getRandomDouble(-M_PI / 3.0,M_PI / 3.0),
+        getRandomDouble(-M_PI / 3.0,M_PI / 3.0),
+        getRandomDouble(-M_PI / 3.0,M_PI / 3.0)); 
+    
+    ignition::math::Pose3d camera_pose;
+    camera_pose.Set (light_position, (light_orientation).Inverse());
+    //CoordPositionAdd(light_position);
+    camera_pose=camera_pose.RotatePositionAboutOrigin(light_orientation);
 
-	return camera_pose;
+    return camera_pose;
 }
 
 
@@ -311,7 +318,6 @@ ignition::math::Pose3d getRandomDomePose(
         getRandomDouble(min_r, max_r),
         getRandomDouble(min_p, max_p),
         getRandomDouble(min_y, max_y));
-    //ignition::math::Quaternion<double> original_orientation(0,0,0);
 
     ignition::math::Pose3d new_pose;
     new_pose.Set(
@@ -616,6 +622,7 @@ void obtain2DBoundingBoxes(
 }
 
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg){
+    
     if (_msg->type() == INFO){
         if (_msg->has_object_count()){
             std::lock_guard<std::mutex> lock(object_count_mutex);

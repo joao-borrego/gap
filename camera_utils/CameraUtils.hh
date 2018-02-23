@@ -19,6 +19,9 @@
 /* To create directories */
 #include <boost/filesystem.hpp>
 
+/* Benchmark timer */
+#include <ctime>
+
 /* Custom messages */
 #include "camera_utils_request.pb.h"
 #include "camera_utils_response.pb.h"

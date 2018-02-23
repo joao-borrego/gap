@@ -117,6 +117,9 @@ namespace gazebo {
             msg.set_success(false);
             msg.set_type(CAMERA_POINT_RESPONSE);
             
+            using namespace std;
+            clock_t begin = clock();
+
             for (int i = 0; i < _msg->bounding_box_size(); i++){
                 ignition::math::Vector3d point_3d = gazebo::msgs::ConvertIgn(
                     _msg->bounding_box(i).point3d());
@@ -132,7 +135,11 @@ namespace gazebo {
             }
             this->dataPtr->pub->Publish(msg);
 
-            std::cout << "[CameraUtils] Received request for projection of " << _msg->bounding_box_size() << " points" << std::endl;
+            clock_t end = clock();
+            double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+            std::cout << "[CameraUtils] Received request for projection of "
+                << _msg->bounding_box_size() << " points. Took " << elapsed_secs << " seconds." << std::endl;
     
         } else if (_msg->type() == CAMERA_INFO_REQUEST){
 

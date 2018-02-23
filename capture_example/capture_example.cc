@@ -204,18 +204,22 @@ int main(int argc, char **argv)
 
         // Get 2D projection of the defining 8 points of the 3D bounding box
         points_2d.clear();
-        query2DcameraPoint(pub_camera, objects);
-        
-        int desired_points = 0;
-        for (int aux = 0; aux < objects.size(); ++aux) {
-            desired_points += objects[aux].object_points.size();
-        }
-            
-        while (waitFor2DPoints(desired_points)){
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        }
 
-        debugPrintTrace("Done waiting for 2D point projections");
+        std::clock_t begin = std::clock();        
+        {
+            query2DcameraPoint(pub_camera, objects);
+            int desired_points = 0;
+            for (int aux = 0; aux < objects.size(); ++aux) {
+                desired_points += objects[aux].object_points.size();
+            }
+            while (waitFor2DPoints(desired_points)){
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
+        }
+        std::clock_t end = std::clock();
+        double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+        debugPrintTrace("Done waiting for 2D point projections. Took " << elapsed_secs);
 
         // Obtain 2D bounding boxes
         std::vector<cv::Rect> bound_rect(num_objects);
@@ -271,11 +275,7 @@ int main(int argc, char **argv)
     node->Fini();
 
     /* Shut down */
-    #if GAZEBO_MAJOR_VERSION < 6
-    gazebo::shutdown();
-    #else
     gazebo::client::shutdown();
-    #endif
 
     debugPrintTrace("All scenes generated sucessfully! Exiting...");
 

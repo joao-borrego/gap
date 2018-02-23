@@ -43,5 +43,5 @@ add_subdirectory(pattern_generation)
 
 # Examples
 
-# Generate objects and capture picture
-add_subdirectory(capture_example)
+# Random scene generator
+add_subdirectory(scene_example)

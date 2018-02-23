@@ -241,11 +241,12 @@ namespace gazebo {
 
         } else if (type == STATUS){
 
-            // TODO: Add Light count
+            // Return total count of models and lights in the world
             world_utils::msgs::WorldUtilsResponse msg;
             int model_count = this->world->ModelCount();
+            int light_count = this->world->LightCount();
             msg.set_type(INFO);
-            msg.set_object_count(model_count);
+            msg.set_object_count(model_count + light_count);
             pub->Publish(msg,true);
         }
 

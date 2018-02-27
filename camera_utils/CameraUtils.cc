@@ -28,7 +28,6 @@ namespace gazebo {
     CameraUtils::CameraUtils()
         : SensorPlugin(), dataPtr(new CameraUtilsPrivate)
     {
-
         std::cout << "[CameraUtils] Loaded camera tools." << std::endl;
     }
 
@@ -99,7 +98,6 @@ namespace gazebo {
     /////////////////////////////////////////////////
     void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
     {
-
         std::string file_name;
 
         if (_msg->type() == CAPTURE_REQUEST){

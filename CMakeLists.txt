@@ -19,7 +19,7 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake
 	)
 
-# Cmake safeguards e.g. prevent in-source builds
+# CMake safeguards e.g. prevent in-source builds
 include(safeguards)
 
 # Check dependencies
@@ -34,10 +34,15 @@ add_subdirectory(msgs)
 
 # Plugins
 
-# World plugin
-add_subdirectory(world_utils)
 # Camera plugin
 add_subdirectory(camera_utils)
+# Visual plugin
+add_subdirectory(visual_utils)
+# World plugin
+add_subdirectory(world_utils)
+
+# Tools
+
 # Pattern generation tool
 add_subdirectory(pattern_generation)
 

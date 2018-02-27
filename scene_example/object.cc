@@ -11,13 +11,23 @@ Object::Object(
     int & _type,
     ignition::math::Pose3d _pose,
     const std::vector<double> & _parameters
-    ) : name(_name), type(_type), pose(_pose), parameters(_parameters){
-
+    ) : name(_name), type(_type), pose(_pose), parameters(_parameters)
+{
     sampleSurface();
 }
 
 //////////////////////////////////////////////////
-void Object::sampleSurface(){
+Object::Object(
+    float x,
+    float y
+    )
+{
+    type = getRandomInt(0, 2);
+}
+
+//////////////////////////////////////////////////
+void Object::sampleSurface()
+{
     // Generate surface points from object parameters
     if (type == CYLINDER) {
 
@@ -104,4 +114,29 @@ ObjectGrid::ObjectGrid(
         num_cells_x(num_x),
         num_cells_y(num_y),
         grid_x(size_x),
-        grid_y(size_y){}
+        grid_y(size_y)
+{
+    // Create cell array
+    int num_cells = num_cells_x * num_cells_y;
+    for (int i = 0; i < num_cells; i++){
+        cells.push_back(i);
+    }
+
+    // Compute each cell dimensions
+    cell_x = grid_x / num_cells_x;
+    cell_y = grid_y / num_cells_y;
+}
+
+//////////////////////////////////////////////////
+void ObjectGrid::populate(int num_objects)
+{
+    int cell_id, x, y;
+
+    // Shuffle grid cells, for random placement
+    shuffleIntVector(cells);
+    for (int i = 0; i < num_objects; i++){
+        cell_id = cells[i];
+        x = floor(cell_id / num_cells_x);
+        y = floor(cell_id - x * cell_x);
+    }
+}

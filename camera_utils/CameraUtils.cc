@@ -1,42 +1,40 @@
-/**
- * @file CameraUtils.hh
- * @brief Camera utils plugin implementation
- *
- * A custom gazebo plugin that provides an interface to programatically collect data from cameras
- * at specific times.
- *
- * @author João Borrego
- */
+/// \file camera_utils/CameraUtils.cc
+/// \brief Camera Utils plugin implementation
+///
+/// A custom gazebo plugin that provides an interface to programatically collect
+/// data from cameras at specific times.
+///
+/// \author João Borrego
 
 #include "CameraUtils.hh"
 
 namespace gazebo {
 
-    /* Register this plugin with the simulator */
+    /// Register this plugin with the simulator 
     GZ_REGISTER_SENSOR_PLUGIN(CameraUtils)
 
-    /**
-     * @brief      Class for private camera utils plugin data.
-     */
+    /// \brief Class for private camera utils plugin data.
     class CameraUtilsPrivate
     {
-        public:
-
-            /** Gazebo transport node */
-            public: transport::NodePtr node;
-            /** Camera utils topic subscriber */
-            public: transport::SubscriberPtr sub;
-            /** Camera utils topic publisher */
-            public: transport::PublisherPtr pub;
+        /// Gazebo transport node 
+        public: transport::NodePtr node;
+        /// Camera utils topic subscriber 
+        public: transport::SubscriberPtr sub;
+        /// Camera utils topic publisher 
+        public: transport::PublisherPtr pub;
     };
 
+    /////////////////////////////////////////////////
     CameraUtils::CameraUtils()
-        : SensorPlugin(), dataPtr(new CameraUtilsPrivate){
+        : SensorPlugin(), dataPtr(new CameraUtilsPrivate)
+    {
 
         std::cout << "[CameraUtils] Loaded camera tools." << std::endl;
     }
 
-    CameraUtils::~CameraUtils(){
+    /////////////////////////////////////////////////
+    CameraUtils::~CameraUtils()
+    {
         this->newFrameConnection.reset();
         this->parentSensor.reset();
         this->camera.reset();
@@ -45,13 +43,15 @@ namespace gazebo {
         std::cout << "[CameraUtils] Unloaded camera tools." << std::endl;
     }
 
-    void CameraUtils::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf){
+    /////////////////////////////////////////////////
+    void CameraUtils::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf)
+    {
 
-        /* Check if a parent sensor is provided */
+        // Check if a parent sensor is provided 
         if (!_sensor)
             gzerr << "[CameraUtils] Invalid sensor pointer." << std::endl;
 
-        /* Camera sensor */
+        // Camera sensor 
         this->parentSensor = std::dynamic_pointer_cast<sensors::CameraSensor>(_sensor);
         this->camera = this->parentSensor->Camera();
         this->width = this->camera->ImageWidth();
@@ -59,7 +59,7 @@ namespace gazebo {
         this->depth = this->camera->ImageDepth();
         this->format = this->camera->ImageFormat();
 
-        /* Plugin parameters */
+        // Plugin parameters 
 
         if (_sdf->HasElement("output_dir")){
             this->output_dir = _sdf->Get<std::string>("output_dir");
@@ -72,19 +72,19 @@ namespace gazebo {
             this->extension = DEFAULT_EXTENSION;
         }
 
-        /* Subscriber setup */
+        // Subscriber setup 
         this->dataPtr->node = transport::NodePtr(new transport::Node());
         this->dataPtr->node->Init();
 
 
-        /* Subcribe to the topic */
+        // Subcribe to the topic 
         this->dataPtr->sub = this->dataPtr->node->Subscribe(REQUEST_TOPIC,
             &CameraUtils::onRequest, this);
-        /* Setup publisher for the reply topic */
+        // Setup publisher for the reply topic 
         this->dataPtr->pub = this->dataPtr->node->
             Advertise<camera_utils::msgs::CameraUtilsResponse>(RESPONSE_TOPIC);
 
-        /* Create output directory */
+        // Create output directory 
         boost::filesystem::path dir(output_dir);
         boost::filesystem::create_directories(dir);
 
@@ -96,7 +96,9 @@ namespace gazebo {
         this->parentSensor->SetActive(true);
     }
 
-    void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg){
+    /////////////////////////////////////////////////
+    void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
+    {
 
         std::string file_name;
 
@@ -111,58 +113,48 @@ namespace gazebo {
             this->next_file_name = output_dir + file_name;
             this->save_on_update = true;
         
-        } else if (_msg->type() == CAMERA_POINT_REQUEST){
+        } else if (_msg->type() == DIR_REQUEST){
+
+            // TODO
+
+        } else if (_msg->type() == PROJECTION_REQUEST){
 
             camera_utils::msgs::CameraUtilsResponse msg;
             msg.set_success(false);
-            msg.set_type(CAMERA_POINT_RESPONSE);
-            
-            using namespace std;
-            clock_t begin = clock();
+            msg.set_type(PROJECTION_RESPONSE);
 
-            for (int i = 0; i < _msg->bounding_box_size(); i++){
-                ignition::math::Vector3d point_3d = gazebo::msgs::ConvertIgn(
-                    _msg->bounding_box(i).point3d());
+            for (int i = 0; i < _msg->projections_size(); i++){
 
-                ignition::math::Vector2i point_2d = this->camera->Project(point_3d);
-                gazebo::msgs::Vector2d *bb = new gazebo::msgs::Vector2d();
-                bb->set_x(point_2d.X());
-                bb->set_y(point_2d.Y());
-                camera_utils::msgs::BoundingBoxCamera* bounding_box = 
-                    msg.add_bounding_box();
-                bounding_box->set_name(_msg->bounding_box(i).name());
-                bounding_box->set_allocated_point(bb);
+                ignition::math::Vector3d point3 = gazebo::msgs::ConvertIgn(
+                    _msg->projections(i).point3());
+                ignition::math::Vector2i point2 = this->camera->Project(point3);
+                gazebo::msgs::Vector2d *vector2 = new gazebo::msgs::Vector2d();
+                vector2->set_x(point2.X());
+                vector2->set_y(point2.Y());
+                camera_utils::msgs::PointProjection* projection = msg.add_projections();
+                //projection->set_name(_msg->projections(i).name());
+                projection->set_allocated_point2(vector2);
             }
             this->dataPtr->pub->Publish(msg);
 
-            clock_t end = clock();
-            double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+        } else if (_msg->type() == INFO_REQUEST){
 
-            std::cout << "[CameraUtils] Received request for projection of "
-                << _msg->bounding_box_size() << " points. Took " << elapsed_secs << " seconds." << std::endl;
-    
-        } else if (_msg->type() == CAMERA_INFO_REQUEST){
+            // TODO
 
-            camera_utils::msgs::CameraUtilsResponse msg;
-            msg.set_type(CAMERA_INFO_RESPONSE);
-            msg.set_success(true);
-            camera_utils::msgs::CameraInfo* camera_info =
-                new camera_utils::msgs::CameraInfo();
-            camera_info->set_width(this->camera->ViewportWidth ());
-            camera_info->set_height(this->camera->ViewportHeight());
-            camera_info->set_depth(this->camera->ImageDepth());
-            msg.set_allocated_camera_info(camera_info);
+        } else if (_msg->type() == MOVE_REQUEST){
 
-            this->dataPtr->pub->Publish(msg);
+            // TODO
         }
     }
 
+    /////////////////////////////////////////////////
     void CameraUtils::OnNewFrame(
-        const unsigned char *   /*_image*/,
-        unsigned int            /*_width*/,
-        unsigned int            /*_height*/,
-        unsigned int            /*_depth*/,
-        const std::string &     /*_format*/){
+        const unsigned char * _image,
+        unsigned int _width,
+        unsigned int _height,
+        unsigned int _depth,
+        const std::string & _format)
+    {
 
         if (save_on_update){
 

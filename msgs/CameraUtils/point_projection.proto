@@ -1,0 +1,18 @@
+package camera_utils.msgs;
+
+/// \ingroup camera_utils_msgs
+/// \interface PointProjection
+/// \brief A projection of 3D points to 2D
+
+import "vector2d.proto";
+import "vector3d.proto";
+
+message PointProjection
+{
+    /// \brief 2D point
+    optional gazebo.msgs.Vector2d   point2  = 1;
+    /// \brief 3D point
+    optional gazebo.msgs.Vector3d   point3  = 2;
+    /// \brief Optional name
+    optional string                 name    = 3;
+}

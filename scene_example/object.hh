@@ -1,8 +1,11 @@
 /// \file capture_example/object.hh
 /// \brief Object class headers
 
-/// World utils request
+/// WorldUtils request
 #include "world_utils_request.pb.h"
+
+/// Utilities
+#include "utils.hh"
 
 /// Gazebo
 #include <gazebo/gazebo_client.hh>
@@ -59,7 +62,15 @@ class Object
         int & _type,
         ignition::math::Pose3d _pose,
         const std::vector<double> & _parameters
-        );
+    );
+
+    /// \brief Random object constructor
+    /// \param x 
+    /// \param y     { parameter_description }
+    public: Object(
+        float x,
+        float y
+    );
 
     /// \brief Sample 3D points on object surface
     public: void sampleSurface();
@@ -69,7 +80,7 @@ class Object
 /// \class Object 2D grid
 class ObjectGrid
 {
-    private:
+    public:
 
         /// Array of grid cells
         std::vector<int> cells;
@@ -85,8 +96,10 @@ class ObjectGrid
         float cell_x;
         /// Size of each cell in y dimension
         float cell_y;
+        /// List of objects in grid
+        std::vector<Object> objects;
 
-    // \brief Constructor
+    /// \brief Constructor
     /// \param TODO
     /// \param TODO
     /// \param TODO
@@ -96,4 +109,9 @@ class ObjectGrid
         int num_y,
         float size_x,
         float size_y);
+
+    /// \brief Populates a grid with random objects
+    /// \param num_objects Desired number of objects
+    public: void populate(int num_objects);
+
 };

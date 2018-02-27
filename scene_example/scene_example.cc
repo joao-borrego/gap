@@ -90,13 +90,21 @@ int main(int argc, char **argv)
 
     debugPrintTrace("Done waiting for spawn");
 
-    // Disable physics
+    // Disable physics engine
+    setPhysics(pub_world, false);
+    debugPrintTrace("Disable physics engine");
 
     // Main loop
 
     for (int iter; iter < scenes; iter++){
 
         // Populate grid with random objects
+        int num_objects = (getRandomInt(5, 10));
+        g_grid.populate(num_objects);
+
+        debugPrintTrace("Scene (" << iter + 1 << "/"
+        	<< scenes << "): " << num_objects << " objects");
+
         // Obtain 3D surface points
 
         // Request move camera
@@ -202,4 +210,13 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg)
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
 {
     // TODO
+}
+
+//////////////////////////////////////////////////
+void setPhysics(gazebo::transport::PublisherPtr pub, bool enable)
+{
+    world_utils::msgs::WorldUtilsRequest msg;
+    msg.set_type(PHYSICS);
+    msg.set_state(enable);
+    pub->Publish(msg);
 }

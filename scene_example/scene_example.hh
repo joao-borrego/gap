@@ -159,3 +159,8 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr & _msg);
 /// \brief Callback function for CameraUtils response
 /// \param _msg Incoming message
 void onCameraUtilsResponse(CameraUtilsResponsePtr & _msg);
+
+/// \brief Enables/disables physics engine
+/// \param pub WorldUtils publisher ptr
+/// \param enable Desired physics engine status
+void setPhysics(gazebo::transport::PublisherPtr pub, bool enable);

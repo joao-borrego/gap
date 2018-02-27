@@ -1,0 +1,17 @@
+package visual_utils.msgs;
+
+/// \ingroup visual_utils_msgs
+/// \interface VisualUtilsRequest
+/// \brief A request for Visual Utils plugin
+
+message VisualUtilsRequest
+{
+    /// \brief Type of request 
+    enum Type{
+        /// \brief Update 
+        UPDATE = 1;
+    }
+
+    /// \brief Type of request 
+    optional Type               type        = 1;
+}

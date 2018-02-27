@@ -9,26 +9,45 @@
       <uri>model://sun</uri>
     </include>
     
-    <model name="box_sim">
-      <pose>0 0 0.5 0 0 0</pose>
+    <model name="box_1">
+      <pose>-1 0 0 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
             <box>
-              <size>1 1 1</size>
+              <size>0.5 0.5 0.5</size>
             </box>
           </geometry>
         </collision>
         <visual name="visual">
           <geometry>
             <box>
-              <size>1 1 1</size>
+              <size>0.5 0.5 0.5</size>
             </box>
           </geometry>
           <plugin name="visual_utils" filename="libVisualUtils.so">
-            <color_a>1 0 0 1</color_a>
-            <color_b>1 0 0 0</color_b>
-            <period>10</period>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+
+    <model name="box_2">
+      <pose>1 0 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.5 0.5 0.5</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.5 0.5 0.5</size>
+            </box>
+          </geometry>
+          <plugin name="visual_utils" filename="libVisualUtils.so">
           </plugin>
         </visual>
       </link>

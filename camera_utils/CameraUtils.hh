@@ -67,6 +67,22 @@ namespace gazebo{
     // Forward declaration of private data class
     class CameraUtilsPrivate;
 
+    /// \brief A custom gazebo plugin that provides an interface to programatically
+    /// collect data from cameras at specific times. See the example usage below:
+    ///
+    /// \code{.xml}
+    ///    <plugin name="camera_utils" filename="libCameraUtils.so">
+    ///      
+    ///      <!-- Output image directory -->
+    ///      <output_dir>/tmp/camera_world</output_dir>
+    ///      
+    ///      <!-- Output image extension -->
+    ///      <extension>.png</extension>
+    ///
+    ///    </plugin>
+    /// \endcode
+    ///
+    /// See worlds/camera.world for a complete example.
     class CameraUtils : public SensorPlugin {
 
         // Private attributes 
@@ -82,7 +98,7 @@ namespace gazebo{
             std::string next_file_name;
             /// Internal flag for saving on next update 
             bool save_on_update = false;
-
+            /// TODO
             event::ConnectionPtr newFrameConnection;
 
         // Protected attributes 
@@ -90,10 +106,14 @@ namespace gazebo{
 
             /// Pointer to camera sensor 
             sensors::CameraSensorPtr parentSensor;
-            /// Pointer to camera boject 
+            /// Pointer to camera object 
             rendering::CameraPtr camera;
-            /// Image dimensions 
-            unsigned int width, height, depth;
+            /// Image width 
+            unsigned int width;
+            /// Image height 
+            unsigned int height;
+            /// Image depth 
+            unsigned int depth;
             /// Image format 
             std::string format;
             /// Exported image extension 

@@ -12,6 +12,14 @@
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/transport/Node.hh>
 
+// Boost
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+
+// TODO - Change to decent RNG
+#include <time.h>
+#include <stdlib.h>
+
 // Custom messages 
 #include "visual_utils_request.pb.h"
 
@@ -67,6 +75,9 @@ namespace gazebo{
         /// \brief Callback function for handling incoming requests
         /// \param _msg  The message
         public: void onRequest(VisualUtilsRequestPtr &_msg);
+
+        /// TODO
+        public: void randomMaterialName(std::string &name);
 
         /// \brief Private data pointer
         private: std::unique_ptr<VisualUtilsPrivate> dataPtr;

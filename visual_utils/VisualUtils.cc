@@ -23,8 +23,13 @@ class VisualUtilsPrivate
     /// Visual utils topic subscriber 
     public: transport::SubscriberPtr sub;
 
+    /// Material name patterns
+    public: std::vector<std::string> patterns;
+    /// Number of material type variants 
+    public: int variants; 
+
     /// TODO
-    public: bool flag;
+    public: bool update;
 
 };
 
@@ -66,16 +71,37 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
     this->dataPtr->sub = this->dataPtr->node->Subscribe(REQUEST_TOPIC,
         &VisualUtils::onRequest, this);
 
-    // TEST
-    this->dataPtr->flag = false;
+    // Update flag
+    this->dataPtr->update = false;
+
+    // Possible patterns for material names
+    if (_sdf->HasElement("patterns")){
+        std::string patterns_arg(_sdf->Get<std::string>("patterns"));
+        boost::split(this->dataPtr->patterns, patterns_arg,
+            boost::is_any_of(" "), boost::token_compress_on);
+    } else {
+        // TODO
+    }
+    
+    // Number of possible variants for each pattern
+    this->dataPtr->variants = 0;
+    if (_sdf->HasElement("variants")){
+        this->dataPtr->variants = _sdf->Get<int>("variants");
+    }
+
+    // TODO - Change to decent RNG
+    srand(time(NULL));
 }
 
 /////////////////////////////////////////////////
 void VisualUtils::Update()
 {
     // TEST
-    if (this->dataPtr->flag){
-        this->dataPtr->visual->SetMaterial("Plugin/perlin_3");
+    if (this->dataPtr->update){
+        std::string material;
+        this->randomMaterialName(material);
+        this->dataPtr->visual->SetMaterial(material);
+        this->dataPtr->update = false;
     }
 }
 
@@ -83,7 +109,17 @@ void VisualUtils::Update()
 void VisualUtils::onRequest(VisualUtilsRequestPtr &_msg)
 {
     // TEST
-    this->dataPtr->flag = true;
+    this->dataPtr->update = true;
+}
+
+/////////////////////////////////////////////////
+void VisualUtils::randomMaterialName(std::string &name)
+{
+    // TODO - Change to decent RNG
+    int r = rand() % this->dataPtr->patterns.size();
+    name = this->dataPtr->patterns.at(r);
+    r = rand() % this->dataPtr->variants;
+    name = name + std::to_string(r);
 }
 
 }

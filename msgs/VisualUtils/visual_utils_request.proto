@@ -19,7 +19,7 @@ message VisualUtilsRequest
 
     /// \brief Type of request 
     optional Type                   type    = 1;
-    /// \brief Targets
+    /// \brief Targets of request
     repeated string                 targets = 2;
     /// \brief Set of poses
     repeated gazebo.msgs.Pose       poses   = 3;

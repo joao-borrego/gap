@@ -15,14 +15,11 @@
 #include <chrono>
 #include <thread>
 
-/* Custom messages */
+// Custom messages
 #include "visual_utils_request.pb.h"
-
-// Command prompt
-#define PROMPT "> "
 
 // Topic monitored by the server for incoming commands
 #define VISUAL_UTILS_TOPIC "~/gazebo-utils/visual_utils"
 
 /// Request update
-#define UPDATE_REQUEST  visual_utils::msgs::VisualUtilsRequest::UPDATE
+#define UPDATE  visual_utils::msgs::VisualUtilsRequest::UPDATE

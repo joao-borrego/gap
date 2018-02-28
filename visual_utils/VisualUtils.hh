@@ -29,9 +29,14 @@ namespace VisualUtils {
 #define REQUEST_TOPIC   "~/gazebo-utils/visual_utils"
 
 /// Request update
-#define UPDATE_REQUEST  visual_utils::msgs::VisualUtilsRequest::UPDATE
+#define UPDATE          visual_utils::msgs::VisualUtilsRequest::UPDATE
+/// Set default pose
+#define DEFAULT_POSE    visual_utils::msgs::VisualUtilsRequest::DEFAULT_POSE
 
 // Default parameters
+
+/// Default unique name
+#define DEFAULT_NAME    "default"
 
 }
 
@@ -45,11 +50,19 @@ namespace gazebo{
     class VisualUtilsPrivate;
 
     /// \brief A custom gazebo plugin that provides an interface to programatically
-    /// alter visuals during simulation. See the example usage below:
+    /// alter visuals during simulation.
+    /// 
+    /// Materials are assumed to be loaded and name <pattern><index>
+    /// See the example usage below:
     ///
     /// \code{.xml}
     ///    <plugin name="visual_utils" filename="libVisualUtils.so">
-    ///
+    ///     <!-- Unique name identifier -->
+    ///     <uid>box_1</uid>
+    ///     <!-- Prefix patterns for material names, separated by whitespace -->
+    ///     <patterns>Plugin/flat_ Plugin/gradient_ ... </patterns>
+    ///     <!-- Number of variants per prefix pattern -->
+    ///     <variants>100</variants>
     ///    </plugin>
     /// \endcode
     ///

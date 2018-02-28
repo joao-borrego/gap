@@ -68,8 +68,9 @@ namespace gazebo{
     class CameraUtilsPrivate;
 
     /// \brief A custom gazebo plugin that provides an interface to programatically
-    /// collect data from cameras at specific times. See the example usage below:
+    /// collect data from cameras at specific times.
     ///
+    /// See the example usage below:
     /// \code{.xml}
     ///    <plugin name="camera_utils" filename="libCameraUtils.so">
     ///      

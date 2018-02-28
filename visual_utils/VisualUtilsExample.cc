@@ -6,10 +6,16 @@
 
 using namespace visual_utils::msgs;
 
-/// \brief TODO
+/// \brief Main function for Visual plugin example client
+/// 
+/// This simple demo changes the material of 4 objects.
+/// To launch run:
+/// \code
+///	gazebo worlds/visual.world
+/// ./build/visual_utils/visual_example
+/// \endcode
 int main(int argc, char **argv)
 {
-
     // Setup communication
 
     // Setup Gazebo client
@@ -24,14 +30,19 @@ int main(int argc, char **argv)
     pub->WaitForConnection();
 
     // Main loop
-    for (int i = 0; i < 500; i++){
+    for (int i = 0; i < 10; i++){
         
         // Create and send a custom message
         VisualUtilsRequest msg;
-        msg.set_type(UPDATE_REQUEST);
+        msg.set_type(UPDATE);
+        // Define targets of request
+        msg.add_targets(std::string("box_1"));
+        msg.add_targets(std::string("sphere_1"));
+        msg.add_targets(std::string("cylinder_1"));
+        msg.add_targets(std::string("ground_1"));
         pub->Publish(msg);
-    	// Wait 10 milliseconds
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    	// Wait 500 milliseconds
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
     // Clean up

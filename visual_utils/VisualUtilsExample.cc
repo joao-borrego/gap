@@ -24,17 +24,14 @@ int main(int argc, char **argv)
     pub->WaitForConnection();
 
     // Main loop
-    std::string line = "";
-
-    while(std::cout << PROMPT){
-
-        getline(std::cin, line);
-        std::stringstream input_stream(line);
-
+    for (int i = 0; i < 500; i++){
+        
         // Create and send a custom message
         VisualUtilsRequest msg;
         msg.set_type(UPDATE_REQUEST);
         pub->Publish(msg);
+    	// Wait 10 milliseconds
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     // Clean up

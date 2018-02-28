@@ -13,6 +13,9 @@ set (msgs
   # Custom messages
   visual_utils_request.proto
   # Message dependencies
+  ${PROTOBUF_IMPORT_DIRS}/vector3d.proto
+  ${PROTOBUF_IMPORT_DIRS}/quaternion.proto
+  ${PROTOBUF_IMPORT_DIRS}/pose.proto
 )
 
 # Generate Protobuf sources

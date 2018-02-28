@@ -9,10 +9,10 @@ import "vector3d.proto";
 
 message PointProjection
 {
-    /// \brief 2D point
-    optional gazebo.msgs.Vector2d   point2  = 1;
-    /// \brief 3D point
-    optional gazebo.msgs.Vector3d   point3  = 2;
-    /// \brief Optional name
+    /// \brief Set of projected 2D points 
+    repeated gazebo.msgs.Vector2d   point2  = 1;
+    /// \brief Set of 3D point to project
+    repeated gazebo.msgs.Vector3d   point3  = 2;
+    /// \brief Optional name describing set of points
     optional string                 name    = 3;
 }

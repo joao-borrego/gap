@@ -118,20 +118,24 @@ namespace gazebo {
         } else if (_msg->type() == PROJECTION_REQUEST){
 
             camera_utils::msgs::CameraUtilsResponse msg;
-            msg.set_success(false);
             msg.set_type(PROJECTION_RESPONSE);
 
+            // For each PointProjection message 
             for (int i = 0; i < _msg->projections_size(); i++){
-
-                ignition::math::Vector3d point3 = gazebo::msgs::ConvertIgn(
-                    _msg->projections(i).point3());
-                ignition::math::Vector2i point2 = this->camera->Project(point3);
-                gazebo::msgs::Vector2d *vector2 = new gazebo::msgs::Vector2d();
-                vector2->set_x(point2.X());
-                vector2->set_y(point2.Y());
-                camera_utils::msgs::PointProjection* projection = msg.add_projections();
-                //projection->set_name(_msg->projections(i).name());
-                projection->set_allocated_point2(vector2);
+                
+                camera_utils::msgs::PointProjection* proj = msg.add_projections();
+                if (_msg->projections(i).has_name())
+                    proj->set_name(_msg->projections(i).name());
+                
+                // For each 3D point in the set
+                for (int j = 0; j < _msg->projections(i).point3_size(); j++){
+                    ignition::math::Vector3d point3 = gazebo::msgs::ConvertIgn(
+                        _msg->projections(i).point3(j));
+                    ignition::math::Vector2i point2 = this->camera->Project(point3);
+                    gazebo::msgs::Vector2d *vector2 = proj->add_point2();
+                    vector2->set_x(point2.X());
+                    vector2->set_y(point2.Y());
+                }
             }
             this->dataPtr->pub->Publish(msg);
 

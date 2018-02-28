@@ -5,7 +5,7 @@ package camera_utils.msgs;
 /// \brief A request for Camera Utils plugin
 
 import "pose.proto";
-import "vector3d.proto";
+//import "vector3d.proto";
 import "point_projection.proto";
 
 message CameraUtilsRequest

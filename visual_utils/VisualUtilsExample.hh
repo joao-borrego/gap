@@ -11,6 +11,10 @@
 // I/O streams
 #include <iostream>
 
+// For sleeps
+#include <chrono>
+#include <thread>
+
 /* Custom messages */
 #include "visual_utils_request.pb.h"
 

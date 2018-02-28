@@ -30,6 +30,8 @@ class VisualUtilsPrivate
 
     /// TODO
     public: bool update;
+    /// TODO
+    public: int counter; 
 
 };
 
@@ -73,6 +75,8 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
 
     // Update flag
     this->dataPtr->update = false;
+    // Reset counter
+    this->dataPtr->counter = 0;
 
     // Possible patterns for material names
     if (_sdf->HasElement("patterns")){
@@ -89,6 +93,8 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
         this->dataPtr->variants = _sdf->Get<int>("variants");
     }
 
+    // Geometry type
+
     // TODO - Change to decent RNG
     srand(time(NULL));
 }
@@ -98,10 +104,20 @@ void VisualUtils::Update()
 {
     // TEST
     if (this->dataPtr->update){
+        
+        // Change material
         std::string material;
         this->randomMaterialName(material);
         this->dataPtr->visual->SetMaterial(material);
         this->dataPtr->update = false;
+        // Change pose
+        int x = this->dataPtr->visual->Pose().Pos().X();
+        int z = (this->dataPtr->counter++ % 2);
+        ignition::math::Pose3d pose(x,0,z,0,0,0);
+        this->dataPtr->visual->SetPose(pose);
+        // Change scale
+        ignition::math::Vector3d scale(1,0.5,0.5);
+        this->dataPtr->visual->SetScale(scale);
     }
 }
 

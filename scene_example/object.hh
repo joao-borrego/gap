@@ -17,13 +17,14 @@
 #include <Eigen/Dense>
 
 /// Spawn sphere object
-#define SPHERE          world_utils::msgs::Object::SPHERE
+#define SPHERE    0
 /// Spawn cylinder object
-#define CYLINDER        world_utils::msgs::Object::CYLINDER
+#define CYLINDER  1
 /// Spawn box object
-#define BOX             world_utils::msgs::Object::BOX
+#define BOX       2
 
 /// \class Object
+/// TODO
 class Object
 {
     public:
@@ -32,14 +33,16 @@ class Object
         std::string name;
         /// \brief Object type
         int type;
-        /// \brief Object 2D bounding box
-        cv::Rect bounding_box;
         /// \brief Object 3D world pose
         ignition::math::Pose3d pose;
+        /// \brief Object scale vector
+        ignition::math::Vector3d scale;
         /// \brief Object parameter values
         std::vector<double> parameters;
         /// \brief Object surface 3D points
         std::vector<Eigen::Vector4f> object_points;
+        /// \brief Object 2D bounding box
+        cv::Rect bounding_box;
         
     private:
 
@@ -53,23 +56,13 @@ class Object
         const double TOTAL_STEPS_S = 360.0 / ANGLE_STEP_S;
 
     /// \brief Constructor
-    /// \param _name
-    /// \param _type
-    /// \param _pose
-    /// \param _parameters
+    /// \param TODO
     public: Object(
         std::string & _name,
         int & _type,
-        ignition::math::Pose3d _pose,
-        const std::vector<double> & _parameters
-    );
-
-    /// \brief Random object constructor
-    /// \param x 
-    /// \param y     { parameter_description }
-    public: Object(
-        float x,
-        float y
+        ignition::math::Pose3d & _pose,
+        ignition::math::Vector3d & _scale,
+        std::vector<double> & _parameters
     );
 
     /// \brief Sample 3D points on object surface
@@ -96,10 +89,20 @@ class ObjectGrid
         float cell_x;
         /// Size of each cell in y dimension
         float cell_y;
+        /// Height of each cell
+        float cell_z;
         /// List of objects in grid
         std::vector<Object> objects;
 
+    private:
+
+        /// Array of counters, one per object type
+        int counters[3] = {0};
+        /// \brief Object types string vector
+        const std::vector<std::string> TYPES = {"sphere", "cylinder","box"};
+
     /// \brief Constructor
+    /// \param TODO
     /// \param TODO
     /// \param TODO
     /// \param TODO
@@ -108,10 +111,14 @@ class ObjectGrid
         int num_x,
         int num_y,
         float size_x,
-        float size_y);
+        float size_y,
+        float size_z);
 
     /// \brief Populates a grid with random objects
     /// \param num_objects Desired number of objects
     public: void populate(int num_objects);
+
+    /// TODO
+    private: void addRandomObject(int x, int y);
 
 };

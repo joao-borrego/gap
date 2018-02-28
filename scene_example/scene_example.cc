@@ -10,7 +10,7 @@
 // Global variables
 
 // 5 x 5 object Grid
-ObjectGrid g_grid(5, 5, 5, 5);
+ObjectGrid g_grid(5, 5, 5, 5, 1);
 // Object count
 int g_object_count{0};
 std::mutex g_object_count_mutex;

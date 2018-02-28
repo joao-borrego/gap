@@ -83,12 +83,6 @@
 /// Get entity or world information 
 #define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
 
-/// Spawn sphere object 
-#define SPHERE          world_utils::msgs::Object::SPHERE
-/// Spawn cylinder object 
-#define CYLINDER        world_utils::msgs::Object::CYLINDER
-/// Spawn box object 
-#define BOX             world_utils::msgs::Object::BOX
 /// Spawn custom object 
 #define CUSTOM          world_utils::msgs::Object::CUSTOM
 /// Spawn custom light object 

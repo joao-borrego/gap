@@ -29,10 +29,10 @@ class Object
 {
     public:
 
-        /// \brief Object name
-        std::string name;
         /// \brief Object type
         int type;
+        /// \brief Object name
+        std::string name;
         /// \brief Object 3D world pose
         ignition::math::Pose3d pose;
         /// \brief Object scale vector
@@ -58,11 +58,11 @@ class Object
     /// \brief Constructor
     /// \param TODO
     public: Object(
-        std::string & _name,
         int & _type,
-        ignition::math::Pose3d & _pose,
-        ignition::math::Vector3d & _scale,
-        std::vector<double> & _parameters
+        const std::string & _name,
+        const ignition::math::Pose3d & _pose,
+        const ignition::math::Vector3d & _scale,
+        const std::vector<double> & _parameters
     );
 
     /// \brief Sample 3D points on object surface

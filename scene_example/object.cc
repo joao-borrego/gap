@@ -1,18 +1,16 @@
-/**
- * @file object.hh
- * @brief Object class headers
- */
+/// \file capture_example/object.cc
+/// \brief Object class implementation
 
 #include "object.hh"
 
 //////////////////////////////////////////////////
 Object::Object(
-    std::string & _name,
     int & _type,
-    ignition::math::Pose3d & _pose,
-    ignition::math::Vector3d & _scale,
-    std::vector<double> & _parameters) :
-        name(_name), type(_type), pose(_pose), scale(_scale), parameters(_parameters)
+    const std::string & _name,
+    const ignition::math::Pose3d & _pose,
+    const ignition::math::Vector3d & _scale,
+    const std::vector<double> & _parameters) :
+        type(_type), name(_name), pose(_pose), scale(_scale), parameters(_parameters)
 {
     // Store 3D points at the object surface
     sampleSurface();
@@ -124,7 +122,7 @@ ObjectGrid::ObjectGrid(
 //////////////////////////////////////////////////
 void ObjectGrid::populate(int num_objects)
 {
-    int cell_id, x, y, type;
+    int cell_id, x, y;
 
     // Clear existing objects
     objects.clear();
@@ -214,4 +212,7 @@ void ObjectGrid::addRandomObject(int x, int y)
         s_z = box_z;
     }
     ignition::math::Vector3d scale(s_x, s_y, s_z);
+
+    Object new_obj(type, name, pose, scale, parameters);
+    this->objects.push_back(new_obj);
 }

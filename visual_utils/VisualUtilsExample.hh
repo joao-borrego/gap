@@ -18,7 +18,7 @@
 // Custom messages
 #include "visual_utils_request.pb.h"
 
-// Topic monitored by the server for incoming commands
+/// Topic monitored by the server for incoming commands
 #define VISUAL_UTILS_TOPIC "~/gazebo-utils/visual_utils"
 
 /// Request update

@@ -10,13 +10,13 @@
 // Global variables
 
 // 5 x 5 object Grid
-ObjectGrid g_grid(5, 5, 5, 5, 1);
-// Object count
-int g_object_count{0};
-std::mutex g_object_count_mutex;
+ObjectGrid g_grid(4, 4, 4, 4, 1);
 // Camera ready
 bool g_camera_ready{false};
 std::mutex g_camera_ready_mutex;
+// Regex objects
+std::regex g_regex_uid(REGEX_XML_UID);
+std::regex g_regex_model(REGEX_XML_MODEL);
 
 //////////////////////////////////////////////////
 int main(int argc, char **argv)
@@ -36,12 +36,6 @@ int main(int argc, char **argv)
 
     // Create output directories
     createDirectory(dataset_dir);
-    // Open texture folder and obtain file list
-    std::string textures_dir = media_dir + "/materials/scripts";
-    std::vector<std::string> textures;
-    getFilenamesInDir(textures_dir, textures);
-
-    debugPrintTrace("Found " << textures.size() << " textures");
 
     // Setup communication
 
@@ -65,38 +59,38 @@ int main(int argc, char **argv)
     // Subscribe to the camera utils reply topic and link callback function
     gazebo::transport::SubscriberPtr sub_camera =
         node->Subscribe(CAMERA_UTILS_RESPONSE_TOPIC, onCameraUtilsResponse);
+    // Publish to the visual plugin topic
+    gazebo::transport::PublisherPtr pub_visual =
+        node->Advertise<visual_utils::msgs::VisualUtilsRequest>(VISUAL_UTILS_TOPIC);
 
     // Wait for WorldUtils plugin to launch
     pub_world->WaitForConnection();
 
-    debugPrintTrace("Connected to Gazebo Server");
+    debugPrintTrace("Connected to World plugin");
 
     // Setup scene generation
-
-    // Spawn light source and camera
-    world_utils::msgs::WorldUtilsRequest msg;
-    msg.set_type(SPAWN);
-    addModelFromFile(msg, "models/custom_sun.sdf", false, textures);
-    addModelFromFile(msg, "models/custom_camera.sdf", false, textures);
-    pub_world->Publish(msg);
-
-    debugPrintTrace("Spawning light and camera");
-
-    // Wait for light source and camera to spawn
-    while (waitForObjectCount(2)){
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        queryObjectCount(pub_world);
-    }
-
-    debugPrintTrace("Done waiting for spawn");
 
     // Disable physics engine
     setPhysics(pub_world, false);
     debugPrintTrace("Disable physics engine");
 
-    // Main loop
+    // Spawn required objects
+    world_utils::msgs::WorldUtilsRequest msg_w;
+    msg_w.set_type(SPAWN);
+    addModelFromFile(msg_w, "models/custom_sun.sdf");
+    addModelFromFile(msg_w, "models/custom_ground.sdf");
+    addModelFromFile(msg_w, "models/custom_camera.sdf");
+    addDynamicModels(msg_w);
+    pub_world->Publish(msg_w);
+    debugPrintTrace("Spawning objects");
 
-    for (int iter; iter < scenes; iter++){
+    // Wait for a subscriber to connect to this publisher
+    pub_visual->WaitForConnection();
+    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+    debugPrintTrace("Done waiting for spawn");
+
+    // Main loop
+    for (int iter = 0; iter < scenes; iter++) {
 
         // Populate grid with random objects
         int num_objects = (getRandomInt(5, 10));
@@ -105,13 +99,17 @@ int main(int argc, char **argv)
         debugPrintTrace("Scene (" << iter + 1 << "/"
         	<< scenes << "): " << num_objects << " objects");
 
-        // Obtain 3D surface points
-
         // Request move camera
         // Request move light
 
-        // Wait empty world
-        // Request spawn: ground and objects
+        // Update scene
+        visual_utils::msgs::VisualUtilsRequest msg_v;
+        msg_v.set_type(UPDATE);
+        updateObjects(msg_v);
+        pub_visual->Publish(msg_v);
+
+        // TEST
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         // Wait for camera and light to move
         // Request point projection
@@ -140,9 +138,7 @@ int main(int argc, char **argv)
 //////////////////////////////////////////////////
 void addModelFromFile(
     world_utils::msgs::WorldUtilsRequest & msg,
-    const std::string & file,
-    const bool custom_texture,
-    std::vector<std::string> & textures)
+    const std::string & file)
 {
     // Read file to SDF string
     std::ifstream infile {file};
@@ -154,56 +150,70 @@ void addModelFromFile(
     world_utils::msgs::Object *object = msg.add_object();
     object->set_model_type(CUSTOM);
     object->set_sdf(model_sdf);
+}
 
-    // Apply custom texture
-    if (custom_texture) {
-        addCustomTexture(object, textures);
+//////////////////////////////////////////////////
+void addDynamicModels(world_utils::msgs::WorldUtilsRequest & msg)
+{
+    const std::vector<std::string> types = {"sphere", "cylinder","box"};
+
+    for (int i = 0; i < types.size(); i++)
+    {
+        for (int j = 1; j <= 10; j++)
+        {
+            // Read file to SDF string
+            std::string file_name = "models/custom_" + types[i] + ".sdf";
+            std::ifstream infile {file_name};
+            std::string sdf {
+                std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>()
+            };
+
+            std::string name = types[i] + "_" + std::to_string(j);
+            // Replace content inside <uid> tags in model SDF (VisualPlugin parameter)
+            std::string uid = "<uid>" + name + "</uid>";
+            sdf = std::regex_replace(sdf, g_regex_uid, uid);
+
+            // Replace model name inside <model name=""> tag
+            std::string model = "<model name=\"" + name + "\">";
+            sdf = std::regex_replace(sdf, g_regex_model, model);
+
+            // Add object to request message
+            world_utils::msgs::Object *object = msg.add_object();
+            object->set_model_type(CUSTOM);
+            object->set_sdf(sdf);
+        }
     }
 }
 
 //////////////////////////////////////////////////
-void addCustomTexture(
-    world_utils::msgs::Object *object,
-     std::vector<std::string> & textures)
+void updateObjects(visual_utils::msgs::VisualUtilsRequest & msg)
 {
-    int texture_idx  = getRandomInt(0, textures.size() - 1);
-    std::string texture = textures.at(texture_idx);
-    std::stringstream texture_uri;
-    std::stringstream texture_name;
+    int total = g_grid.objects.size();
+    const std::vector<std::string> types = {"sphere", "cylinder","box"};
 
-    // According to documented structure for textures
-    texture_uri << "file://materials/scripts/" << texture << ".material"
-        << "</uri><uri>file://materials/textures/";
-    texture_name << "Plugin/" << texture;
+    // Object parameters
+    std::string name;
+    ignition::math::Pose3d pose;
+    ignition::math::Vector3d scale;
 
-    object->set_texture_uri(texture_uri.str());
-    object->set_texture_name(texture_name.str());
-}
+    for  (int i = 0; i < total; i++) {
+        name = g_grid.objects.at(i).name;
+        pose = g_grid.objects.at(i).pose;
+        scale = g_grid.objects.at(i).scale;
 
-//////////////////////////////////////////////////
-bool waitForObjectCount(int num_objects){
-    
-    std::lock_guard<std::mutex> lock(g_object_count_mutex);
-    return (num_objects != g_object_count);
-}
+        gazebo::msgs::Pose *msg_pose = msg.add_poses();
+        gazebo::msgs::Vector3d *msg_scale = msg.add_scale();
 
-//////////////////////////////////////////////////
-void queryObjectCount(gazebo::transport::PublisherPtr pub){
-    
-    world_utils::msgs::WorldUtilsRequest msg;
-    msg.set_type(STATUS);
-    pub->Publish(msg, false);
+        msg.add_targets(name);
+        gazebo::msgs::Set(msg_pose, pose);
+        gazebo::msgs::Set(msg_scale, scale);
+    }
 }
 
 //////////////////////////////////////////////////
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg)
 {
-    if (_msg->type() == INFO){
-        if (_msg->has_object_count()){
-            std::lock_guard<std::mutex> lock(g_object_count_mutex);
-            g_object_count = _msg->object_count();
-        }
-    }
+    // TODO
 }
 
 //////////////////////////////////////////////////

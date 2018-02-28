@@ -52,7 +52,6 @@ GZ_REGISTER_VISUAL_PLUGIN(VisualUtils)
 /////////////////////////////////////////////////
 VisualUtils::VisualUtils(): VisualPlugin(), dataPtr(new VisualUtilsPrivate)
 {
-    gzmsg << "[VisualUtils] Loaded visual tools." << std::endl;
 }
 
 /////////////////////////////////////////////////
@@ -60,7 +59,7 @@ VisualUtils::~VisualUtils()
 {
     this->dataPtr->sub.reset();
     this->dataPtr->node->Fini();
-    gzmsg << "[VisualUtils] Unloaded visual tools." << std::endl;
+    gzmsg << "[VisualUtils] Unloaded visual tools: " << this->dataPtr->name << std::endl;
 }
 
 /////////////////////////////////////////////////
@@ -112,11 +111,18 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
 
     // TODO - Change to decent RNG
     srand(time(NULL));
+
+    gzmsg << "[VisualUtils] Loaded visual tools: " << this->dataPtr->name << std::endl;
 }
 
 /////////////////////////////////////////////////
 void VisualUtils::Update()
 {
+    // Update scale
+    if (this->dataPtr->update_scale) {
+        this->dataPtr->visual->SetScale(this->dataPtr->new_scale);
+        this->dataPtr->update_scale = false;
+    }
     // Update pose
     if (this->dataPtr->update_pose) {
         this->dataPtr->visual->SetPose(this->dataPtr->new_pose);
@@ -126,11 +132,6 @@ void VisualUtils::Update()
     if (this->dataPtr->update_material) {
         this->dataPtr->visual->SetMaterial(this->dataPtr->new_material);
         this->dataPtr->update_material = false;
-    }
-    // Update scale
-    if (this->dataPtr->update_scale) {
-        this->dataPtr->visual->SetScale(this->dataPtr->new_scale);
-        this->dataPtr->update_scale = false;
     }
 }
 

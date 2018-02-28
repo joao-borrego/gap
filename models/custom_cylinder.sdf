@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="plugin_box">
+    <pose>0 0 -3 0 0 0</pose>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>1</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>1</length>
+          </cylinder>
+        </geometry>
+        <plugin name="visual_utils" filename="libVisualUtils.so">
+          <uid>cylinder_uid</uid>
+          <patterns>
+            Plugin/flat_
+            Plugin/gradient_
+            Plugin/chess_
+            Plugin/perlin_
+          </patterns>
+          <variants>100</variants>
+        </plugin>
+      </visual>
+    </link>
+  </model>
+</sdf>

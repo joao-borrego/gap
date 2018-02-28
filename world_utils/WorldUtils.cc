@@ -180,7 +180,7 @@ namespace gazebo {
                     new_model_str = model_str.str();
                 }
 
-                // Insert model in 
+                // Insert model in World
                 sdf::SDF objectSDF;
                 objectSDF.SetFromString(new_model_str);
                 this->world->InsertModelSDF(objectSDF);

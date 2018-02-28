@@ -5,42 +5,40 @@
 /// TODO
 ///
 
-/// Includes
+// Includes
 
-/// Gazebo
+// Gazebo
 #include <gazebo/gazebo_config.h>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
 
-/// Custom messages 
-
-/// Camera utils request 
+// Custom messages 
 #include "camera_utils_request.pb.h"
-/// Camera utils reply 
 #include "camera_utils_response.pb.h"
-/// World utils request 
+#include "visual_utils_request.pb.h"
 #include "world_utils_request.pb.h"
-/// World utils response 
 #include "world_utils_response.pb.h"
 
-/// Utilities
+// Utilities
 #include "utils.hh"
-/// Object class
+// Object class
 #include "object.hh"
 
-/// I/O streams 
+// I/O streams 
 #include <iostream>
-/// File streams 
+// File streams 
 #include <fstream>
-/// For iterating over the contents of a dir 
+// Iterating over the contents of a dir 
 #include <boost/filesystem.hpp>
-/// For protecting variables 
+// Protecting variables 
 #include <mutex>
-/// For sleeps 
+// Sleep 
 #include <chrono>
 #include <thread>
-/// TODO 
+// Regular expressions
+#include <regex>
+// TODO 
 #include <Eigen/Dense>
 
 /// OpenCV 2 
@@ -50,25 +48,23 @@
 
 //////////////////////////////////////////////////
 
-/// Macros for custom messages
- 
-/// Camera utils 
+// Macros
 
-/// Request for camera object info 
-#define CAMERA_INFO_REQUEST     camera_utils::msgs::CameraUtilsRequest::CAMERA_INFO
-/// Request to capture a frame and save it to disk 
-#define CAPTURE_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAPTURE
-/// Request for projection of 3D point in world to 2D camera reference plane 
-#define CAMERA_POINT_REQUEST    camera_utils::msgs::CameraUtilsRequest::CAMERA_POINT
+/// Matches name field in <model name=""> XML tag
+#define REGEX_XML_MODEL "<model name=(\"([^\"]|\"\")*\")>"
+/// Matches string enclosed in <uid> XML tags
+#define REGEX_XML_UID   "<uid>[\\s\\S]*?<\\/uid>"
 
-/// TODO
-#define CAMERA_INFO_RESPONSE    camera_utils::msgs::CameraUtilsResponse::CAMERA_INFO
-/// TODO
-#define CAPTURE_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAPTURE
-/// TODO
-#define CAMERA_POINT_RESPONSE   camera_utils::msgs::CameraUtilsResponse::CAMERA_POINT
+//////////////////////////////////////////////////
 
-/// World utils 
+// Macros for custom messages
+
+// Visual utils
+
+/// Request update
+#define UPDATE  visual_utils::msgs::VisualUtilsRequest::UPDATE
+
+// World utils 
 
 /// Spawn entity 
 #define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
@@ -78,26 +74,15 @@
 #define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
 /// Start or stop physcis simulation 
 #define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
-/// Pause or resume simulation 
-#define PAUSE           world_utils::msgs::WorldUtilsRequest::PAUSE
-/// Get entity or world information 
-#define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
 
 /// Spawn custom object 
 #define CUSTOM          world_utils::msgs::Object::CUSTOM
 /// Spawn custom light object 
 #define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
-/// Spawn a model included in gazebo model path 
-#define MODEL           world_utils::msgs::Object::MODEL
-
-/// Provide world state information 
-#define INFO            world_utils::msgs::WorldUtilsResponse::INFO
-/// Provide specific object state information 
-#define PROPERTIES      world_utils::msgs::WorldUtilsResponse::PROPERTIES
 
 //////////////////////////////////////////////////
 
-/// API Topics
+// API Topics
 
 /// Topic monitored by the server for incoming camera requests 
 #define CAMERA_UTILS_TOPIC          "~/gazebo-utils/camera_utils"
@@ -107,8 +92,10 @@
 #define WORLD_UTILS_TOPIC           "~/gazebo-utils/world_utils"
 /// Topic for receiving replies from the object spawner server 
 #define WORLD_UTILS_RESPONSE_TOPIC  "~/gazebo-utils/world_utils/response"
+// Topic monitored by the server for incoming commands
+#define VISUAL_UTILS_TOPIC          "~/gazebo-utils/visual_utils"
 
-/// Message pointer typedefs
+// Message pointer typedefs
 
 typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
     WorldUtilsResponsePtr;
@@ -122,20 +109,15 @@ typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
 /// \brief Adds an SDF model to a WorldUtils request
 /// \param msg
 /// \param file
-/// \param custom_texture
-/// \param textures
 void addModelFromFile(
     world_utils::msgs::WorldUtilsRequest & msg,
-    const std::string & file,
-    const bool custom_texture,
-    std::vector<std::string> & textures);
+    const std::string & file);
 
-/// \brief Adds a random custom texture field to a message object
-/// \param object
-/// \param textures Array of textures
-void addCustomTexture(
-    world_utils::msgs::Object *object,
-    std::vector<std::string> & textures);
+/// \brief TODO
+void addDynamicModels(world_utils::msgs::WorldUtilsRequest & msg);
+
+/// \brief TODO
+void updateObjects(visual_utils::msgs::VisualUtilsRequest & msg);
 
 /// \brief Returns true if number of objects have not spawned yet
 /// \param num_objects Desired number of objects

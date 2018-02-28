@@ -106,7 +106,8 @@ ObjectGrid::ObjectGrid(
         num_cells_x(num_x),
         num_cells_y(num_y),
         grid_x(size_x),
-        grid_y(size_y)
+        grid_y(size_y),
+        cell_z(size_z)
 {
     // Create cell array
     int num_cells = num_cells_x * num_cells_y;
@@ -126,6 +127,8 @@ void ObjectGrid::populate(int num_objects)
 
     // Clear existing objects
     objects.clear();
+    // Reset object counters
+    for (int i = 0; i < 3; i++) counters[i] = 0;
     
     // Shuffle grid cells, for random placement
     shuffleIntVector(cells);
@@ -133,7 +136,7 @@ void ObjectGrid::populate(int num_objects)
         // Get random cell coordinates
         cell_id = cells[i];
         x = floor(cell_id / num_cells_x);
-        y = floor(cell_id - x * cell_x);
+        y = floor(cell_id - x * num_cells_x);
         // Create random object at cell (x,y)
         addRandomObject(x,y);
     }
@@ -151,13 +154,16 @@ void ObjectGrid::addRandomObject(int x, int y)
     std::vector<double> parameters;
     // Pose
     double p_x, p_y, p_z;
+    // Offsets 
+    // TODO - Turn into parameters
+    double o_x = 2, o_y = 2, o_z = -3;
     // Scale vector
     double s_x, s_y, s_z;
 
     // Object type and name
     type = getRandomInt(0, 2);
     this->counters[type]++;
-    name = TYPES[type] + std::to_string(counters[type]);
+    name = TYPES[type] + "_" + std::to_string(counters[type]);
     
     // TODO - Orientation
 
@@ -198,7 +204,9 @@ void ObjectGrid::addRandomObject(int x, int y)
     } else if (type == BOX) {
         p_z = box_z * 0.5;
     }
-    ignition::math::Pose3d pose(p_x, p_y, p_z, 0, 0, 0);
+
+    // Apply offset to pose
+    ignition::math::Pose3d pose(p_x - o_x, p_y - o_y, p_z - o_z, 0, 0, 0);
     
     // Scale vector
     if (type == SPHERE) {
@@ -213,6 +221,5 @@ void ObjectGrid::addRandomObject(int x, int y)
     }
     ignition::math::Vector3d scale(s_x, s_y, s_z);
 
-    Object new_obj(type, name, pose, scale, parameters);
-    this->objects.push_back(new_obj);
+    this->objects.emplace_back(type, name, pose, scale, parameters);
 }

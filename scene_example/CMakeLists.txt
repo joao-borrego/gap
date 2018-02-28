@@ -18,14 +18,16 @@ include_directories(
   ${GAZEBO_INCLUDE_DIRS}
   ${SDF_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
-  ${PROJECT_BINARY_DIR}/msgs/WorldUtils
   ${PROJECT_BINARY_DIR}/msgs/CameraUtils
+  ${PROJECT_BINARY_DIR}/msgs/VisualUtils
+  ${PROJECT_BINARY_DIR}/msgs/WorldUtils
 )
 
 link_directories(
   ${GAZEBO_LIBRARY_DIRS}
-  ${PROJECT_BINARY_DIR}/msgs/WorldUtils
   ${PROJECT_BINARY_DIR}/msgs/CameraUtils
+  ${PROJECT_BINARY_DIR}/msgs/VisualUtils
+  ${PROJECT_BINARY_DIR}/msgs/WorldUtils
 )
 
 # Camera utils plugin client
@@ -37,9 +39,11 @@ add_executable (
 target_link_libraries(
   scene_example
   camera_utils_msgs
+  visual_utils_msgs
   world_utils_msgs
   ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES} ${OpenCV_LIBRARIES})
 add_dependencies(
   scene_example
   camera_utils_msgs
+  visual_utils_msgs
   world_utils_msgs)

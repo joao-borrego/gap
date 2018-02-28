@@ -93,11 +93,11 @@ class ObjectGrid
         float cell_z;
         /// List of objects in grid
         std::vector<Object> objects;
+        /// Array of counters, one per object type
+        int counters[3] = {0};
 
     private:
 
-        /// Array of counters, one per object type
-        int counters[3] = {0};
         /// \brief Object types string vector
         const std::vector<std::string> TYPES = {"sphere", "cylinder","box"};
 

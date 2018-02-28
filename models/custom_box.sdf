@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<sdf version="1.5">
+  <model name="plugin_box">
+    <pose>0 0 -3 0 0 0</pose>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>1 1 1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>1 1 1</size>
+          </box>
+        </geometry>
+        <plugin name="visual_utils" filename="libVisualUtils.so">
+          <uid>box_uid</uid>
+          <patterns>
+            Plugin/flat_
+            Plugin/gradient_
+            Plugin/chess_
+            Plugin/perlin_
+          </patterns>
+          <variants>100</variants>
+        </plugin>
+      </visual>
+    </link>
+  </model>
+</sdf>

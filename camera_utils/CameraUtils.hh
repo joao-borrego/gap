@@ -20,6 +20,10 @@
 // To create directories 
 #include <boost/filesystem.hpp>
 
+// Malloc and memcpy
+#include <stdio.h>
+#include <string.h>
+
 namespace CameraUtils {
 
 /// Topic monitored for incoming commands 

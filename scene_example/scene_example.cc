@@ -75,13 +75,13 @@ int main(int argc, char **argv)
     debugPrintTrace("Disable physics engine");
 
     // Spawn required objects
-    world_utils::msgs::WorldUtilsRequest msg_w;
-    msg_w.set_type(SPAWN);
-    addModelFromFile(msg_w, "models/custom_sun.sdf");
-    addModelFromFile(msg_w, "models/custom_ground.sdf");
-    addModelFromFile(msg_w, "models/custom_camera.sdf");
-    addDynamicModels(msg_w);
-    pub_world->Publish(msg_w);
+    world_utils::msgs::WorldUtilsRequest msg_spawn;
+    msg_spawn.set_type(SPAWN);
+    addModelFromFile(msg_spawn, "models/custom_sun.sdf");
+    addModelFromFile(msg_spawn, "models/custom_ground.sdf");
+    addModelFromFile(msg_spawn, "models/custom_camera.sdf");
+    addDynamicModels(msg_spawn);
+    pub_world->Publish(msg_spawn);
     debugPrintTrace("Spawning objects");
 
     // Wait for a subscriber to connect to this publisher
@@ -89,6 +89,9 @@ int main(int argc, char **argv)
     std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     debugPrintTrace("Done waiting for spawn");
 
+    // Camera and light poses
+    ignition::math::Pose3d camera_pose, light_pose;
+    
     // Main loop
     for (int iter = 0; iter < scenes; iter++) {
 
@@ -97,36 +100,45 @@ int main(int argc, char **argv)
         g_grid.populate(num_objects);
 
         debugPrintTrace("Scene (" << iter + 1 << "/"
-        	<< scenes << "): " << num_objects << " objects");
+            << scenes << "): " << num_objects << " objects");
+
+        // Calculate new camera and light poses
+        camera_pose = getRandomCameraPose();
+        light_pose = getRandomLightPose();
 
         // Request move camera
-        // Request move light
+        world_utils::msgs::WorldUtilsRequest msg_move;
+        msg_move.set_type(MOVE);
+        addMoveObject(msg_move, "custom_camera", false, camera_pose);
+        addMoveObject(msg_move, "custom_sun", true, light_pose);
+        pub_world->Publish(msg_move);
 
         // Update scene
-        visual_utils::msgs::VisualUtilsRequest msg_v;
-        msg_v.set_type(UPDATE);
-        updateObjects(msg_v);
-        pub_visual->Publish(msg_v);
+        visual_utils::msgs::VisualUtilsRequest msg_visual;
+        msg_visual.set_type(UPDATE);
+        updateObjects(msg_visual);
+        pub_visual->Publish(msg_visual);
 
-        // TEST
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-        // Wait for camera and light to move
+        // TODO
+        // Wait for camera to move to new position
         // Request point projection
 
         // Wait for objects to spawn
-        // Request image
-        // Wait for image
+        // Capture the scene and save it to a file
+        captureScene(pub_camera, iter);
+        while (waitForCamera()){
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
 
+        // TODO
         // If debug, view image
-
         // Wait for projections
-        // Request clear world
         // Save annotations to file
     }
 
-    // Clean up
+    // Force save camera raw data buffer
 
+    // Clean up
     sub_world.reset();
     sub_camera.reset();
     node->Fini();
@@ -208,6 +220,83 @@ void updateObjects(visual_utils::msgs::VisualUtilsRequest & msg)
         gazebo::msgs::Set(msg_pose, pose);
         gazebo::msgs::Set(msg_scale, scale);
     }
+    msg.add_targets("ground");
+}
+
+//////////////////////////////////////////////////
+void addMoveObject(
+    world_utils::msgs::WorldUtilsRequest & msg,
+    const std::string & name,
+    const bool is_light,
+    const ignition::math::Pose3d & pose){
+
+    world_utils::msgs::Object *object = msg.add_object();
+    object->set_name(name);
+    if (is_light) {
+        object->set_model_type(CUSTOM_LIGHT);
+    }
+
+    gazebo::msgs::Pose *pose_msg = new gazebo::msgs::Pose();
+    gazebo::msgs::Set(pose_msg, pose);
+    object->set_allocated_pose(pose_msg);
+}
+
+//////////////////////////////////////////////////
+ignition::math::Pose3d getRandomCameraPose()
+{
+    static const ignition::math::Quaternion<double> correct_orientation(
+        ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
+ 
+    ignition::math::Quaternion<double> original_orientation(
+        getRandomDouble(0, M_PI / 5.0),
+        getRandomDouble(0, M_PI / 5.0),
+        getRandomDouble(0, M_PI / 5.0));
+
+    ignition::math::Pose3d new_pose;
+    ignition::math::Vector3d position(0, 0, 5.0);
+
+    new_pose.Set(position,
+        (correct_orientation * original_orientation).Inverse());
+    new_pose = new_pose.RotatePositionAboutOrigin(original_orientation);
+
+    return new_pose;
+}
+
+//////////////////////////////////////////////////
+ignition::math::Pose3d getRandomLightPose()
+{
+    ignition::math::Quaternion<double> light_orientation(
+        getRandomDouble(-M_PI / 3.0,M_PI / 3.0),
+        getRandomDouble(-M_PI / 3.0,M_PI / 3.0),
+        getRandomDouble(-M_PI / 3.0,M_PI / 3.0)); 
+    
+    ignition::math::Pose3d new_pose;
+    ignition::math::Vector3d position(0, 0, 5.0);
+
+    new_pose.Set(position, (light_orientation).Inverse());
+    new_pose = new_pose.RotatePositionAboutOrigin(light_orientation);
+
+    return new_pose;
+}
+
+//////////////////////////////////////////////////
+void captureScene(gazebo::transport::PublisherPtr pub, int iteration)
+{
+    camera_utils::msgs::CameraUtilsRequest msg;
+    msg.set_type(CAPTURE_REQUEST);
+    msg.set_file_name(std::to_string(iteration));
+    pub->Publish(msg, false);
+}
+
+//////////////////////////////////////////////////
+bool waitForCamera()
+{
+    std::lock_guard<std::mutex> lock(g_camera_ready_mutex);
+    if (g_camera_ready) {
+        g_camera_ready = false;
+        return false;
+    }
+    return true;
 }
 
 //////////////////////////////////////////////////
@@ -219,7 +308,13 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg)
 //////////////////////////////////////////////////
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
 {
-    // TODO
+    if (_msg->type() == CAPTURE_RESPONSE) {
+
+        if (_msg->success()){
+            std::lock_guard<std::mutex> lock(g_camera_ready_mutex);
+            g_camera_ready = true;
+        }
+    }
 }
 
 //////////////////////////////////////////////////

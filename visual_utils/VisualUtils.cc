@@ -17,36 +17,36 @@ class VisualUtilsPrivate
     public: rendering::VisualPtr visual;
     /// \brief Connects to rendering update event
     public: event::ConnectionPtr updateConnection;
-    /// Gazebo transport node 
+    /// \brief Gazebo transport node
     public: transport::NodePtr node;
-    /// Visual utils topic subscriber 
+    /// \brief Visual utils topic subscriber
     public: transport::SubscriberPtr sub;
 
-    /// Unique name
-    public: std::string name; 
-    /// Material name patterns
+    /// \brief Unique name
+    public: std::string name;
+    /// \brief Material name patterns
     public: std::vector<std::string> patterns;
-    /// Number of material type variants 
-    public: int variants; 
-    /// Default pose
+    /// \brief Number of material type variants
+    public: int variants;
+    /// \brief Default pose
     public: ignition::math::Pose3d default_pose;
 
-    /// Flag to update pose
+    /// \brief Flag to update pose
     public: bool update_pose {false};
-    /// Flag to update material
+    /// \brief Flag to update material
     public: bool update_material {false};
-    /// Flag to update scale
-    public: bool update_scale {false}; 
+    /// \brief Flag to update scale
+    public: bool update_scale {false};
 
-    /// New pose
+    /// \brief New pose
     public: ignition::math::Pose3d new_pose;
-    /// New material 
+    /// \brief New material
     public: std::string new_material;
-    /// New scale
+    /// \brief New scale
     public: ignition::math::Vector3d new_scale;
 };
 
-/// Register this plugin with the simulator 
+/// Register this plugin with the simulator
 GZ_REGISTER_VISUAL_PLUGIN(VisualUtils)
 
 /////////////////////////////////////////////////
@@ -75,10 +75,10 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
     // Connect to the world update signal
     this->dataPtr->updateConnection = event::Events::ConnectPreRender(
         std::bind(&VisualUtils::Update, this));
-     // Setup transport node 
+     // Setup transport node
     this->dataPtr->node = transport::NodePtr(new transport::Node());
     this->dataPtr->node->Init();
-    // Subcribe to the monitored requests topic 
+    // Subcribe to the monitored requests topic
     this->dataPtr->sub = this->dataPtr->node->Subscribe(REQUEST_TOPIC,
         &VisualUtils::onRequest, this);
 
@@ -99,7 +99,7 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
     } else {
         // TODO
     }
-    
+
     // Number of possible variants for each pattern
     this->dataPtr->variants = 0;
     if (_sdf->HasElement("variants")) {
@@ -140,13 +140,13 @@ void VisualUtils::onRequest(VisualUtilsRequestPtr &_msg)
 {
     // Relevant index of commands in message for the current visual
     int index = -1;
-    
+
     // Validate msg structure
     if (!_msg->has_type()) {
         gzwarn <<" [VisualUtils] Invalid request received" << std::endl;
         return;
     }
-    
+
     // Check if current visual is targeted
     for (int i = 0; i < _msg->targets_size(); i++) {
         if (this->dataPtr->name == _msg->targets(i)) {
@@ -175,7 +175,7 @@ void VisualUtils::onRequest(VisualUtilsRequestPtr &_msg)
     }
     else if (_msg->type() == DEFAULT_POSE)
     {
-        if (index != -1) { 
+        if (index != -1) {
             if (index < _msg->poses_size()) {
                 this->dataPtr->default_pose = gazebo::msgs::ConvertIgn(_msg->poses(index));
             }

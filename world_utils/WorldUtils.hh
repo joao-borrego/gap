@@ -1,21 +1,18 @@
-/**
- * @file WorldUtils.hh 
- * @brief World utils headers
- * 
- * A gazebo WorldPlugin that provides an interface to programatically interact with the simulator
- * and perform a set of actions including:
- * - Spawning entities
- *  + generic shapes from respective parameters
- *  + from SDF strings, namely light objects
- *  + from model URI
- *  + with custom textures in a known media directory
- * - Moving and removing entities
- * - Get world information
- * - Get specific object information, namely
- *  + 3D bounding box
- *  
- * @author João Borrego
- */
+/// \file world_utils/WorldUtils.hh
+/// \brief TODO
+///
+/// TODO
+///
+/// \author João Borrego
+
+// Gazebo
+#include <gazebo/common/Events.hh>
+#include "gazebo/common/Plugin.hh"
+#include <gazebo/msgs/msgs.hh>
+#include "gazebo/physics/physics.hh"
+#include <gazebo/transport/transport.hh>
+
+#include <mutex>
 
 #include <iostream>         // io
 #include <iomanip>          // setprecision
@@ -23,71 +20,63 @@
 #include <list>             // list of live objects 
 #include <string>           // strings
 #include <regex>            // regular expressions
-#include <gazebo/gazebo.hh> // gazebo
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "gazebo/physics/physics.hh"
-#include "gazebo/common/common.hh"
-#include "gazebo/gazebo.hh"
-
-#include <gazebo/transport/transport.hh>
-#include <gazebo/msgs/msgs.hh>
-
-/* Custom messages */
+// Custom messages
 #include "world_utils_request.pb.h"
 #include "world_utils_response.pb.h"
 
 namespace WorldUtils {
 
-/** Topic monitored for incoming commands */
+/// Topic monitored for incoming commands
 #define REQUEST_TOPIC "~/gazebo-utils/world_utils"
-/** Topic for publishing replies */
+/// Topic for publishing replies
 #define RESPONSE_TOPIC "~/gazebo-utils/world_utils/response"
 
-/* Ease of use macros */
+// Ease of use macros
 
-/* Request */
+// Request
 
-/** Spawn entity */
+/// Spawn entity
 #define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
-/** Move entity */
+/// Move entity
 #define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
-/** Remove entity from the world */
+/// Remove entity from the world
 #define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
-/** Start or stop physcis simulation */
+/// Start or stop physcis simulation
 #define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
-/** Pause or resume simulation */
+/// Pause or resume simulation
 #define PAUSE           world_utils::msgs::WorldUtilsRequest::PAUSE
-/** Get entity or world information */
+/// Get entity or world information
 #define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
 
-/** Spawn sphere object */
+/// Spawn sphere object
 #define SPHERE          world_utils::msgs::Object::SPHERE
-/** Spawn cylinder object */
+/// Spawn cylinder object
 #define CYLINDER        world_utils::msgs::Object::CYLINDER
-/** Spawn box object */
+/// Spawn box object
 #define BOX             world_utils::msgs::Object::BOX
-/** Spawn custom object */
+/// Spawn custom object
 #define CUSTOM          world_utils::msgs::Object::CUSTOM
-/** Spawn custom light object */
+/// Spawn custom light object
 #define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
-/** Spawn a model included in gazebo model path */
+/// Spawn a model included in gazebo model path
 #define MODEL           world_utils::msgs::Object::MODEL
 
-/* Response */
+// Response
 
-/** Provide world state information */
+/// Provide world state information
 #define INFO            world_utils::msgs::WorldUtilsResponse::INFO
-/** Provide specific object state information */
+/// Provide specific object state information
 #define PROPERTIES      world_utils::msgs::WorldUtilsResponse::PROPERTIES
 
-/* Regex patterns */
+// Regex patterns
 
-/** Matches string enclosed in <script> XML tags */
+/// Matches string enclosed in <script> XML tags
 #define REGEX_XML_SCRIPT "<script>[\\s\\S]*?<\\/script>"
-/** Matches string enclosed in <pose> XML tags */
+/// Matches string enclosed in <pose> XML tags
 #define REGEX_XML_POSE   "<pose>[\\s\\S]*?<\\/pose>"
 
 }
@@ -100,96 +89,78 @@ namespace gazebo {
     typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
         WorldUtilsResponsePtr;
 
+    /// \brief TODO
     class WorldUtils : public WorldPlugin {
 
-        /* Private attributes */
-        private:
+        /// \brief TODO
+        public: std::mutex mutex;
 
-            /** A pointer to the world */
-            physics::WorldPtr world;
-            /** Keep track of live objects */
-            std::list<std::string> live_objs;
-            
-            /** A node used for transport */
-            transport::NodePtr node;
-            /** A subscriber to the request topic */
-            transport::SubscriberPtr sub;
-            /** A publisher to the reply topic */
-            transport::PublisherPtr pub;
-            
-            /** A publisher to the factory topic */
-            transport::PublisherPtr factory_pub;
-            /** A publisher to the light factory topic */
-            transport::PublisherPtr factory_light_pub;
-            /** A publisher to the gazebo request topic */
-            transport::PublisherPtr request_pub;
-            /** A subscriber to the gazebo response topic */
-            transport::SubscriberPtr response_sub;
+        /// \brief A pointer to the world
+        private: physics::WorldPtr world;
+        /// \brief Connection to World Update events
+        private: event::ConnectionPtr updateConnection;
 
-            /* Regex patterns */
-            std::regex script_reg;
-            std::regex pose_reg;
+        /// \brief A node used for transport
+        private: transport::NodePtr node;
+        /// \brief A subscriber to the request topic
+        private: transport::SubscriberPtr sub;
+        /// \brief A publisher to the reply topic
+        private: transport::PublisherPtr pub;
+        
+        /// \brief A publisher to the factory topic
+        private: transport::PublisherPtr factory_pub;
+        /// \brief A publisher to the light factory topic
+        private: transport::PublisherPtr factory_light_pub;
+        /// \brief A publisher to the gazebo request topic
+        private: transport::PublisherPtr request_pub;
+        /// \brief A subscriber to the gazebo response topic
+        private: transport::SubscriberPtr response_sub;
 
-            /* Counters for automatic naming */
-            int sphere_counter      {0};
-            int cylinder_counter    {0};
-            int box_counter         {0};
-            int light_counter       {0};
+        // Regex patterns
+        private: std::regex script_reg;
+        private: std::regex pose_reg;
 
-        /* Public methods */
+        // Counters for automatic naming
+        private: int sphere_counter      {0};
+        private: int cylinder_counter    {0};
+        private: int box_counter         {0};
+        private: int light_counter       {0};
+
+        /// \brief TODO
+        private: std::queue<int> type;
+        /// \brief Queue of objects with pending move operations
+        private: std::queue<std::string> move;
+        /// \brief TODO
+        private: std::queue<ignition::math::Pose3d> poses;
+
+        // Public methods
         public:
             
-            /**
-             * @brief      Constructor
-             */
+            /// \brief TODO
             WorldUtils();
 
-            /**
-             * @brief      Plugin setup executed on gazebo server launch
-             *
-             * @param      _world  The world pointer
-             * @param      _sdf    The sdf parameters
-             */
+            /// \brief TODO
             void Load(physics::WorldPtr _world, sdf::ElementPtr _sdf);
 
-        /* Private methods */
+            /// \brief TODO
+            void onUpdate();
+
+        // Private methods
         private:
 
-            /**
-             * @brief      Callback function for receiving a message
-             *
-             * @param      _msg  The message
-             */
+            /// \brief TODO
             void onRequest(WorldUtilsRequestPtr &_msg);
 
-            /**
-             * @brief      Prints live objects in the world
-             */
+            /// \brief TODO
             void printLiveObjs();
 
-            /**
-             * @brief      Deletes every model in the world
-             */
+            /// \brief TODO
             void clearWorld();
 
-            /**
-             * @brief      Deletes every model with name matching a given substring
-             *
-             * @param      match  The substring to be matched
-             */
+            /// \brief TODO
             void clearMatching(const std::string &match, const bool is_light);
 
-            /**
-             * @brief      Generates SDF string for sphere object
-             *
-             * @param      model_name   The model name
-             * @param      mass         The mass
-             * @param      radius       The radius
-             * @param      position     The position
-             * @param      orientation  The orientation
-             *
-             * @return     The sphere SDF string
-             */
+            /// \brief TODO
             const std::string genSphere(
                 const std::string &model_name,
                 const double mass,
@@ -197,18 +168,7 @@ namespace gazebo {
                 const ignition::math::Vector3d position,
                 const ignition::math::Quaterniond orientation);
 
-            /**
-             * @brief      Generates SDF string for cylinder object
-             *
-             * @param      model_name   The model name
-             * @param      mass         The mass
-             * @param      radius       The radius
-             * @param      length       The length
-             * @param      position     The position
-             * @param      orientation  The orientation
-             *
-             * @return     The cylinder SDF string
-             */
+            /// \brief TODO
             const std::string genCylinder(
                 const std::string &model_name,
                 const double mass,
@@ -217,17 +177,7 @@ namespace gazebo {
                 const ignition::math::Vector3d position,
                 const ignition::math::Quaterniond orientation);
 
-            /**
-             * @brief      Generates SDF string for box object
-             *
-             * @param      model_name   The model name
-             * @param      mass         The mass
-             * @param      size         The box dimensions
-             * @param      position     The position
-             * @param      orientation  The orientation
-             *
-             * @return     The box SDF string
-             */
+            /// \brief TODO
             const std::string genBox(
                 const std::string &model_name,
                 const double mass,

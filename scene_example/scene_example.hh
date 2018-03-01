@@ -59,6 +59,13 @@
 
 // Macros for custom messages
 
+// Camera utils
+
+/// \brief Request to capture a frame and save it to disk
+#define CAPTURE_REQUEST     camera_utils::msgs::CameraUtilsRequest::CAPTURE
+/// \brief Response acknowling captured frame
+#define CAPTURE_RESPONSE    camera_utils::msgs::CameraUtilsResponse::CAPTURE
+
 // Visual utils
 
 /// Request update
@@ -66,18 +73,18 @@
 
 // World utils 
 
-/// Spawn entity 
+/// \brief Spawn entity 
 #define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
-/// Move entity 
+/// \brief Move entity 
 #define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
-/// Remove entity from the world 
+/// \brief Remove entity from the world 
 #define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
-/// Start or stop physcis simulation 
+/// \brief Start or stop physcis simulation 
 #define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
 
-/// Spawn custom object 
+/// \brief Spawn custom object 
 #define CUSTOM          world_utils::msgs::Object::CUSTOM
-/// Spawn custom light object 
+/// \brief Spawn custom light object 
 #define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
 
 //////////////////////////////////////////////////
@@ -119,16 +126,26 @@ void addDynamicModels(world_utils::msgs::WorldUtilsRequest & msg);
 /// \brief TODO
 void updateObjects(visual_utils::msgs::VisualUtilsRequest & msg);
 
-/// \brief Returns true if number of objects have not spawned yet
-/// \param num_objects Desired number of objects
-/// \return False if desired number of objects have spawned
-bool waitForObjectCount(int num_objects);
+/// \brief TODO
+void addMoveObject(
+    world_utils::msgs::WorldUtilsRequest & msg,
+    const std::string & name,
+    const bool is_light,
+    const ignition::math::Pose3d & pose);
 
-/// \brief Updates World object count
-/// \param pub WorldUtils publisher ptr
-void queryObjectCount(gazebo::transport::PublisherPtr pub);
+/// \brief TODO - Cleanup
+ignition::math::Pose3d getRandomCameraPose();
 
-/// \brief Callback function for WordUtils response
+/// \brief TODO - Cleanup
+ignition::math::Pose3d getRandomLightPose();
+
+/// \brief TODO
+void captureScene(gazebo::transport::PublisherPtr pub, int iteration);
+
+/// \brief TODO
+bool waitForCamera();
+
+/// \brief TODO
 /// \param _msg Incoming message
 void onWorldUtilsResponse(WorldUtilsResponsePtr & _msg);
 

@@ -22,22 +22,22 @@ void Object::sampleSurface()
     // Generate surface points from object parameters
     if (type == CYLINDER) {
 
-        double radius = fabs(parameters[0]);
-        double length = fabs(parameters[1]);
+        double radius = parameters[0];
+        double length = parameters[1];
         
         // Generate points on the circular edge of the cylinder
-        for(int i = 0; i < TOTAL_STEPS_C ; i++){
+        for (int i = 0; i < TOTAL_STEPS_C ; i++) {
 
             float x,y,z;
             x = cos(ANGLE_STEP_C * i) * radius;
             y = sin(ANGLE_STEP_C * i) * radius;
-            z = 0.5*length;
+            z = 0.5 * length;
 
             Eigen::Vector4f point1;
             point1 << x, y, z, 1.0;
             points.push_back(point1);
 
-            z= -0.5*length;
+            z = -0.5 * length;
             Eigen::Vector4f point2; 
             point2 << x, y, z, 1.0;
             points.push_back(point2);
@@ -45,15 +45,15 @@ void Object::sampleSurface()
 
     } else if (type == SPHERE) {
 
-        double radius = fabs(parameters[0]);
+        double radius = parameters[0];
         
-        for (int i = 0; i < TOTAL_STEPS_S; i++){
-            for (int j = 0; j < TOTAL_STEPS_S; j++){
+        for (int i = 0; i < TOTAL_STEPS_S; i++) {
+            for (int j = 0; j < TOTAL_STEPS_S; j++) {
                 
                 float x,y,z;
-                x = radius*sin(ANGLE_STEP_S*i)*cos(ANGLE_STEP_S*j);
-                y = radius*sin(ANGLE_STEP_S*i)*sin(ANGLE_STEP_S*j);
-                z = radius*cos(ANGLE_STEP_S*i);
+                x = radius * sin(ANGLE_STEP_S * i) * cos(ANGLE_STEP_S * j);
+                y = radius * sin(ANGLE_STEP_S * i) * sin(ANGLE_STEP_S * j);
+                z = radius * cos(ANGLE_STEP_S * i);
 
                 Eigen::Vector4f point;
                 point << x, y, z, 1.0;
@@ -63,9 +63,9 @@ void Object::sampleSurface()
     
     } else if (type == BOX) {
 
-        double size_x = fabs(parameters[0]);
-        double size_y = fabs(parameters[1]);
-        double size_z = fabs(parameters[2]);
+        double size_x = parameters[0];
+        double size_y = parameters[1];
+        double size_z = parameters[2];
 
         float x,y,z;
         for (int i=-1; i < 2 ; i+= 2){

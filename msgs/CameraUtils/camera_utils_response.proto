@@ -9,7 +9,8 @@ import "point_projection.proto";
 message CameraUtilsResponse
 {
     /// \brief Type of request
-    enum Type{
+    enum Type
+    {
         /// \brief Acquire frame and save it to disk 
         CAPTURE     = 1;
         /// \brief Change output directory 

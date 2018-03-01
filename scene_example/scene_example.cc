@@ -12,8 +12,11 @@
 // 5 x 5 object Grid
 ObjectGrid g_grid(4, 4, 4, 4, 1);
 // Camera ready
-bool g_camera_ready{false};
+bool g_camera_ready {false};
 std::mutex g_camera_ready_mutex;
+bool g_points_ready {false};
+std::mutex g_points_ready_mutex;
+
 // Regex objects
 std::regex g_regex_uid(REGEX_XML_UID);
 std::regex g_regex_model(REGEX_XML_MODEL);
@@ -99,7 +102,7 @@ int main(int argc, char **argv)
         int num_objects = (getRandomInt(5, 10));
         g_grid.populate(num_objects);
 
-        debugPrintTrace("Scene (" << iter + 1 << "/"
+        debugPrintTrace("Scene (" << iter << "/"
             << scenes << "): " << num_objects << " objects");
 
         // Create message with desired 3D points to project in camera plane
@@ -124,25 +127,31 @@ int main(int argc, char **argv)
         updateObjects(msg_visual);
         pub_visual->Publish(msg_visual);
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
         // TODO
         // Wait for camera to move to new position
         // Request point projection
         pub_camera->Publish(msg_points);
 
+
         // Wait for objects to spawn
         // Capture the scene and save it to a file
-        /*
         captureScene(pub_camera, iter);
         while (waitForCamera()){
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(30));
         }
-        */
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-        // TODO
-        // If debug, view image
         // Wait for projections
+        while(waitForProjections()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(30)); 
+        }
         // Save annotations to file
+        
+        // If debug, view image
+        if (debug) {
+            visualizeData(imgs_dir, iter);
+        }
     }
 
     // Force save camera raw data buffer
@@ -261,7 +270,7 @@ ignition::math::Pose3d getRandomCameraPose()
         getRandomDouble(0, M_PI / 5.0));
 
     ignition::math::Pose3d new_pose;
-    ignition::math::Vector3d position(2, 2, 5);
+    ignition::math::Vector3d position(2, 2, 4);
 
     new_pose.Set(position,
         (correct_orientation * original_orientation).Inverse());
@@ -274,12 +283,12 @@ ignition::math::Pose3d getRandomCameraPose()
 ignition::math::Pose3d getRandomLightPose()
 {
     ignition::math::Quaternion<double> light_orientation(
-        getRandomDouble(-M_PI / 3.0,M_PI / 3.0),
-        getRandomDouble(-M_PI / 3.0,M_PI / 3.0),
-        getRandomDouble(-M_PI / 3.0,M_PI / 3.0)); 
+        getRandomDouble(-M_PI / 5.0, M_PI / 5.0),
+        getRandomDouble(-M_PI / 5.0, M_PI / 5.0),
+        getRandomDouble(-M_PI / 5.0, M_PI / 5.0)); 
     
     ignition::math::Pose3d new_pose;
-    ignition::math::Vector3d position(2, 2, 5);
+    ignition::math::Vector3d position(2, 2, 6);
 
     new_pose.Set(position, (light_orientation).Inverse());
     new_pose = new_pose.RotatePositionAboutOrigin(light_orientation);
@@ -328,6 +337,17 @@ bool waitForCamera()
 }
 
 //////////////////////////////////////////////////
+bool waitForProjections()
+{
+    std::lock_guard<std::mutex> lock(g_points_ready_mutex);
+    if (g_points_ready) {
+        g_points_ready = false;
+        return false;
+    }
+    return true;
+}
+
+//////////////////////////////////////////////////
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg)
 {
     // TODO
@@ -336,12 +356,43 @@ void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg)
 //////////////////////////////////////////////////
 void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
 {
-    if (_msg->type() == CAPTURE_RESPONSE) {
-
+    if (_msg->type() == CAPTURE_RESPONSE)
+    {
         if (_msg->success()){
             std::lock_guard<std::mutex> lock(g_camera_ready_mutex);
             g_camera_ready = true;
         }
+    }
+    else if (_msg->type() == PROJECTION_RESPONSE)
+    {
+        int obj = _msg->projections_size();
+        int x_min, x_max, y_min, y_max;
+        int x_tmp, y_tmp;
+
+        for (int i = 0; i < obj; i++)
+        {
+            int points = _msg->projections(i).point2_size();
+            x_min = y_min = INT_MAX;
+            x_max = y_max = INT_MIN; 
+            for (int j = 0; j < points; j++)
+            {
+                // Obtain 2D bounding box
+                x_tmp = _msg->projections(i).point2(j).x();
+                y_tmp = _msg->projections(i).point2(j).y();
+                if (x_min > x_tmp) x_min = x_tmp;
+                if (x_max < x_tmp) x_max = x_tmp;
+                if (y_min > y_tmp) y_min = y_tmp;
+                if (y_max < y_tmp) y_max = y_tmp;
+            }
+            // Store bounding box
+            g_grid.objects[i].bounding_box.push_back(x_min);
+            g_grid.objects[i].bounding_box.push_back(x_max);
+            g_grid.objects[i].bounding_box.push_back(y_min);
+            g_grid.objects[i].bounding_box.push_back(y_max);
+        }
+
+        std::lock_guard<std::mutex> lock(g_points_ready_mutex);
+        g_points_ready = true;
     }
 }
 
@@ -352,4 +403,38 @@ void setPhysics(gazebo::transport::PublisherPtr pub, bool enable)
     msg.set_type(PHYSICS);
     msg.set_state(enable);
     pub->Publish(msg);
+}
+
+//////////////////////////////////////////////////
+void visualizeData(const std::string & image_dir, int iteration)
+{
+    std::string image_ext = ".png";
+    std::string image_name = std::to_string(iteration);
+    std::string filename = image_dir + image_name + image_ext;
+    
+    // Read image from file
+    cv::Mat image = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+    // Check if image is valid
+    if (!image.data)
+    {
+       std::cerr <<  "Could not open '" << filename << "'" << std::endl;
+    }
+    else
+    {
+        for (int i = 0; i < g_grid.objects.size(); i++)
+        {
+            cv::rectangle(image,
+                cv::Point(g_grid.objects[i].bounding_box[0],
+                    g_grid.objects[i].bounding_box[2]),
+                cv::Point(g_grid.objects[i].bounding_box[1],
+                    g_grid.objects[i].bounding_box[3]),
+                cv::Scalar(255,0,1), 2, 8, 0 );
+        }
+
+        // Create a window for display
+        cv::namedWindow("Display", cv::WINDOW_KEEPRATIO);
+        // Show image and wait for keystroke
+        cv::imshow("Display", image);
+        cv::waitKey(0);
+    }
 }

@@ -34,7 +34,7 @@ GZ_REGISTER_SENSOR_PLUGIN(CameraUtils)
 CameraUtils::CameraUtils()
     : SensorPlugin(), dataPtr(new CameraUtilsPrivate)
 {
-    std::cout << "[CameraUtils] Loaded camera tools." << std::endl;
+    gzmsg << "[CameraUtils] Loaded camera tools." << std::endl;
 }
 
 /////////////////////////////////////////////////
@@ -45,7 +45,7 @@ CameraUtils::~CameraUtils()
     this->camera.reset();
     this->dataPtr->sub.reset();
     this->dataPtr->node->Fini();
-    std::cout << "[CameraUtils] Unloaded camera tools." << std::endl;
+    gzmsg << "[CameraUtils] Unloaded camera tools." << std::endl;
 }
 
 /////////////////////////////////////////////////

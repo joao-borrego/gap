@@ -1,5 +1,4 @@
 /// \file scene_example/scene_example.hh
-///
 /// \brief TODO
 ///
 /// TODO
@@ -38,8 +37,10 @@
 #include <thread>
 // Regular expressions
 #include <regex>
-// TODO 
+// Linear algebra
 #include <Eigen/Dense>
+// INT MAX
+#include <climits>
 
 /// OpenCV 2 
 #include <opencv2/core/core.hpp>
@@ -62,11 +63,13 @@
 // Camera utils
 
 /// \brief Request to capture a frame and save it to disk
-#define CAPTURE_REQUEST     camera_utils::msgs::CameraUtilsRequest::CAPTURE
+#define CAPTURE_REQUEST     	camera_utils::msgs::CameraUtilsRequest::CAPTURE
 /// \brief Response acknowling captured frame
-#define CAPTURE_RESPONSE    camera_utils::msgs::CameraUtilsResponse::CAPTURE
+#define CAPTURE_RESPONSE    	camera_utils::msgs::CameraUtilsResponse::CAPTURE
 /// \brief Request 3D to 2D point projection
-#define PROJECTION_REQUEST  camera_utils::msgs::CameraUtilsRequest::PROJECTION
+#define PROJECTION_REQUEST  	camera_utils::msgs::CameraUtilsRequest::PROJECTION
+/// \brief Response 3D to 2D point projection
+#define PROJECTION_RESPONSE 	camera_utils::msgs::CameraUtilsResponse::PROJECTION
 
 // Visual utils
 
@@ -150,6 +153,9 @@ void captureScene(gazebo::transport::PublisherPtr pub, int iteration);
 bool waitForCamera();
 
 /// \brief TODO
+bool waitForProjections();
+
+/// \brief TODO
 void addProjections(camera_utils::msgs::CameraUtilsRequest & msg);
 
 /// \brief TODO
@@ -164,3 +170,6 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr & _msg);
 /// \param pub WorldUtils publisher ptr
 /// \param enable Desired physics engine status
 void setPhysics(gazebo::transport::PublisherPtr pub, bool enable);
+
+/// \brief TODO
+void visualizeData(const std::string & image_dir, int iteration);

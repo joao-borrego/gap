@@ -125,7 +125,7 @@ void VisualUtils::Update()
     }
     // Update pose
     if (this->dataPtr->update_pose) {
-        this->dataPtr->visual->SetPose(this->dataPtr->new_pose);
+        this->dataPtr->visual->SetWorldPose(this->dataPtr->new_pose);
         this->dataPtr->update_pose = false;
     }
     // Update material

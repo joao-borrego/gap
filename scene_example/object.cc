@@ -35,12 +35,12 @@ void Object::sampleSurface()
 
             Eigen::Vector4f point1;
             point1 << x, y, z, 1.0;
-            object_points.push_back(point1);
+            points.push_back(point1);
 
             z= -0.5*length;
             Eigen::Vector4f point2; 
             point2 << x, y, z, 1.0;
-            object_points.push_back(point2);
+            points.push_back(point2);
         }
 
     } else if (type == SPHERE) {
@@ -57,7 +57,7 @@ void Object::sampleSurface()
 
                 Eigen::Vector4f point;
                 point << x, y, z, 1.0;
-                object_points.push_back(point);
+                points.push_back(point);
             }
         }
     
@@ -77,7 +77,7 @@ void Object::sampleSurface()
                     z = k * size_z / 2.0;
                     Eigen::Vector4f point;
                     point << x, y, z, 1.0;
-                    object_points.push_back(point);
+                    points.push_back(point);
                 }
             }
         }
@@ -91,8 +91,8 @@ void Object::sampleSurface()
     transf.block(0,0,3,3) = rot;
     transf.block(0,3,3,1) = Eigen::Vector3f(pose.Pos().X(),pose.Pos().Y(),pose.Pos().Z());
 
-    for (int i = 0; i < object_points.size(); i++){
-        object_points[i] = transf * object_points[i];
+    for (int i = 0; i < points.size(); i++){
+        points[i] = transf * points[i];
     }
 }
 
@@ -154,9 +154,6 @@ void ObjectGrid::addRandomObject(int x, int y)
     std::vector<double> parameters;
     // Pose
     double p_x, p_y, p_z;
-    // Offsets 
-    // TODO - Turn into parameters
-    double o_x = 2, o_y = 2, o_z = -3;
     // Scale vector
     double s_x, s_y, s_z;
 
@@ -206,7 +203,7 @@ void ObjectGrid::addRandomObject(int x, int y)
     }
 
     // Apply offset to pose
-    ignition::math::Pose3d pose(p_x - o_x, p_y - o_y, p_z - o_z, 0, 0, 0);
+    ignition::math::Pose3d pose(p_x, p_y, p_z, 0, 0, 0);
     
     // Scale vector
     if (type == SPHERE) {

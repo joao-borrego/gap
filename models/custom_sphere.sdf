@@ -11,6 +11,7 @@
         </geometry>
       </collision>
       <visual name="visual">
+        <pose>0 0 -3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.5</radius>

@@ -12,6 +12,7 @@
         </geometry>
       </collision>
       <visual name="visual">
+        <pose>0 0 -3 0 0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.5</radius>

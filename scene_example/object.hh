@@ -40,7 +40,7 @@ class Object
         /// \brief Object parameter values
         std::vector<double> parameters;
         /// \brief Object surface 3D points
-        std::vector<Eigen::Vector4f> object_points;
+        std::vector<Eigen::Vector4f> points;
         /// \brief Object 2D bounding box
         cv::Rect bounding_box;
         

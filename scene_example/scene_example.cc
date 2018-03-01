@@ -102,6 +102,11 @@ int main(int argc, char **argv)
         debugPrintTrace("Scene (" << iter + 1 << "/"
             << scenes << "): " << num_objects << " objects");
 
+        // Create message with desired 3D points to project in camera plane
+        camera_utils::msgs::CameraUtilsRequest msg_points;
+        msg_points.set_type(PROJECTION_REQUEST);
+        addProjections(msg_points);
+
         // Calculate new camera and light poses
         camera_pose = getRandomCameraPose();
         light_pose = getRandomLightPose();
@@ -122,6 +127,7 @@ int main(int argc, char **argv)
         // TODO
         // Wait for camera to move to new position
         // Request point projection
+        pub_camera->Publish(msg_points);
 
         // Wait for objects to spawn
         // Capture the scene and save it to a file
@@ -201,7 +207,6 @@ void addDynamicModels(world_utils::msgs::WorldUtilsRequest & msg)
 void updateObjects(visual_utils::msgs::VisualUtilsRequest & msg)
 {
     int total = g_grid.objects.size();
-    const std::vector<std::string> types = {"sphere", "cylinder","box"};
 
     // Object parameters
     std::string name;
@@ -253,7 +258,7 @@ ignition::math::Pose3d getRandomCameraPose()
         getRandomDouble(0, M_PI / 5.0));
 
     ignition::math::Pose3d new_pose;
-    ignition::math::Vector3d position(0, 0, 5.0);
+    ignition::math::Vector3d position(2, 2, 5);
 
     new_pose.Set(position,
         (correct_orientation * original_orientation).Inverse());
@@ -271,12 +276,32 @@ ignition::math::Pose3d getRandomLightPose()
         getRandomDouble(-M_PI / 3.0,M_PI / 3.0)); 
     
     ignition::math::Pose3d new_pose;
-    ignition::math::Vector3d position(0, 0, 5.0);
+    ignition::math::Vector3d position(2, 2, 5);
 
     new_pose.Set(position, (light_orientation).Inverse());
     new_pose = new_pose.RotatePositionAboutOrigin(light_orientation);
 
     return new_pose;
+}
+
+//////////////////////////////////////////////////
+void addProjections(camera_utils::msgs::CameraUtilsRequest & msg)
+{
+    int num_obj = g_grid.objects.size();
+    for (int i = 0; i < num_obj; i++)
+    {
+        camera_utils::msgs::PointProjection *proj = msg.add_projections();
+        
+        int num_points = g_grid.objects[i].points.size();
+        for (int j = 0; j < num_points; j++)
+        {
+            gazebo::msgs::Vector3d *points_msg = proj->add_point3();
+            points_msg->set_x(g_grid.objects[i].points[j](0));
+            points_msg->set_y(g_grid.objects[i].points[j](1));
+            points_msg->set_z(g_grid.objects[i].points[j](2));
+        }
+        proj->set_name(g_grid.objects[i].name);
+    }
 }
 
 //////////////////////////////////////////////////

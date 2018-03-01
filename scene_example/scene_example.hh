@@ -65,6 +65,8 @@
 #define CAPTURE_REQUEST     camera_utils::msgs::CameraUtilsRequest::CAPTURE
 /// \brief Response acknowling captured frame
 #define CAPTURE_RESPONSE    camera_utils::msgs::CameraUtilsResponse::CAPTURE
+/// \brief Request 3D to 2D point projection
+#define PROJECTION_REQUEST  camera_utils::msgs::CameraUtilsRequest::PROJECTION
 
 // Visual utils
 
@@ -91,23 +93,25 @@
 
 // API Topics
 
-/// Topic monitored by the server for incoming camera requests 
+/// \brief Topic monitored by the server for incoming camera requests 
 #define CAMERA_UTILS_TOPIC          "~/gazebo-utils/camera_utils"
-/// Topic for receiving replies from the camera plugin server  
+/// \brief Topic for receiving replies from the camera plugin server  
 #define CAMERA_UTILS_RESPONSE_TOPIC "~/gazebo-utils/camera_utils/response"
-/// Topic monitored by the server for incoming object spawn requests 
-#define WORLD_UTILS_TOPIC           "~/gazebo-utils/world_utils"
-/// Topic for receiving replies from the object spawner server 
-#define WORLD_UTILS_RESPONSE_TOPIC  "~/gazebo-utils/world_utils/response"
-// Topic monitored by the server for incoming commands
+/// \brief Topic monitored by the server for incoming commands
 #define VISUAL_UTILS_TOPIC          "~/gazebo-utils/visual_utils"
+/// \brief Topic monitored by the server for incoming object spawn requests 
+#define WORLD_UTILS_TOPIC           "~/gazebo-utils/world_utils"
+/// \brief Topic for receiving replies from the object spawner server 
+#define WORLD_UTILS_RESPONSE_TOPIC  "~/gazebo-utils/world_utils/response"
 
 // Message pointer typedefs
 
-typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
-    WorldUtilsResponsePtr;
+/// \brief Pointer to Camera Utils response message
 typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
     CameraUtilsResponsePtr;
+/// \brief Pointer to World Utils request message
+typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
+    WorldUtilsResponsePtr;
 
 //////////////////////////////////////////////////
 
@@ -144,6 +148,9 @@ void captureScene(gazebo::transport::PublisherPtr pub, int iteration);
 
 /// \brief TODO
 bool waitForCamera();
+
+/// \brief TODO
+void addProjections(camera_utils::msgs::CameraUtilsRequest & msg);
 
 /// \brief TODO
 /// \param _msg Incoming message

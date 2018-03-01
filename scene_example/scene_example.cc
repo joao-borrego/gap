@@ -131,10 +131,13 @@ int main(int argc, char **argv)
 
         // Wait for objects to spawn
         // Capture the scene and save it to a file
+        /*
         captureScene(pub_camera, iter);
         while (waitForCamera()){
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
+        */
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         // TODO
         // If debug, view image

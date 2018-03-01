@@ -152,17 +152,26 @@ void ObjectGrid::addRandomObject(int x, int y)
     double min;
     double radius,length, box_x, box_y, box_z;
     std::vector<double> parameters;
+    // Rotation
+    double pitch = 0.0, yaw = 0.0;
     // Pose
     double p_x, p_y, p_z;
     // Scale vector
     double s_x, s_y, s_z;
+    // Whether cylinder is horizontal
+    bool horizontal;
 
     // Object type and name
     type = getRandomInt(0, 2);
     this->counters[type]++;
     name = TYPES[type] + "_" + std::to_string(counters[type]);
     
-    // TODO - Orientation
+    // Orientation
+    yaw = M_PI * getRandomDouble(0.0, 0.5);
+    if (type == CYLINDER) {
+        horizontal = (getRandomDouble(0.0, 1.0) > 0.5);
+        if (horizontal) pitch = M_PI * 0.5;  
+    }
 
     // Auxiliar calculations
     min = std::min(cell_x, cell_y);
@@ -185,7 +194,7 @@ void ObjectGrid::addRandomObject(int x, int y)
         // Box size in x,y,z
         box_x = getRandomDouble(0.1 * cell_x, 0.8 * cell_x);
         box_y = getRandomDouble(0.1 * cell_y, 0.8 * cell_y);
-        box_z = getRandomDouble(0.5 * cell_z, 1.0 * cell_z);
+        box_z = getRandomDouble(0.5 * cell_z, 0.8 * cell_z);
         parameters.push_back(box_x);
         parameters.push_back(box_y);
         parameters.push_back(box_z);
@@ -197,13 +206,14 @@ void ObjectGrid::addRandomObject(int x, int y)
     if (type == SPHERE) {
         p_z = radius * 0.5;
     } else if (type == CYLINDER) {
-        p_z = length * 0.5;
+        if (horizontal) p_z = radius * 0.5;
+        else            p_z = length * 0.5;
     } else if (type == BOX) {
         p_z = box_z * 0.5;
     }
 
     // Apply offset to pose
-    ignition::math::Pose3d pose(p_x, p_y, p_z, 0, 0, 0);
+    ignition::math::Pose3d pose(p_x, p_y, p_z, 0, pitch, yaw);
     
     // Scale vector
     if (type == SPHERE) {

@@ -25,10 +25,6 @@ void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
     this->node = transport::NodePtr(new transport::Node());
     this->node->Init(this->world->Name());
 
-    // Setup publisher for the factory topic
-    this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
-    // Setup publisher for the light factory topic
-    this->factory_light_pub = this->node->Advertise<msgs::Light>("~/factory/light");
     // Setup publisher for the gazebo request topic
     this->request_pub = this->node->Advertise<msgs::Request>("~/request");
 
@@ -50,8 +46,12 @@ void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
 /////////////////////////////////////////////////
 void WorldUtils::onUpdate()
 {
+    bool moved = false;
+    world_utils::msgs::WorldUtilsResponse msg;
+
     std::lock_guard<std::mutex> lock(this->mutex);
 
+    // Move objects
     while (!this->type.empty())
     {
         int model_type = this->type.front();
@@ -66,6 +66,14 @@ void WorldUtils::onUpdate()
             if (model) model->SetWorldPose(pose);
         }
         type.pop(); move.pop(); poses.pop();
+
+        moved = true;
+    }
+
+    // Report sucess in move
+    if (moved) {
+        msg.set_type(SUCCESS);
+        this->pub->Publish(msg);
     }
 }
 

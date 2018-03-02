@@ -5,13 +5,13 @@ package camera_utils.msgs;
 /// \brief A request for Camera Utils plugin
 
 import "pose.proto";
-//import "vector3d.proto";
 import "point_projection.proto";
 
 message CameraUtilsRequest
 {
     /// \brief Type of request 
-    enum Type{
+    enum Type
+    {
         /// \brief Acquire frame and save it to disk 
         CAPTURE     = 1;
         /// \brief Change output directory 

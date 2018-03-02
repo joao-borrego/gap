@@ -63,13 +63,13 @@
 // Camera utils
 
 /// \brief Request to capture a frame and save it to disk
-#define CAPTURE_REQUEST     	camera_utils::msgs::CameraUtilsRequest::CAPTURE
+#define CAPTURE_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAPTURE
 /// \brief Response acknowling captured frame
-#define CAPTURE_RESPONSE    	camera_utils::msgs::CameraUtilsResponse::CAPTURE
+#define CAPTURE_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAPTURE
 /// \brief Request 3D to 2D point projection
-#define PROJECTION_REQUEST  	camera_utils::msgs::CameraUtilsRequest::PROJECTION
+#define PROJECTION_REQUEST      camera_utils::msgs::CameraUtilsRequest::PROJECTION
 /// \brief Response 3D to 2D point projection
-#define PROJECTION_RESPONSE 	camera_utils::msgs::CameraUtilsResponse::PROJECTION
+#define PROJECTION_RESPONSE     camera_utils::msgs::CameraUtilsResponse::PROJECTION
 
 // Visual utils
 
@@ -82,10 +82,10 @@
 #define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
 /// \brief Move entity 
 #define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
-/// \brief Remove entity from the world 
-#define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
 /// \brief Start or stop physcis simulation 
 #define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
+/// \breief TODO
+#define SUCCESS         world_utils::msgs::WorldUtilsResponse::SUCCESS
 
 /// \brief Spawn custom object 
 #define CUSTOM          world_utils::msgs::Object::CUSTOM
@@ -148,6 +148,9 @@ ignition::math::Pose3d getRandomLightPose();
 
 /// \brief TODO
 void captureScene(gazebo::transport::PublisherPtr pub, int iteration);
+
+/// \brief TODO
+bool waitForMove();
 
 /// \brief TODO
 bool waitForCamera();

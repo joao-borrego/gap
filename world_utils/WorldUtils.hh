@@ -1,9 +1,9 @@
-/// \file world_utils/WorldUtils.hh
+/// \brief \file world_utils/WorldUtils.hh
 /// \brief TODO
-///
-/// TODO
-///
-/// \author João Borrego
+/// \brief
+/// \brief TODO
+/// \brief
+/// \brief \author João Borrego
 
 // Gazebo
 #include <gazebo/common/Events.hh>
@@ -14,12 +14,12 @@
 
 #include <mutex>
 
-#include <iostream>         // io
-#include <iomanip>          // setprecision
-#include <sstream>          // stringstream
-#include <list>             // list of live objects 
-#include <string>           // strings
-#include <regex>            // regular expressions
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <list>
+#include <string>
+#include <regex>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
@@ -30,53 +30,53 @@
 
 namespace WorldUtils {
 
-/// Topic monitored for incoming commands
+/// \brief Topic monitored for incoming commands
 #define REQUEST_TOPIC "~/gazebo-utils/world_utils"
-/// Topic for publishing replies
+/// \brief Topic for publishing replies
 #define RESPONSE_TOPIC "~/gazebo-utils/world_utils/response"
 
 // Ease of use macros
 
 // Request
 
-/// Spawn entity
+/// \brief Spawn entity
 #define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
-/// Move entity
+/// \brief Move entity
 #define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
-/// Remove entity from the world
+/// \brief Remove entity from the world
 #define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
-/// Start or stop physcis simulation
+/// \brief Start or stop physcis simulation
 #define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
-/// Pause or resume simulation
+/// \brief Pause or resume simulation
 #define PAUSE           world_utils::msgs::WorldUtilsRequest::PAUSE
-/// Get entity or world information
+/// \brief Get entity or world information
 #define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
 
-/// Spawn sphere object
+/// \brief Spawn sphere object
 #define SPHERE          world_utils::msgs::Object::SPHERE
-/// Spawn cylinder object
+/// \brief Spawn cylinder object
 #define CYLINDER        world_utils::msgs::Object::CYLINDER
-/// Spawn box object
+/// \brief Spawn box object
 #define BOX             world_utils::msgs::Object::BOX
-/// Spawn custom object
+/// \brief Spawn custom object
 #define CUSTOM          world_utils::msgs::Object::CUSTOM
-/// Spawn custom light object
+/// \brief Spawn custom light object
 #define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
-/// Spawn a model included in gazebo model path
+/// \brief Spawn a model included in gazebo model path
 #define MODEL           world_utils::msgs::Object::MODEL
 
 // Response
 
-/// Provide world state information
+/// \brief Provide world state information
 #define INFO            world_utils::msgs::WorldUtilsResponse::INFO
-/// Provide specific object state information
-#define PROPERTIES      world_utils::msgs::WorldUtilsResponse::PROPERTIES
+/// \brief TODO
+#define SUCCESS         world_utils::msgs::WorldUtilsResponse::SUCCESS
 
 // Regex patterns
 
-/// Matches string enclosed in <script> XML tags
+/// \brief Matches string enclosed in <script> XML tags
 #define REGEX_XML_SCRIPT "<script>[\\s\\S]*?<\\/script>"
-/// Matches string enclosed in <pose> XML tags
+/// \brief Matches string enclosed in <pose> XML tags
 #define REGEX_XML_POSE   "<pose>[\\s\\S]*?<\\/pose>"
 
 }
@@ -106,11 +106,7 @@ namespace gazebo {
         private: transport::SubscriberPtr sub;
         /// \brief A publisher to the reply topic
         private: transport::PublisherPtr pub;
-        
-        /// \brief A publisher to the factory topic
-        private: transport::PublisherPtr factory_pub;
-        /// \brief A publisher to the light factory topic
-        private: transport::PublisherPtr factory_light_pub;
+
         /// \brief A publisher to the gazebo request topic
         private: transport::PublisherPtr request_pub;
         /// \brief A subscriber to the gazebo response topic

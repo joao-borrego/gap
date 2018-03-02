@@ -1,23 +1,22 @@
 package world_utils.msgs;
 
+/// \ingroup world_utils_msgs
+/// \interface WorldUtilsResponse
+/// \brief A response from World Utils plugin
 
-import "bounding_box.proto";
 message WorldUtilsResponse
 {
-    /* @brief Type of response */
-    enum Type{
-        /* @brief World status information */
-        INFO        = 1;
-        /* @brief Object properties */
-        PROPERTIES  = 2;
+    /// \brief Type of response 
+    enum Type
+    {
+        /// \brief World status information 
+        INFO    = 1;
+        /// \brief Object properties 
+        SUCCESS  = 2;
     }
 
-    /* @brief Type of request */
-    optional Type                   type            = 1;
-    /* @brief Object count */
-    optional int32                  object_count    = 2;
-    /* @brief Object name */
-    optional string                 name            = 3;
-    /* @brief Bounding box */
-    repeated BoundingBox            bounding_box       = 4;
+    /// \brief Type of request 
+    optional Type   type            = 1;
+    /// \brief Object count 
+    optional int32  object_count    = 2;
 }

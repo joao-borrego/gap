@@ -85,7 +85,8 @@ void Object::sampleSurface()
 
     // Transform Ignition to Eigen
     Eigen::Matrix3f rot;
-    rot = Eigen::Quaternionf(pose.Rot().W(),pose.Rot().X(),pose.Rot().Y(),pose.Rot().Z());
+    rot = Eigen::Quaternionf(
+        pose.Rot().W(),pose.Rot().X(),pose.Rot().Y(),pose.Rot().Z());
 
     Eigen::Matrix4f transf;
     transf.block(0,0,3,3) = rot;
@@ -204,9 +205,9 @@ void ObjectGrid::addRandomObject(int x, int y)
     p_x = (x + 0.5) * (cell_x);
     p_y = (y + 0.5) * (cell_y);
     if (type == SPHERE) {
-        p_z = radius * 0.5;
+        p_z = radius;
     } else if (type == CYLINDER) {
-        if (horizontal) p_z = radius * 0.5;
+        if (horizontal) p_z = radius;
         else            p_z = length * 0.5;
     } else if (type == BOX) {
         p_z = box_z * 0.5;
@@ -217,9 +218,9 @@ void ObjectGrid::addRandomObject(int x, int y)
     
     // Scale vector
     if (type == SPHERE) {
-        s_x = s_y = s_z = radius;
+        s_x = s_y = s_z = 2 * radius;
     } else if (type == CYLINDER) {
-        s_x = s_y = radius;
+        s_x = s_y = 2 * radius;
         s_z = length;
     } else if (type == BOX) {
         s_x = box_x;

@@ -9,9 +9,12 @@
 
 // Global variables
 
-// 5 x 5 object Grid
+// 4 x 4 object Grid
 ObjectGrid g_grid(4, 4, 4, 4, 1);
-// Camera ready
+
+// Variables that lock progress for synchronous scene generation
+bool g_moved {false};
+std::mutex g_moved_mutex;
 bool g_camera_ready {false};
 std::mutex g_camera_ready_mutex;
 bool g_points_ready {false};
@@ -34,9 +37,6 @@ int main(int argc, char **argv)
 
     // Parse command-line arguments
     parseArgs(argc, argv, scenes, start, media_dir, imgs_dir, dataset_dir, debug);
-
-    // Setup filesystem
-
     // Create output directories
     createDirectory(dataset_dir);
 
@@ -114,6 +114,12 @@ int main(int argc, char **argv)
         camera_pose = getRandomCameraPose();
         light_pose = getRandomLightPose();
 
+        // Update scene
+        visual_utils::msgs::VisualUtilsRequest msg_visual;
+        msg_visual.set_type(UPDATE);
+        updateObjects(msg_visual);
+        pub_visual->Publish(msg_visual);
+
         // Request move camera
         world_utils::msgs::WorldUtilsRequest msg_move;
         msg_move.set_type(MOVE);
@@ -121,24 +127,17 @@ int main(int argc, char **argv)
         addMoveObject(msg_move, "custom_sun", true, light_pose);
         pub_world->Publish(msg_move);
 
-        // Update scene
-        visual_utils::msgs::VisualUtilsRequest msg_visual;
-        msg_visual.set_type(UPDATE);
-        updateObjects(msg_visual);
-        pub_visual->Publish(msg_visual);
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
-
-        // TODO
         // Wait for camera to move to new position
+        while (waitForMove()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        }
+
         // Request point projection
         pub_camera->Publish(msg_points);
 
-
-        // Wait for objects to spawn
         // Capture the scene and save it to a file
         captureScene(pub_camera, iter);
-        while (waitForCamera()){
+        while (waitForCamera()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(30));
         }
 
@@ -326,6 +325,17 @@ void captureScene(gazebo::transport::PublisherPtr pub, int iteration)
 }
 
 //////////////////////////////////////////////////
+bool waitForMove()
+{
+    std::lock_guard<std::mutex> lock(g_moved_mutex);
+    if (g_moved) {
+        g_moved = false;
+        return false;
+    }
+    return true;
+}
+
+//////////////////////////////////////////////////
 bool waitForCamera()
 {
     std::lock_guard<std::mutex> lock(g_camera_ready_mutex);
@@ -350,7 +360,10 @@ bool waitForProjections()
 //////////////////////////////////////////////////
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg)
 {
-    // TODO
+    if (_msg->type() == SUCCESS) {
+        std::lock_guard<std::mutex> lock(g_moved_mutex);
+        g_moved = true;
+    }
 }
 
 //////////////////////////////////////////////////
@@ -365,11 +378,11 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
     }
     else if (_msg->type() == PROJECTION_RESPONSE)
     {
-        int obj = _msg->projections_size();
+        int objects = _msg->projections_size();
         int x_min, x_max, y_min, y_max;
         int x_tmp, y_tmp;
 
-        for (int i = 0; i < obj; i++)
+        for (int i = 0; i < objects; i++)
         {
             int points = _msg->projections(i).point2_size();
             x_min = y_min = INT_MAX;
@@ -382,7 +395,7 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
                 if (x_min > x_tmp) x_min = x_tmp;
                 if (x_max < x_tmp) x_max = x_tmp;
                 if (y_min > y_tmp) y_min = y_tmp;
-                if (y_max < y_tmp) y_max = y_tmp;
+                if (y_max < y_tmp) y_max = y_tmp; 
             }
             // Store bounding box
             g_grid.objects[i].bounding_box.push_back(x_min);
@@ -421,14 +434,19 @@ void visualizeData(const std::string & image_dir, int iteration)
     }
     else
     {
+        cv::Scalar color;
+        cv::Scalar blue(255,0,0), red(0,255,0), green(0,0,255);
         for (int i = 0; i < g_grid.objects.size(); i++)
         {
+            Object obj = g_grid.objects[i];
+            if      (obj.type == SPHERE)    color = blue;
+            else if (obj.type == CYLINDER)  color = red;
+            else                            color = green;
+
             cv::rectangle(image,
-                cv::Point(g_grid.objects[i].bounding_box[0],
-                    g_grid.objects[i].bounding_box[2]),
-                cv::Point(g_grid.objects[i].bounding_box[1],
-                    g_grid.objects[i].bounding_box[3]),
-                cv::Scalar(255,0,1), 2, 8, 0 );
+                cv::Point(obj.bounding_box[0], obj.bounding_box[2]),
+                cv::Point(obj.bounding_box[1], obj.bounding_box[3]),
+                color,2,8,0);
         }
 
         // Create a window for display

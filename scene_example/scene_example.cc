@@ -96,13 +96,13 @@ int main(int argc, char **argv)
     ignition::math::Pose3d camera_pose, light_pose;
     
     // Main loop
-    for (int iter = 0; iter < scenes; iter++) {
+    for (int iteration = 0; iteration < scenes; iteration++) {
 
         // Populate grid with random objects
         int num_objects = (getRandomInt(5, 10));
         g_grid.populate(num_objects);
 
-        debugPrintTrace("Scene (" << iter << "/"
+        debugPrintTrace("Scene (" << iteration << "/"
             << scenes << "): " << num_objects << " objects");
 
         // Create message with desired 3D points to project in camera plane
@@ -129,27 +129,29 @@ int main(int argc, char **argv)
 
         // Wait for camera to move to new position
         while (waitForMove()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(30));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
 
         // Request point projection
         pub_camera->Publish(msg_points);
 
         // Capture the scene and save it to a file
-        captureScene(pub_camera, iter);
+        captureScene(pub_camera, iteration);
         while (waitForCamera()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(30));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
 
         // Wait for projections
         while(waitForProjections()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(30)); 
+            std::this_thread::sleep_for(std::chrono::milliseconds(20)); 
         }
-        // Save annotations to file
         
+        // Save annotations to file
+        storeAnnotations(camera_pose, dataset_dir, iteration);
+
         // If debug, view image
         if (debug) {
-            visualizeData(imgs_dir, iter);
+            visualizeData(imgs_dir, iteration);
         }
     }
 
@@ -371,7 +373,7 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
 {
     if (_msg->type() == CAPTURE_RESPONSE)
     {
-        if (_msg->success()){
+        if (_msg->success()) {
             std::lock_guard<std::mutex> lock(g_camera_ready_mutex);
             g_camera_ready = true;
         }
@@ -399,8 +401,8 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
             }
             // Store bounding box
             g_grid.objects[i].bounding_box.push_back(x_min);
-            g_grid.objects[i].bounding_box.push_back(x_max);
             g_grid.objects[i].bounding_box.push_back(y_min);
+            g_grid.objects[i].bounding_box.push_back(x_max);
             g_grid.objects[i].bounding_box.push_back(y_max);
         }
 
@@ -444,8 +446,8 @@ void visualizeData(const std::string & image_dir, int iteration)
             else                            color = green;
 
             cv::rectangle(image,
-                cv::Point(obj.bounding_box[0], obj.bounding_box[2]),
-                cv::Point(obj.bounding_box[1], obj.bounding_box[3]),
+                cv::Point(obj.bounding_box[0], obj.bounding_box[1]),
+                cv::Point(obj.bounding_box[2], obj.bounding_box[3]),
                 color,2,8,0);
         }
 
@@ -455,4 +457,61 @@ void visualizeData(const std::string & image_dir, int iteration)
         cv::imshow("Display", image);
         cv::waitKey(0);
     }
+}
+
+//////////////////////////////////////////////////
+void storeAnnotations(
+    const ignition::math::Pose3d & camera_pose,
+    const std::string & path,
+    const int iteration)
+{
+
+    std::string ext_img = ".png";
+    std::string ext_data = ".xml";
+    std::string image_name = std::to_string(iteration) + ext_img;
+    std::string data_name = std::to_string(iteration) + ext_data;
+
+    std::ofstream out(path+"/"+data_name);
+
+    // TODO
+    int camera_width = 1920;
+    int camera_height = 1080;
+    int camera_depth = 3;
+
+    out << "<annotation>\n"
+        << "  <folder>images</folder>\n"
+        << "  <filename>"+image_name+"</filename>\n"
+        << "  <source>\n"
+        << "    <database>The SHAPE2018 Database</database>\n"
+        << "    <annotation>SHAPE SHAPE2018</annotation>\n"
+        << "    <image>" << image_name <<"</image>\n"
+        << "    <pose>" << camera_pose <<"</pose>\n"
+        << "  </source>\n"
+        << "  <size>\n"
+        << "    <width>"  << camera_width  << "</width>\n"
+        << "    <height>" << camera_height << "</height>\n"
+        << "    <depth>"  << camera_depth  << "</depth>\n"
+        << "  </size>\n"
+        << "  <segmented>1</segmented>\n";
+
+    for (int i = 0; i < g_grid.objects.size(); i++)
+    {
+        Object object = g_grid.objects[i];
+        out << "  <object>\n"
+            << "    <name>" << g_grid.TYPES[object.type] << "</name>\n"
+            << "    <pose>" << object.pose << "</pose>\n"
+            << "    <truncated>0</truncated>\n"
+            << "    <difficult>1</difficult>\n"
+            << "    <bndbox>\n"
+            << "      <xmin>"<< object.bounding_box[0] <<"</xmin>\n"
+            << "      <ymin>"<< object.bounding_box[1] <<"</ymin>\n"
+            << "      <xmax>"<< object.bounding_box[2] <<"</xmax>\n"
+            << "      <ymax>"<< object.bounding_box[3] <<"</ymax>\n"
+            << "    </bndbox>\n"
+            << "  </object>\n";
+    }
+
+    out << "</annotation>";
+    // TODO - Keep file open
+    out.close();
 }

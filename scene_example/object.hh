@@ -96,8 +96,6 @@ class ObjectGrid
         /// Array of counters, one per object type
         int counters[3] = {0};
 
-    private:
-
         /// \brief Object types string vector
         const std::vector<std::string> TYPES = {"sphere", "cylinder","box"};
 

@@ -176,3 +176,9 @@ void setPhysics(gazebo::transport::PublisherPtr pub, bool enable);
 
 /// \brief TODO
 void visualizeData(const std::string & image_dir, int iteration);
+
+/// \brief TODO
+void storeAnnotations(
+    const ignition::math::Pose3d & camera_pose,
+    const std::string & path,
+    const int iteration);

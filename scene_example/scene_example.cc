@@ -129,23 +129,29 @@ int main(int argc, char **argv)
 
         // Wait for camera to move to new position
         while (waitForMove()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+
+        //debugPrintTrace("[1/3] Done waiting for camera and light to move.");
 
         // Request point projection
         pub_camera->Publish(msg_points);
 
         // Capture the scene and save it to a file
-        captureScene(pub_camera, iteration);
         while (waitForCamera()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            captureScene(pub_camera, iteration);
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
+
+        //debugPrintTrace("[2/3] Done waiting for frame to be acquired.");
 
         // Wait for projections
         while(waitForProjections()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(20)); 
+            std::this_thread::sleep_for(std::chrono::milliseconds(10)); 
         }
         
+        //debugPrintTrace("[3/3] Done waiting for annotations.");
+
         // Save annotations to file
         storeAnnotations(camera_pose, dataset_dir, iteration);
 
@@ -322,7 +328,7 @@ void captureScene(gazebo::transport::PublisherPtr pub, int iteration)
 {
     camera_utils::msgs::CameraUtilsRequest msg;
     msg.set_type(CAPTURE_REQUEST);
-    msg.set_file_name(std::to_string(iteration));
+    msg.set_file_name(std::to_string(iteration / 100) + "00/" + std::to_string(iteration));
     pub->Publish(msg, false);
 }
 
@@ -465,7 +471,6 @@ void storeAnnotations(
     const std::string & path,
     const int iteration)
 {
-
     std::string ext_img = ".png";
     std::string ext_data = ".xml";
     std::string image_name = std::to_string(iteration) + ext_img;

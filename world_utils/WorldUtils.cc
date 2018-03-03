@@ -46,7 +46,7 @@ void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
 /////////////////////////////////////////////////
 void WorldUtils::onUpdate()
 {
-    bool moved = false;
+    bool moved = false;    
     world_utils::msgs::WorldUtilsResponse msg;
 
     std::lock_guard<std::mutex> lock(this->mutex);
@@ -231,6 +231,7 @@ void WorldUtils::onRequest(WorldUtilsRequestPtr &_msg){
                 this->type.push(model_type);
                 this->move.push(name);
                 this->poses.push(pose);
+                
             }
         }
 

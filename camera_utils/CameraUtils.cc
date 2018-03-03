@@ -66,12 +66,12 @@ void CameraUtils::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf)
 
     // Plugin parameters 
 
-    if (_sdf->HasElement("output_dir")){
+    if (_sdf->HasElement("output_dir")) {
         this->output_dir = _sdf->Get<std::string>("output_dir");
     } else {
         this->output_dir = DEFAULT_OUTPUT_DIR;
     }
-    if (_sdf->HasElement("extension")){
+    if (_sdf->HasElement("extension")) {
         this->extension = _sdf->Get<std::string>("extension");
     } else {
         this->extension = DEFAULT_EXTENSION;
@@ -105,9 +105,9 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
 {
     std::string file_name;
 
-    if (_msg->type() == CAPTURE_REQUEST){
-
-        if (_msg->has_file_name()){
+    if (_msg->type() == CAPTURE_REQUEST) 
+    {
+        if (_msg->has_file_name()) {
             file_name = _msg->file_name() + extension;
         } else {
             file_name = std::to_string(saved_counter++) + extension;
@@ -115,25 +115,26 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
 
         this->next_file_name = output_dir + file_name;
         this->save_on_update = true;
-    
-    } else if (_msg->type() == DIR_REQUEST){
-
+        gzmsg << "[CameraUtils] Requested save frame as " << next_file_name << std::endl;
+    }
+    else if (_msg->type() == DIR_REQUEST)
+    {
         // TODO
-
-    } else if (_msg->type() == PROJECTION_REQUEST){
-
+    }
+    else if (_msg->type() == PROJECTION_REQUEST)
+    {
         camera_utils::msgs::CameraUtilsResponse msg;
         msg.set_type(PROJECTION_RESPONSE);
 
         // For each PointProjection message 
-        for (int i = 0; i < _msg->projections_size(); i++){
+        for (int i = 0; i < _msg->projections_size(); i++) {
             
             camera_utils::msgs::PointProjection* proj = msg.add_projections();
             if (_msg->projections(i).has_name())
                 proj->set_name(_msg->projections(i).name());
             
             // For each 3D point in the set
-            for (int j = 0; j < _msg->projections(i).point3_size(); j++){
+            for (int j = 0; j < _msg->projections(i).point3_size(); j++) {
                 ignition::math::Vector3d point3 = gazebo::msgs::ConvertIgn(
                     _msg->projections(i).point3(j));
                 ignition::math::Vector2i point2 = this->camera->Project(point3);
@@ -144,12 +145,9 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
         }
         this->dataPtr->pub->Publish(msg);
 
-    } else if (_msg->type() == INFO_REQUEST){
-
-        // TODO
-
-    } else if (_msg->type() == MOVE_REQUEST){
-
+    }
+    else if (_msg->type() == INFO_REQUEST)
+    {
         // TODO
     }
 }
@@ -162,14 +160,13 @@ void CameraUtils::OnNewFrame(
     unsigned int _depth,
     const std::string & _format)
 {
-    std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
-
     if (save_on_update) {
         bool success = this->camera->SaveFrame(next_file_name);
         camera_utils::msgs::CameraUtilsResponse msg;
         msg.set_success(success);
         msg.set_type(CAPTURE_RESPONSE);
         this->dataPtr->pub->Publish(msg);
+        gzmsg << "[CameraUtils] Saved frame as " << next_file_name << std::endl;
         save_on_update = false;
     }
 }

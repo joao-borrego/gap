@@ -1,7 +1,12 @@
-/// \file capture_example/object.cc
-/// \brief Object class implementation
+/*!
+    \file examples/scene_example/ObjectGrid.cc
+    \brief ObjectGrid and Object classes implementation
 
-#include "object.hh"
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
+
+#include "ObjectGrid.hh"
 
 //////////////////////////////////////////////////
 Object::Object(
@@ -24,7 +29,7 @@ void Object::sampleSurface()
 
         double radius = parameters[0];
         double length = parameters[1];
-        
+
         // Generate points on the circular edge of the cylinder
         for (int i = 0; i < TOTAL_STEPS_C ; i++) {
 
@@ -38,7 +43,7 @@ void Object::sampleSurface()
             points.push_back(point1);
 
             z = -0.5 * length;
-            Eigen::Vector4f point2; 
+            Eigen::Vector4f point2;
             point2 << x, y, z, 1.0;
             points.push_back(point2);
         }
@@ -46,10 +51,10 @@ void Object::sampleSurface()
     } else if (type == SPHERE) {
 
         double radius = parameters[0];
-        
+
         for (int i = 0; i < TOTAL_STEPS_S; i++) {
             for (int j = 0; j < TOTAL_STEPS_S; j++) {
-                
+
                 float x,y,z;
                 x = radius * sin(ANGLE_STEP_S * i) * cos(ANGLE_STEP_S * j);
                 y = radius * sin(ANGLE_STEP_S * i) * sin(ANGLE_STEP_S * j);
@@ -60,7 +65,7 @@ void Object::sampleSurface()
                 points.push_back(point);
             }
         }
-    
+
     } else if (type == BOX) {
 
         double size_x = parameters[0];
@@ -130,7 +135,7 @@ void ObjectGrid::populate(int num_objects)
     objects.clear();
     // Reset object counters
     for (int i = 0; i < 3; i++) counters[i] = 0;
-    
+
     // Shuffle grid cells, for random placement
     shuffleIntVector(cells);
     for (int i = 0; i < num_objects; i++) {
@@ -166,12 +171,12 @@ void ObjectGrid::addRandomObject(int x, int y)
     type = getRandomInt(0, 2);
     this->counters[type]++;
     name = TYPES[type] + "_" + std::to_string(counters[type]);
-    
+
     // Orientation
     yaw = M_PI * getRandomDouble(0.0, 0.5);
     if (type == CYLINDER) {
         horizontal = (getRandomDouble(0.0, 1.0) > 0.5);
-        if (horizontal) pitch = M_PI * 0.5;  
+        if (horizontal) pitch = M_PI * 0.5;
     }
 
     // Auxiliar calculations
@@ -215,7 +220,7 @@ void ObjectGrid::addRandomObject(int x, int y)
 
     // Apply offset to pose
     ignition::math::Pose3d pose(p_x, p_y, p_z, 0, pitch, yaw);
-    
+
     // Scale vector
     if (type == SPHERE) {
         s_x = s_y = s_z = 2 * radius;

@@ -1,9 +1,12 @@
-/// \file scene_example/scene_example.cc
-///
-/// \brief TODO
-///
-/// TODO
-///
+/*!
+    \file examples/scene_example/scene_example.cc
+    \brief Random scene generation example implementation
+
+    Generates a scene with up to 10 objects in a 4x4 grid.
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
 
 #include "scene_example.hh"
 
@@ -22,9 +25,6 @@ std::mutex g_points_ready_mutex;
 
 // Global camera pose
 ignition::math::Pose3d g_camera_pose;
-
-// Global current iteration
-int g_iteration;
 
 // Regex objects
 std::regex g_regex_uid(REGEX_XML_UID);
@@ -104,15 +104,15 @@ int main(int argc, char **argv)
 
     // Light poses
     ignition::math::Pose3d light_pose;
-    
+
     // Main loop
-    for (g_iteration = 0; g_iteration < scenes; g_iteration++) {
+    for (int iteration = 0; iteration < scenes; iteration++) {
 
         // Populate grid with random objects
         int num_objects = (getRandomInt(5, 10));
         g_grid.populate(num_objects);
 
-        debugPrintTrace("Scene (" << g_iteration << "/"
+        debugPrintTrace("Scene (" << iteration << "/"
             << scenes - 1 << "): " << num_objects << " objects");
 
         // Create message with desired 3D points to project in camera plane
@@ -139,6 +139,7 @@ int main(int argc, char **argv)
 
         moveCamera(pub_camera);
 
+        // TODO - Replace by proper mechanism to ensure scene was updated
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         // Wait for camera to move to new position
@@ -149,7 +150,7 @@ int main(int argc, char **argv)
         //debugPrintTrace("[1/3] Done waiting for camera and light to move.");
 
         // Capture the scene and save it to a file
-        captureScene(pub_camera, g_iteration);
+        captureScene(pub_camera, iteration);
         while (waitForCamera()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
@@ -161,17 +162,17 @@ int main(int argc, char **argv)
 
         // Wait for projections
         while (waitForProjections()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10)); 
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-        
+
         //debugPrintTrace("[3/3] Done waiting for annotations.");
 
         // Save annotations to file
-        storeAnnotations(dataset_dir, g_iteration);
+        storeAnnotations(dataset_dir, iteration);
 
         // If debug, view image
         if (debug) {
-            visualizeData(imgs_dir, g_iteration);
+            visualizeData(imgs_dir, iteration);
         }
     }
 
@@ -284,7 +285,7 @@ ignition::math::Pose3d getRandomCameraPose()
 {
     static const ignition::math::Quaternion<double> correct_orientation(
         ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
- 
+
     ignition::math::Quaternion<double> original_orientation(
         getRandomDouble(0, M_PI / 5.0),
         getRandomDouble(0, M_PI / 5.0),
@@ -306,8 +307,8 @@ ignition::math::Pose3d getRandomLightPose()
     ignition::math::Quaternion<double> light_orientation(
         getRandomDouble(-M_PI / 5.0, M_PI / 5.0),
         getRandomDouble(-M_PI / 5.0, M_PI / 5.0),
-        getRandomDouble(-M_PI / 5.0, M_PI / 5.0)); 
-    
+        getRandomDouble(-M_PI / 5.0, M_PI / 5.0));
+
     ignition::math::Pose3d new_pose;
     ignition::math::Vector3d position(2, 2, 6);
 
@@ -324,7 +325,7 @@ void addProjections(camera_utils::msgs::CameraUtilsRequest & msg)
     for (int i = 0; i < num_obj; i++)
     {
         camera_utils::msgs::PointProjection *proj = msg.add_projections();
-        
+
         int num_points = g_grid.objects[i].points.size();
         for (int j = 0; j < num_points; j++)
         {
@@ -346,7 +347,7 @@ void moveCamera(gazebo::transport::PublisherPtr pub)
     gazebo::msgs::Pose *pose_msg = new gazebo::msgs::Pose();
     gazebo::msgs::Set(pose_msg, g_camera_pose);
     msg.set_allocated_pose(pose_msg);
-    
+
     pub->Publish(msg, false);
 }
 
@@ -395,6 +396,7 @@ bool waitForProjections()
 //////////////////////////////////////////////////
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg)
 {
+    // Unused
     /*
     if (_msg->type() == SUCCESS) {
         std::lock_guard<std::mutex> lock(g_moved_mutex);
@@ -432,7 +434,7 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
         {
             int points = _msg->projections(i).point2_size();
             x_min = y_min = INT_MAX;
-            x_max = y_max = INT_MIN; 
+            x_max = y_max = INT_MIN;
             for (int j = 0; j < points; j++)
             {
                 // Obtain 2D bounding box
@@ -441,7 +443,7 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
                 if (x_min > x_tmp) x_min = x_tmp;
                 if (x_max < x_tmp) x_max = x_tmp;
                 if (y_min > y_tmp) y_min = y_tmp;
-                if (y_max < y_tmp) y_max = y_tmp; 
+                if (y_max < y_tmp) y_max = y_tmp;
             }
             // Store bounding box
             g_grid.objects[i].bounding_box.push_back(x_min);
@@ -470,7 +472,7 @@ void visualizeData(const std::string & image_dir, int iteration)
     std::string image_ext = ".png";
     std::string image_name = std::to_string(iteration / 100) + "00/" + std::to_string(iteration);
     std::string filename = image_dir + image_name + image_ext;
-    
+
     // Read image from file
     cv::Mat image = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
     // Check if image is valid
@@ -516,14 +518,15 @@ void storeAnnotations(
 
     std::ofstream out(path+"/"+data_name);
 
-    // TODO
+    // TODO - Obtain directly from camera instead
+    // These values are set in loaded SDF model - models/custom_camera.sdf
     int camera_width = 1920;
     int camera_height = 1080;
     int camera_depth = 3;
 
     out << "<annotation>\n"
         << "  <folder>images</folder>\n"
-        << "  <filename>"+image_name+"</filename>\n"
+        << "  <filename>" + image_name + "</filename>\n"
         << "  <source>\n"
         << "    <database>The SHAPE2018 Database</database>\n"
         << "    <annotation>SHAPE SHAPE2018</annotation>\n"
@@ -555,6 +558,5 @@ void storeAnnotations(
     }
 
     out << "</annotation>";
-    // TODO - Keep file open
     out.close();
 }

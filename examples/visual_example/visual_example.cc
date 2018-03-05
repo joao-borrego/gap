@@ -1,19 +1,17 @@
-/// \file examples/visual_example/visual_example.cc
-/// \brief Visual Utils plugin example client implementation
-/// \author João Borrego
+/*!
+    \file examples/visual_example/visual_example.cc
+    \brief Visual tools example client implementation
+
+    An example client to interact with VisualUtils plugin
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
 
 #include "visual_example.hh"
 
 using namespace visual_utils::msgs;
 
-/// \brief Main function for Visual plugin example client
-/// 
-/// This simple demo changes the material of 4 objects.
-/// To launch run:
-/// \code
-///	gazebo worlds/visual.world
-/// ./build/visual_utils/visual_example
-/// \endcode
 int main(int argc, char **argv)
 {
     // Setup communication
@@ -31,7 +29,7 @@ int main(int argc, char **argv)
 
     // Main loop
     for (int i = 0; i < 10; i++){
-        
+
         // Create and send a custom message
         VisualUtilsRequest msg;
         msg.set_type(UPDATE);

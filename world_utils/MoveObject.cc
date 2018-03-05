@@ -1,3 +1,13 @@
+/*!
+    \file world_utils/MoveObject.cc
+    \brief Move Object class implementation
+
+    Class for object with a pending move operation
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
+
 #include "MoveObject.hh"
 
 MoveObject::MoveObject(

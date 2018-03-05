@@ -1,9 +1,13 @@
-/// \brief \file world_utils/WorldUtils.hh
-/// \brief TODO
-/// \brief
-/// \brief TODO
-/// \brief
-/// \brief \author João Borrego
+/*!
+    \file world_utils/WorldUtils.hh
+    \brief World Utils plugin
+
+    A custom gazebo plugin that provides an interface to programatically
+    interact with the World object.
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
 
 // Gazebo
 #include <gazebo/common/Events.hh>
@@ -12,6 +16,7 @@
 #include "gazebo/physics/physics.hh"
 #include <gazebo/transport/transport.hh>
 
+// Mutex
 #include <mutex>
 
 #include <iostream>
@@ -20,7 +25,7 @@
 #include <list>
 #include <string>
 #include <regex>
-
+// Boost
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -28,44 +33,44 @@
 #include "world_utils_request.pb.h"
 #include "world_utils_response.pb.h"
 
-// TODO Move object request temporary storage
-#include "MoveObject.hh" 
+// Õbjects with pending move operations
+#include "MoveObject.hh"
 
 namespace WorldUtils {
 
-/// \brief Topic monitored for incoming commands
+/// Topic monitored for incoming commands
 #define REQUEST_TOPIC "~/gazebo-utils/world_utils"
-/// \brief Topic for publishing replies
+/// Topic for publishing replies
 #define RESPONSE_TOPIC "~/gazebo-utils/world_utils/response"
 
 // Ease of use macros
 
 // Request
 
-/// \brief Spawn entity
+/// Spawn entity
 #define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
-/// \brief Move entity
+/// Move entity
 #define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
-/// \brief Remove entity from the world
+/// Remove entity from the world
 #define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
-/// \brief Start or stop physcis simulation
+/// Start or stop physcis simulation
 #define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
-/// \brief Pause or resume simulation
+/// Pause or resume simulation
 #define PAUSE           world_utils::msgs::WorldUtilsRequest::PAUSE
-/// \brief Get entity or world information
+/// Get entity or world information
 #define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
 
-/// \brief Spawn sphere object
+/// Spawn sphere object
 #define SPHERE          world_utils::msgs::Object::SPHERE
-/// \brief Spawn cylinder object
+/// Spawn cylinder object
 #define CYLINDER        world_utils::msgs::Object::CYLINDER
-/// \brief Spawn box object
+/// Spawn box object
 #define BOX             world_utils::msgs::Object::BOX
-/// \brief Spawn custom object
+/// Spawn custom object
 #define CUSTOM          world_utils::msgs::Object::CUSTOM
-/// \brief Spawn custom light object
+/// Spawn custom light object
 #define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
-/// \brief Spawn a model included in gazebo model path
+/// Spawn a model included in gazebo model path
 #define MODEL           world_utils::msgs::Object::MODEL
 
 // Response
@@ -77,109 +82,149 @@ namespace WorldUtils {
 
 // Regex patterns
 
-/// \brief Matches string enclosed in <script> XML tags
+/// Matches string enclosed in <script> XML tags
 #define REGEX_XML_SCRIPT "<script>[\\s\\S]*?<\\/script>"
-/// \brief Matches string enclosed in <pose> XML tags
+/// Matches string enclosed in <pose> XML tags
 #define REGEX_XML_POSE   "<pose>[\\s\\S]*?<\\/pose>"
 
 }
 
 namespace gazebo {
 
+    /// Shared pointer declaration for request message type
     typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsRequest>
         WorldUtilsRequestPtr;
-
+    /// Shared pointer declaration for response message type
     typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
         WorldUtilsResponsePtr;
 
-    /// \brief TODO
+    /// \brief A custom gazebo plugin that provides an interface to
+    /// programatically interact with the World object.
+    ///
+    /// See the example usage below:
+    /// \code{.xml}
+    ///    <plugin name="world" filename="libWorldUtils.so"/>
+    /// \endcode
+    ///
+    /// See worlds/spawner.world for a complete example.
+    ///
+    /// \warning This plugin is likely to undergo major changes, as some
+    /// of its features can easily be done client-side.
     class WorldUtils : public WorldPlugin {
 
-        /// \brief TODO
+        /// Mutex for safe data access
         public: std::mutex mutex;
 
-        /// \brief A pointer to the world
+        /// A pointer to the world
         private: physics::WorldPtr world;
-        /// \brief Connection to World Update events
+        /// Connection to World Update events
         private: event::ConnectionPtr updateConnection;
 
-        /// \brief A node used for transport
+        /// A node used for transport
         private: transport::NodePtr node;
-        /// \brief A subscriber to the request topic
+        /// A subscriber to the request topic
         private: transport::SubscriberPtr sub;
-        /// \brief A publisher to the reply topic
+        /// A publisher to the reply topic
         private: transport::PublisherPtr pub;
 
-        /// \brief A publisher to the gazebo request topic
+        /// A publisher to the gazebo request topic
         private: transport::PublisherPtr request_pub;
-        /// \brief A subscriber to the gazebo response topic
+        /// A subscriber to the gazebo response topic
         private: transport::SubscriberPtr response_sub;
 
         // Regex patterns
+
+        /// Regex for applying custom material
         private: std::regex script_reg;
+        /// Regex for applying custom pose
         private: std::regex pose_reg;
 
         // Counters for automatic naming
+
+        /// Number of generated spheres
         private: int sphere_counter      {0};
+        /// Number of generated cylinders
         private: int cylinder_counter    {0};
+        /// Number of generated boxes
         private: int box_counter         {0};
+        /// Number of generated lights
         private: int light_counter       {0};
 
-        /// \brief TODO
+        /// Queue of objects with pending move actions
         private: std::queue<MoveObject> move_queue;
-        /// \brief TODO
-        private: std::queue<MoveObject> update_queue;
 
         // Public methods
-        public:
-            
-            /// \brief TODO
-            WorldUtils();
 
-            /// \brief TODO
-            void Load(physics::WorldPtr _world, sdf::ElementPtr _sdf);
+        /// \brief Constructs the object
+        public: WorldUtils();
 
-            /// \brief TODO
-            void onUpdate();
+        /// \brief Loads the object
+        /// \param _world   The World object to which the plugin is attached
+        /// \param _sdf     The SDF element with plugin parameters
+        public: void Load(physics::WorldPtr _world, sdf::ElementPtr _sdf);
+
+        /// \brief Callback function for handling world updates
+        public: void onUpdate();
 
         // Private methods
-        private:
 
-            /// \brief TODO
-            void onRequest(WorldUtilsRequestPtr &_msg);
+        /// \brief Callback function for handling incoming requests
+        /// \param _msg  The message
+        private: void onRequest(WorldUtilsRequestPtr &_msg);
 
-            /// \brief TODO
-            void printLiveObjs();
+        /// \brief Removes everything from the world
+        private: void clearWorld();
 
-            /// \brief TODO
-            void clearWorld();
+        /// \brief Removes entities matching a given string
+        /// \param match    The string to be matched
+        /// \param is_light Whether to target light objects or not
+        private: void clearMatching(const std::string & match, const bool is_light);
 
-            /// \brief TODO
-            void clearMatching(const std::string &match, const bool is_light);
+        /// \brief Returns the SDF of a sphere
+        /// \param model_name   Model name
+        /// \param mass         Model mass
+        /// \param radius       Sphere radius
+        /// \param position     Sphere position
+        /// \param orientation  Sphere orientation
+        /// \return Sphere SDF string
+        /// \deprecated Unused feature, easily replaced by client command
+        private: const std::string genSphere(
+            const std::string &model_name,
+            const double mass,
+            const double radius,
+            const ignition::math::Vector3d position,
+            const ignition::math::Quaterniond orientation);
 
-            /// \brief TODO
-            const std::string genSphere(
-                const std::string &model_name,
-                const double mass,
-                const double radius,
-                const ignition::math::Vector3d position,
-                const ignition::math::Quaterniond orientation);
+        /// \brief Returns the SDF of a cylinder
+        /// \param model_name   Model name
+        /// \param mass         Model mass
+        /// \param radius       Cylinder radius
+        /// \param length       Cylinder length
+        /// \param position     Cylinder position
+        /// \param orientation  Cylinder orientation
+        /// \return Cylinder SDF string
+        /// \deprecated Unused feature, easily replaced by client command
+        private: const std::string genCylinder(
+            const std::string &model_name,
+            const double mass,
+            const double radius,
+            const double length,
+            const ignition::math::Vector3d position,
+            const ignition::math::Quaterniond orientation);
 
-            /// \brief TODO
-            const std::string genCylinder(
-                const std::string &model_name,
-                const double mass,
-                const double radius,
-                const double length,
-                const ignition::math::Vector3d position,
-                const ignition::math::Quaterniond orientation);
-
-            /// \brief TODO
-            const std::string genBox(
-                const std::string &model_name,
-                const double mass,
-                const ignition::math::Vector3d size,
-                const ignition::math::Vector3d position,
-                const ignition::math::Quaterniond orientation);
+        /// \brief Returns the SDF of a box
+        /// \param model_name   Model name
+        /// \param mass         Model mass
+        /// \param size         Box size 3D vector
+        /// \param position     Box position
+        /// \param orientation  Box orientation
+        /// \return Box SDF
+        /// \deprecated Unused feature, easily replaced by client command
+        private: const std::string genBox(
+            const std::string &model_name,
+            const double mass,
+            const ignition::math::Vector3d size,
+            const ignition::math::Vector3d position,
+            const ignition::math::Quaterniond orientation);
     };
 }

@@ -1,9 +1,13 @@
-/// \file world_utils/WorldUtils.cc
-/// \brief TODO
-///
-/// TODO
-///
-/// \author João Borrego
+/*!
+    \file world_utils/WorldUtils.cc
+    \brief World Utils plugin implementation
+
+    A custom gazebo plugin that provides an interface to programatically
+    interact with the World object.
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
 
 #include "WorldUtils.hh"
 
@@ -45,7 +49,7 @@ void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
 
 /////////////////////////////////////////////////
 void WorldUtils::onUpdate()
-{  
+{
     world_utils::msgs::WorldUtilsResponse msg;
     bool moved = false;
 
@@ -66,7 +70,7 @@ void WorldUtils::onUpdate()
         moved = true;
     }
 
-    // TODO - report each object individually 
+    // TODO - report each object individually
     // Report sucess in move
     if (moved) {
         msg.set_type(SUCCESS);
@@ -237,10 +241,10 @@ void WorldUtils::onRequest(WorldUtilsRequestPtr &_msg){
             for (int i = 0; i < _msg->object_size(); i++) {
                 model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
                 if (_msg->object(i).has_name()){
-                    /// Clear specific object(s)
+                    // Clear specific object(s)
                     clearMatching(_msg->object(i).name() , (model_type == CUSTOM_LIGHT));
                 } else {
-                    /// Clear everything
+                    // Clear everything
                     clearWorld();
                 }
             }
@@ -251,17 +255,19 @@ void WorldUtils::onRequest(WorldUtilsRequestPtr &_msg){
 
     else if (type == PHYSICS) {
 
-            bool state = (_msg->has_state())?
-                _msg->state() : !this->world->PhysicsEnabled();
-            this->world->SetPhysicsEnabled(state);
+        // Toggle world physics
+        bool state = (_msg->has_state())?
+            _msg->state() : !this->world->PhysicsEnabled();
+        this->world->SetPhysicsEnabled(state);
 
-    } else if (type == PAUSE){
+    } else if (type == PAUSE) {
 
+        // Pause or unpause the world
         bool state = (_msg->has_state())?
             _msg->state() : !this->world->IsPaused();;
         this->world->SetPaused(state);
 
-    } else if (type == STATUS){
+    } else if (type == STATUS) {
 
         // Return total count of models and lights in the world
         world_utils::msgs::WorldUtilsResponse msg;

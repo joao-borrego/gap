@@ -1,6 +1,12 @@
-/// \file examples/visual_example/visual_example.hh
-/// \brief Visual Utils plugin example client headers
-/// \author João Borrego
+/*! 
+    \file examples/visual_example/visual_example.hh
+    \brief Visual tools example client
+
+    An example client to interact with VisualUtils plugin
+    
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
 
 // Gazebo
 #include <gazebo/gazebo_config.h>

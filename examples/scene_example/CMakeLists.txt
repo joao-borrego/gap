@@ -35,7 +35,7 @@ add_executable (
   scene_example
   scene_example.cc
   utils.cc
-  object.cc)
+  ObjectGrid.cc)
 target_link_libraries(
   scene_example
   camera_utils_msgs

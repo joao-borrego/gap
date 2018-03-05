@@ -1,24 +1,26 @@
-/// \file camera_utils/CameraUtils.hh
-/// \brief Camera Utils plugin headers
-///
-/// A custom gazebo plugin that provides an interface to programatically collect
-/// data from cameras at specific times.
-///
-/// \author João Borrego : jsbruglie
-/// \author Rui Figueiredo : ruipimentelfigueiredo
+/*!
+    \file camera_utils/CameraUtils.hh
+    \brief Camera Utils plugin
 
-// Gazebo 
+    A custom gazebo plugin that provides an interface to programatically collect
+    data from cameras at specific times.
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
+
+// Gazebo
 #include "gazebo/common/Plugin.hh"
 #include <gazebo/msgs/msgs.hh>
 #include "gazebo/sensors/CameraSensor.hh"
 #include "gazebo/rendering/Camera.hh"
 #include "gazebo/util/system.hh"
-// Custom messages 
+// Custom messages
 #include "camera_utils_request.pb.h"
 #include "camera_utils_response.pb.h"
 // Strings
 #include <string>
-// To create directories 
+// To create directories
 #include <boost/filesystem.hpp>
 // Malloc and memcpy
 #include <stdio.h>
@@ -27,9 +29,9 @@
 // Macros used in CameraUtils class
 namespace CameraUtils {
 
-/// Topic monitored for incoming commands 
+/// Topic monitored for incoming commands
 #define REQUEST_TOPIC   "~/gazebo-utils/camera_utils"
-/// Topic for replying to commands 
+/// Topic for replying to commands
 #define RESPONSE_TOPIC  "~/gazebo-utils/camera_utils/response"
 
 /// Request to move camera to given pose
@@ -76,10 +78,10 @@ namespace gazebo{
     /// See the example usage below:
     /// \code{.xml}
     ///    <plugin name="camera_utils" filename="libCameraUtils.so">
-    ///      
+    ///
     ///      <!-- Output image directory -->
     ///      <output_dir>/tmp/camera_world</output_dir>
-    ///      
+    ///
     ///      <!-- Output image extension -->
     ///      <extension>.png</extension>
     ///
@@ -89,39 +91,39 @@ namespace gazebo{
     /// See worlds/camera.world for a complete example.
     class CameraUtils : public SensorPlugin {
 
-        // Private attributes 
+        // Private attributes
 
-        /// Class with private attributes 
+        /// Class with private attributes
         private: std::unique_ptr<CameraUtilsPrivate> dataPtr;
-        /// Directory for saving output 
+        /// Directory for saving output
         private: std::string output_dir;
-        /// Saved frames counter 
+        /// Saved frames counter
         private: int saved_counter = 0;
-        /// File name for next capture 
+        /// File name for next capture
         private: std::string next_file_name;
-        /// Internal flag for saving on next update 
+        /// Internal flag for saving on next update
         private: bool save_on_update = false;
         /// Connects to new frame rendered event
         private: event::ConnectionPtr newFrameConnection;
 
-        // Protected attributes 
+        // Protected attributes
 
-        /// Pointer to camera sensor 
+        /// Pointer to camera sensor
         protected: sensors::CameraSensorPtr parentSensor;
-        /// Pointer to camera object 
+        /// Pointer to camera object
         protected: rendering::CameraPtr camera;
-        /// Image width 
+        /// Image width
         protected: unsigned int width;
-        /// Image height 
+        /// Image height
         protected: unsigned int height;
-        /// Image depth 
+        /// Image depth
         protected: unsigned int depth;
-        /// Image format 
+        /// Image format
         protected: std::string format;
-        /// Exported image extension 
+        /// Exported image extension
         protected: std::string extension;
 
-        // Public methods 
+        // Public methods
 
         /// \brief Constructs the object
         public: CameraUtils();
@@ -143,8 +145,8 @@ namespace gazebo{
         public: void OnNewFrame(const unsigned char *_image,
             unsigned int _width, unsigned int _height,
             unsigned int _depth, const std::string &_format);
-        
-        // Private methods 
+
+        // Private methods
 
         /// \brief Callback function for handling incoming requests
         /// \param _msg  The message

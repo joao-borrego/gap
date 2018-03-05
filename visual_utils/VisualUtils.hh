@@ -1,17 +1,19 @@
-/// \file visual_utils/VisualUtils.hh
-/// \brief Visual Utils plugin headers
-///
-/// A custom gazebo plugin that provides an interface to programatically
-/// change the visual properties of an object.
-///
-/// \author João Borrego : jsbruglie
-/// \author Rui Figueiredo : ruipimentelfigueiredo
+/*!
+    \file visual_utils/VisualUtils.hh
+    \brief Visual Utils plugin
+
+    A custom gazebo plugin that provides an interface to programatically
+    change the visual properties of an object.
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
 
 // Gazebo
 #include <gazebo/common/Events.hh>
 #include "gazebo/common/Plugin.hh"
-#include <gazebo/rendering/Visual.hh>
 #include <gazebo/msgs/msgs.hh>
+#include <gazebo/rendering/Visual.hh>
 #include <gazebo/transport/Node.hh>
 
 // Boost - for convenient string split
@@ -23,12 +25,12 @@
 #include <time.h>
 #include <stdlib.h>
 
-// Custom messages 
+// Custom messages
 #include "visual_utils_request.pb.h"
 
 namespace VisualUtils {
 
-/// Topic monitored for incoming commands 
+/// Topic monitored for incoming commands
 #define REQUEST_TOPIC   "~/gazebo-utils/visual_utils"
 
 /// Request update
@@ -54,7 +56,7 @@ namespace gazebo{
 
     /// \brief A custom gazebo plugin that provides an interface to programatically
     /// alter visuals during simulation.
-    /// 
+    ///
     /// Materials are assumed to be loaded and name <pattern><index>
     /// See the example usage below:
     ///
@@ -92,7 +94,7 @@ namespace gazebo{
         /// \param _msg  The message
         public: void onRequest(VisualUtilsRequestPtr & _msg);
 
-        /// \brief Randomly generates a new material name. 
+        /// \brief Randomly generates a new material name.
         /// \param name Output random material name
         public: void randomMaterialName(std::string & name);
 

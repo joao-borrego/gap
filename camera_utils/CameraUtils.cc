@@ -1,11 +1,13 @@
-/// \file camera_utils/CameraUtils.cc
-/// \brief Camera Utils plugin implementation
-///
-/// A custom gazebo plugin that provides an interface to programatically collect
-/// data from cameras at specific times.
-///
-/// \author João Borrego : jsbruglie
-/// \author Rui Figueiredo : ruipimentelfigueiredo
+/*!
+    \file camera_utils/CameraUtils.cc
+    \brief Camera Utils plugin implementation
+
+    A custom gazebo plugin that provides an interface to programatically collect
+    data from cameras at specific times.
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
 
 #include "CameraUtils.hh"
 

@@ -27,7 +27,7 @@ to generate the tools' custom messages.
 sudo apt install protobuf-compiler
 ```
 
-The pattern generation tool depends on OpenCV, as well as some debug tools.
+OpenCV 2 is required for the pattern generation tool and a few debug options.
 
 ### Compilation
 

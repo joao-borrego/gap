@@ -6,17 +6,19 @@ programatically with the simulator.
 These tools communicate directly with Gazebo server, not depending on any ROS modules.
 It includes:
 
+- [Camera Utils plugin], to control camera objects, namely moving the camera and saving rendered frames at specific instants.
+
+- [Visual Utils plugin], to control the visual appearance of an object during simulation, including changing the Visual object's pose, material and scale.
+
 - [World Utils plugin], that allows you to spawn boxes, spheres and cylinders, as well as custom models either by
 a uri reference or directly with an sdf string. Furthermore, it allows a model to be rendered with custom textures.
-
-- [Camera Utils plugin], which creates an interface to capture frames at specific instants.
 
 - [Pattern generation tool], which can randomly generate a high number of different types of textures,
 that are ready to be rendered in Gazebo.
 
 ### Dependencies
 
-The code has been tested in Gazebo 7.8.1 running on Ubuntu 16.04.
+The code has been tested in Gazebo 9.0.0 built from source and running on Ubuntu 16.04.
 
 Gazebo internal message passing relies on Protobuf, which is why the compiler needs to be installed in order
 to generate the tools' custom messages.
@@ -25,7 +27,7 @@ to generate the tools' custom messages.
 sudo apt install protobuf-compiler
 ```
 
-The pattern generation tool depends on OpenCV.
+The pattern generation tool depends on OpenCV, as well as some debug tools.
 
 ### Compilation
 
@@ -51,7 +53,7 @@ cd ~/workspace/gazebo-utils &&
 source setup.sh
 ```
 
-
-[World Utils plugin]: world_utils
 [Camera Utils plugin]: camera_utils
+[Visual Utils plugin]: visual_utils
+[World Utils plugin]: world_utils
 [Pattern generation tool]: pattern_generation

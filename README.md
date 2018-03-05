@@ -18,7 +18,7 @@ that are ready to be rendered in Gazebo.
 
 ### Examples
 
-Check out the [examples] to check out what you can achieve with these plugins.
+Check out the [examples] and see what you can achieve with these plugins.
 
 ### Dependencies
 

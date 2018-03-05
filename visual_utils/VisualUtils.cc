@@ -17,39 +17,41 @@ namespace gazebo {
 /// \brief Private data for the VisualUtils class
 class VisualUtilsPrivate
 {
-    /// \brief Visual to which the plugin is attached
+    /// Visual to which the plugin is attached
     public: rendering::VisualPtr visual;
-    /// \brief Connects to rendering update event
+    /// Connects to rendering update event
     public: event::ConnectionPtr updateConnection;
-    /// \brief Gazebo transport node
+    /// Gazebo transport node
     public: transport::NodePtr node;
-    /// \brief Visual utils topic subscriber
+    /// Visual utils topic subscriber
     public: transport::SubscriberPtr sub;
+    /// A publisher to the reply topic
+    public: transport::PublisherPtr pub;
 
-    /// \brief Unique name
+    /// Unique name
     public: std::string name;
-    /// \brief Material name patterns
+    /// Material name patterns
     public: std::vector<std::string> patterns;
-    /// \brief Number of material type variants
+    /// Number of material type variants
     public: int variants;
-    /// \brief Default pose
+    /// Default pose
     public: ignition::math::Pose3d default_pose;
 
-    /// \brief Mutex
+    /// Mutex
     public: std::mutex mutex;
 
-    /// \brief Flag to update pose
+    /// Flag to update pose
     public: bool update_pose {false};
-    /// \brief Flag to update material
+    /// Flag to update material
     public: bool update_material {false};
-    /// \brief Flag to update scale
+    /// Flag to update scale
     public: bool update_scale {false};
 
-    /// \brief New pose
+    /// New pose
     public: ignition::math::Pose3d new_pose;
-    /// \brief New material
+    /// New material
     public: std::string new_material;
-    /// \brief New scale
+    /// New scale
     public: ignition::math::Vector3d new_scale;
 };
 
@@ -88,6 +90,9 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
     // Subcribe to the monitored requests topic
     this->dataPtr->sub = this->dataPtr->node->Subscribe(REQUEST_TOPIC,
         &VisualUtils::onRequest, this);
+    // Setup publisher for the response topic
+    this->dataPtr->pub = this->dataPtr->node->
+        Advertise<visual_utils::msgs::VisualUtilsResponse>(RESPONSE_TOPIC);
 
     // Plugin parameters
 
@@ -127,12 +132,16 @@ void VisualUtils::Update()
 {
     std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
 
+    visual_utils::msgs::VisualUtilsResponse msg;
+    bool updated = false;
+
     // Update scale
     if (this->dataPtr->update_scale) {
         if (this->dataPtr->visual->Scale() != this->dataPtr->new_scale) {
             this->dataPtr->visual->SetScale(this->dataPtr->new_scale);
         }
         this->dataPtr->update_scale = false;
+        updated = true;
     }
     // Update pose
     if (this->dataPtr->update_pose) {
@@ -140,11 +149,20 @@ void VisualUtils::Update()
             this->dataPtr->visual->SetWorldPose(this->dataPtr->new_pose);
         }
         this->dataPtr->update_pose = false;
+        updated = true;
     }
     // Update material
     if (this->dataPtr->update_material) {
         this->dataPtr->visual->SetMaterial(this->dataPtr->new_material);
         this->dataPtr->update_material = false;
+        updated = true;
+    }
+
+    // Notify subscribers to the response topic that visual was updated
+    if (updated) {
+        msg.set_type(UPDATED);
+        msg.set_origin(this->dataPtr->name);
+        this->dataPtr->pub->Publish(msg);
     }
 }
 

@@ -35,7 +35,8 @@ void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
     // Subcribe to the request topic
     this->sub = this->node->Subscribe(REQUEST_TOPIC, &WorldUtils::onRequest, this);
     // Setup publisher for the response topic
-    this->pub = this->node->Advertise<world_utils::msgs::WorldUtilsResponse>(RESPONSE_TOPIC);
+    this->pub = this->node->
+        Advertise<world_utils::msgs::WorldUtilsResponse>(RESPONSE_TOPIC);
 
     // Setup regular expression used for texture replacement
     this->script_reg = std::regex(REGEX_XML_SCRIPT);

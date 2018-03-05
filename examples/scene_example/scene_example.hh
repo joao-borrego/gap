@@ -20,6 +20,7 @@
 #include "camera_utils_request.pb.h"
 #include "camera_utils_response.pb.h"
 #include "visual_utils_request.pb.h"
+#include "visual_utils_response.pb.h"
 #include "world_utils_request.pb.h"
 #include "world_utils_response.pb.h"
 
@@ -36,6 +37,8 @@
 #include <boost/filesystem.hpp>
 // Protecting variables
 #include <mutex>
+// Set container
+#include <set>
 // Sleep
 #include <chrono>
 #include <thread>
@@ -82,7 +85,9 @@
 // Visual utils
 
 /// Request update
-#define UPDATE  visual_utils::msgs::VisualUtilsRequest::UPDATE
+#define UPDATE      visual_utils::msgs::VisualUtilsRequest::UPDATE
+/// Visual updated response
+#define UPDATED     visual_utils::msgs::VisualUtilsResponse::UPDATED
 
 // World utils
 
@@ -104,23 +109,28 @@
 
 // API Topics
 
-/// Topic monitored by the server for incoming camera requests
+/// Topic monitored by CameraUtils plugin for incoming requests
 #define CAMERA_UTILS_TOPIC          "~/gazebo-utils/camera_utils"
-/// Topic for receiving replies from the camera plugin server
+/// Topic for receiving replies from CameraUtils plugin
 #define CAMERA_UTILS_RESPONSE_TOPIC "~/gazebo-utils/camera_utils/response"
-/// Topic monitored by the server for incoming commands
+/// Topic monitored by VisualUtils plugin for incoming requests
 #define VISUAL_UTILS_TOPIC          "~/gazebo-utils/visual_utils"
-/// Topic monitored by the server for incoming object spawn requests
+/// Topic for receiving replies from VisualUtils plugin
+#define VISUAL_UTILS_RESPONSE_TOPIC "~/gazebo-utils/visual_utils/response"
+/// Topic monitored by WorldUtils plugin for incoming requests
 #define WORLD_UTILS_TOPIC           "~/gazebo-utils/world_utils"
-/// Topic for receiving replies from the object spawner server
+/// Topic for receiving replies from WorldUtils plugin
 #define WORLD_UTILS_RESPONSE_TOPIC  "~/gazebo-utils/world_utils/response"
 
 // Message pointer typedefs
 
-/// Pointer to Camera Utils response message
+/// Pointer to CameraUtils response message
 typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
     CameraUtilsResponsePtr;
-/// Pointer to World Utils request message
+/// Pointer to VisualUtils request message
+typedef const boost::shared_ptr<const visual_utils::msgs::VisualUtilsResponse>
+    VisualUtilsResponsePtr;
+/// Pointer to WorldUtils request message
 typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
     WorldUtilsResponsePtr;
 
@@ -166,13 +176,22 @@ ignition::math::Pose3d getRandomLightPose();
 void captureScene(gazebo::transport::PublisherPtr pub, int iteration);
 
 /// \brief Wait for camera to move to new pose
+/// \return True if process should wait
 bool waitForMove();
 
+/// \brief Wait for visuals to update
+/// \return True if process should wait
+bool waitForVisuals();
+
 /// \brief Wait for camera to save frame to disk
+/// \return True if process should wait
 bool waitForCamera();
 
 /// \brief Wait for projected points
 bool waitForProjections();
+
+/// \brief Create set with names of existing objects
+void createNameSet();
 
 /// \brief Add 3D points to projection request
 void addProjections(camera_utils::msgs::CameraUtilsRequest & msg);
@@ -180,13 +199,17 @@ void addProjections(camera_utils::msgs::CameraUtilsRequest & msg);
 /// \brief Move camera to global camera pose
 void moveCamera(gazebo::transport::PublisherPtr pub);
 
-/// \brief Callback function for WorldUtils response
-/// \param _msg Incoming message
-void onWorldUtilsResponse(WorldUtilsResponsePtr & _msg);
-
 /// \brief Callback function for CameraUtils response
 /// \param _msg Incoming message
 void onCameraUtilsResponse(CameraUtilsResponsePtr & _msg);
+
+/// \brief Callback function for VisualUtils response
+/// \param _msg Incoming message
+void onVisualUtilsResponse(VisualUtilsResponsePtr & _msg);
+
+/// \brief Callback function for WorldUtils response
+/// \param _msg Incoming message
+void onWorldUtilsResponse(WorldUtilsResponsePtr & _msg);
 
 /// \brief Enables/disables physics engine
 /// \param pub WorldUtils publisher ptr

@@ -22,9 +22,14 @@ bool g_camera_ready {false};
 std::mutex g_camera_ready_mutex;
 bool g_points_ready {false};
 std::mutex g_points_ready_mutex;
+bool g_visuals_ready {false};
+std::mutex g_visuals_ready_mutex;
+// Set of names of existing objects
+std::set<std::string> g_names;
 
 // Global camera pose
 ignition::math::Pose3d g_camera_pose;
+
 
 // Regex objects
 std::regex g_regex_uid(REGEX_XML_UID);
@@ -60,21 +65,27 @@ int main(int argc, char **argv)
     // Create the communication node
     gazebo::transport::NodePtr node(new gazebo::transport::Node());
     node->Init();
-    // Publish to the object spawner request topic
-    gazebo::transport::PublisherPtr pub_world =
-        node->Advertise<world_utils::msgs::WorldUtilsRequest>(WORLD_UTILS_TOPIC);
-    // Subscribe to the object spawner reply topic and link callback function
-    gazebo::transport::SubscriberPtr sub_world =
-        node->Subscribe(WORLD_UTILS_RESPONSE_TOPIC, onWorldUtilsResponse);
-    // Publish to the camera topic
+
+    // Publish to the CameraUtils topic
     gazebo::transport::PublisherPtr pub_camera =
         node->Advertise<camera_utils::msgs::CameraUtilsRequest>(CAMERA_UTILS_TOPIC);
-    // Subscribe to the camera utils reply topic and link callback function
+    // Subscribe to the CameraUtils reply topic and link callback function
     gazebo::transport::SubscriberPtr sub_camera =
         node->Subscribe(CAMERA_UTILS_RESPONSE_TOPIC, onCameraUtilsResponse);
-    // Publish to the visual plugin topic
+
+    // Publish to the VisualUtils topic
     gazebo::transport::PublisherPtr pub_visual =
         node->Advertise<visual_utils::msgs::VisualUtilsRequest>(VISUAL_UTILS_TOPIC);
+    // Subscribe to the VisualUtils reply topic and link callback function
+    gazebo::transport::SubscriberPtr sub_visual =
+        node->Subscribe(VISUAL_UTILS_RESPONSE_TOPIC, onVisualUtilsResponse);
+
+    // Publish to the WorldUtils request topic
+    gazebo::transport::PublisherPtr pub_world =
+        node->Advertise<world_utils::msgs::WorldUtilsRequest>(WORLD_UTILS_TOPIC);
+    // Subscribe to the WorldUtils reply topic and link callback function
+    gazebo::transport::SubscriberPtr sub_world =
+        node->Subscribe(WORLD_UTILS_RESPONSE_TOPIC, onWorldUtilsResponse);
 
     // Wait for WorldUtils plugin to launch
     pub_world->WaitForConnection();
@@ -111,6 +122,8 @@ int main(int argc, char **argv)
         // Populate grid with random objects
         int num_objects = (getRandomInt(5, 10));
         g_grid.populate(num_objects);
+        // Create a set with the names of created objects
+        createNameSet();
 
         debugPrintTrace("Scene (" << iteration << "/"
             << scenes - 1 << "): " << num_objects << " objects");
@@ -139,15 +152,18 @@ int main(int argc, char **argv)
 
         moveCamera(pub_camera);
 
-        // TODO - Replace by proper mechanism to ensure scene was updated
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
         // Wait for camera to move to new position
         while (waitForMove()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
-        //debugPrintTrace("[1/3] Done waiting for camera and light to move.");
+        // Wait for visuals to update
+        while (waitForVisuals()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        // TODO - Synchronise
+        std::this_thread::sleep_for(std::chrono::milliseconds(60));
 
         // Capture the scene and save it to a file
         captureScene(pub_camera, iteration);
@@ -158,14 +174,10 @@ int main(int argc, char **argv)
         // Request point projection
         pub_camera->Publish(msg_points);
 
-        //debugPrintTrace("[2/3] Done waiting for frame to be acquired.");
-
         // Wait for projections
         while (waitForProjections()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-
-        //debugPrintTrace("[3/3] Done waiting for annotations.");
 
         // Save annotations to file
         storeAnnotations(dataset_dir, iteration);
@@ -319,6 +331,23 @@ ignition::math::Pose3d getRandomLightPose()
 }
 
 //////////////////////////////////////////////////
+void createNameSet()
+{
+    int num_obj = g_grid.objects.size();
+    for (int i = 0; i < num_obj; i++)
+    {
+        std::string name(g_grid.objects.at(i).name);
+        g_names.emplace(name);
+    }
+
+    std::set<std::string>::iterator it;
+    for (it = g_names.begin(); it != g_names.end(); ++it) {
+        std::cout << ' ' << *it;
+    }
+    std::cout << std::endl;
+}
+
+//////////////////////////////////////////////////
 void addProjections(camera_utils::msgs::CameraUtilsRequest & msg)
 {
     int num_obj = g_grid.objects.size();
@@ -372,6 +401,17 @@ bool waitForMove()
 }
 
 //////////////////////////////////////////////////
+bool waitForVisuals()
+{
+    std::lock_guard<std::mutex> lock(g_visuals_ready_mutex);
+    if (g_visuals_ready) {
+        g_visuals_ready = false;
+        return false;
+    }
+    return true;
+}
+
+//////////////////////////////////////////////////
 bool waitForCamera()
 {
     std::lock_guard<std::mutex> lock(g_camera_ready_mutex);
@@ -394,15 +434,22 @@ bool waitForProjections()
 }
 
 //////////////////////////////////////////////////
+void onVisualUtilsResponse(VisualUtilsResponsePtr &_msg)
+{
+    if (_msg->type() == UPDATED)
+    {
+        g_names.erase(_msg->origin());
+        if (g_names.empty()) {
+            std::lock_guard<std::mutex> lock(g_visuals_ready_mutex);
+            g_visuals_ready = true;
+        }
+    }
+}
+
+//////////////////////////////////////////////////
 void onWorldUtilsResponse(WorldUtilsResponsePtr &_msg)
 {
     // Unused
-    /*
-    if (_msg->type() == SUCCESS) {
-        std::lock_guard<std::mutex> lock(g_moved_mutex);
-        g_moved = true;
-    }
-    */
 }
 
 //////////////////////////////////////////////////

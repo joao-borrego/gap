@@ -10,7 +10,8 @@ import "vector3d.proto";
 message VisualUtilsRequest
 {
     /// \brief Type of request 
-    enum Type{
+    enum Type
+    {
         /// \brief Update 
         UPDATE          = 1;
         /// \brief Set default pose

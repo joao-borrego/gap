@@ -27,16 +27,22 @@
 
 // Custom messages
 #include "visual_utils_request.pb.h"
+#include "visual_utils_response.pb.h"
 
 namespace VisualUtils {
 
 /// Topic monitored for incoming commands
 #define REQUEST_TOPIC   "~/gazebo-utils/visual_utils"
+/// Topic for publishing replies
+#define RESPONSE_TOPIC  "~/gazebo-utils/visual_utils/response"
 
 /// Request update
 #define UPDATE          visual_utils::msgs::VisualUtilsRequest::UPDATE
 /// Set default pose
 #define DEFAULT_POSE    visual_utils::msgs::VisualUtilsRequest::DEFAULT_POSE
+
+/// Visual updated response
+#define UPDATED         visual_utils::msgs::VisualUtilsResponse::UPDATED
 
 // Default parameters
 
@@ -50,6 +56,9 @@ namespace gazebo{
     /// Shared pointer declaration for request message type
     typedef const boost::shared_ptr<const visual_utils::msgs::VisualUtilsRequest>
         VisualUtilsRequestPtr;
+    /// Shared pointer declaration for response message type
+    typedef const boost::shared_ptr<const visual_utils::msgs::VisualUtilsResponse>
+        VisualUtilsResponsePtr;
 
     // Forward declaration of private data class
     class VisualUtilsPrivate;

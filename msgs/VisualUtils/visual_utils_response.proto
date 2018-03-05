@@ -1,0 +1,23 @@
+package visual_utils.msgs;
+
+/// \ingroup visual_utils_msgs
+/// \interface VisualUtilsResponse
+/// \brief A response from Visual Utils plugin
+
+import "pose.proto";
+import "vector3d.proto";
+
+message VisualUtilsResponse
+{
+    /// \brief Type of response
+    enum Type
+    {
+        /// \brief Updated notification
+        UPDATED = 1;
+    }
+
+    /// \brief Type of response
+    optional Type   type    = 1;
+    /// \brief Origin of response
+    optional string origin  = 2;        
+}

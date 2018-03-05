@@ -12,6 +12,7 @@ endforeach()
 set (msgs
   # Custom messages
   visual_utils_request.proto
+  visual_utils_response.proto
   # Message dependencies
   ${PROTOBUF_IMPORT_DIRS}/vector3d.proto
   ${PROTOBUF_IMPORT_DIRS}/quaternion.proto

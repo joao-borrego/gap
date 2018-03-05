@@ -28,6 +28,9 @@
 #include "world_utils_request.pb.h"
 #include "world_utils_response.pb.h"
 
+// TODO Move object request temporary storage
+#include "MoveObject.hh" 
+
 namespace WorldUtils {
 
 /// \brief Topic monitored for incoming commands
@@ -123,11 +126,9 @@ namespace gazebo {
         private: int light_counter       {0};
 
         /// \brief TODO
-        private: std::queue<int> type;
-        /// \brief Queue of objects with pending move operations
-        private: std::queue<std::string> move;
+        private: std::queue<MoveObject> move_queue;
         /// \brief TODO
-        private: std::queue<ignition::math::Pose3d> poses;
+        private: std::queue<MoveObject> update_queue;
 
         // Public methods
         public:

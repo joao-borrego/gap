@@ -21,7 +21,7 @@ class CameraUtilsPrivate
     /// \brief Camera utils topic publisher 
     public: transport::PublisherPtr pub;
 
-    /// \brief Buffer of image raw data
+    /// \brief TODO Buffer of image raw data
     public: std::vector<std::string> buffer;
     /// \brief Mutex for safe data access
     public: std::mutex mutex;
@@ -107,6 +107,8 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
 
     if (_msg->type() == CAPTURE_REQUEST) 
     {
+        std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+
         if (_msg->has_file_name()) {
             file_name = _msg->file_name() + extension;
         } else {
@@ -126,6 +128,11 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
         camera_utils::msgs::CameraUtilsResponse msg;
         msg.set_type(PROJECTION_RESPONSE);
 
+        ignition::math::Pose3d pose(this->camera->WorldPose());
+        msgs::Pose *pose_ptr = new msgs::Pose();
+        msgs::Set(pose_ptr, pose);
+        msg.set_allocated_pose(pose_ptr);
+
         // For each PointProjection message 
         for (int i = 0; i < _msg->projections_size(); i++) {
             
@@ -144,11 +151,15 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
             }
         }
         this->dataPtr->pub->Publish(msg);
-
     }
-    else if (_msg->type() == INFO_REQUEST)
+    else if (_msg->type() == MOVE_REQUEST)
     {
-        // TODO
+    	camera_utils::msgs::CameraUtilsResponse msg;
+        msg.set_type(MOVE_RESPONSE);
+
+        ignition::math::Pose3d pose = msgs::ConvertIgn(_msg->pose());
+        this->camera->SetWorldPose(pose);
+        this->dataPtr->pub->Publish(msg);
     }
 }
 
@@ -160,12 +171,21 @@ void CameraUtils::OnNewFrame(
     unsigned int _depth,
     const std::string & _format)
 {
-    if (save_on_update) {
+    std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+
+    if (save_on_update)
+    {
         bool success = this->camera->SaveFrame(next_file_name);
+        if (! success) {
+            gzwarn << "[CameraUtils] could not save frame as " << next_file_name << std::endl;
+        }
+
         camera_utils::msgs::CameraUtilsResponse msg;
         msg.set_success(success);
         msg.set_type(CAPTURE_RESPONSE);
+        msg.set_filename(next_file_name);
         this->dataPtr->pub->Publish(msg);
+        
         gzmsg << "[CameraUtils] Saved frame as " << next_file_name << std::endl;
         save_on_update = false;
     }

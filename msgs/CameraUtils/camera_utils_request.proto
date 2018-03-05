@@ -16,21 +16,19 @@ message CameraUtilsRequest
         CAPTURE     = 1;
         /// \brief Change output directory 
         DIR         = 2;
-        /// \brief Project 3D point to 2D in camera plane
-        PROJECTION  = 3;
-        /// \brief Get camera info
-        INFO        = 4;
         /// \brief Move camera
-        MOVE        = 5;
+        MOVE        = 3;
+        /// \brief Project 3D point to 2D in camera plane
+        PROJECTION  = 4;
     }
 
     /// \brief Type of request 
     optional Type               type        = 1;
-    /// \brief File path of captured frame 
+    /// \brief File path of captured frame
     optional string             file_name   = 2;
     /// \brief Path to the output folder 
     optional string             output_dir  = 3;
-    /// \brief New camera pose
+    /// \brief Expected camera pose
     optional gazebo.msgs.Pose   pose        = 4;
     /// \brief 3D to 2D point projection 
     repeated PointProjection    projections = 5;

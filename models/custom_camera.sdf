@@ -3,7 +3,7 @@
   <model name="custom_camera">
 
     <static>true</static>
-    <pose>0 0 0 0 0 0</pose>
+    <pose>0 0 -6 0 0 0</pose>
 
     <link name="link">
 
@@ -34,8 +34,8 @@
         <camera name="head">
           <horizontal_fov>1.8962634</horizontal_fov>
           <image>
-            <width>1366</width>
-            <height>720</height>
+            <width>1920</width>
+            <height>1080</height>
             <format>R8G8B8</format>
           </image>
           <clip>

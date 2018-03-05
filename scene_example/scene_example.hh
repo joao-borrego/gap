@@ -62,9 +62,13 @@
 
 // Camera utils
 
+/// \brief Request to move camera to given pose
+#define MOVE_REQUEST            camera_utils::msgs::CameraUtilsRequest::MOVE
+/// \brief Response acknowledging move camera request
+#define MOVE_RESPONSE           camera_utils::msgs::CameraUtilsResponse::MOVE
 /// \brief Request to capture a frame and save it to disk
 #define CAPTURE_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAPTURE
-/// \brief Response acknowling captured frame
+/// \brief Response acknowledging captured frame
 #define CAPTURE_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAPTURE
 /// \brief Request 3D to 2D point projection
 #define PROJECTION_REQUEST      camera_utils::msgs::CameraUtilsRequest::PROJECTION
@@ -73,7 +77,7 @@
 
 // Visual utils
 
-/// Request update
+/// \brief Request update
 #define UPDATE  visual_utils::msgs::VisualUtilsRequest::UPDATE
 
 // World utils 
@@ -81,7 +85,7 @@
 /// \brief Spawn entity 
 #define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
 /// \brief Move entity 
-#define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
+#define WORLD_MOVE      world_utils::msgs::WorldUtilsRequest::MOVE
 /// \brief Start or stop physcis simulation 
 #define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
 /// \breief TODO
@@ -162,6 +166,9 @@ bool waitForProjections();
 void addProjections(camera_utils::msgs::CameraUtilsRequest & msg);
 
 /// \brief TODO
+void moveCamera(gazebo::transport::PublisherPtr pub);
+
+/// \brief TODO
 /// \param _msg Incoming message
 void onWorldUtilsResponse(WorldUtilsResponsePtr & _msg);
 
@@ -179,6 +186,5 @@ void visualizeData(const std::string & image_dir, int iteration);
 
 /// \brief TODO
 void storeAnnotations(
-    const ignition::math::Pose3d & camera_pose,
     const std::string & path,
     const int iteration);

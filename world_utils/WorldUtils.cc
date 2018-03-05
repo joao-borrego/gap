@@ -45,31 +45,28 @@ void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
 
 /////////////////////////////////////////////////
 void WorldUtils::onUpdate()
-{
-    bool moved = false;    
+{  
     world_utils::msgs::WorldUtilsResponse msg;
+    bool moved = false;
 
     std::lock_guard<std::mutex> lock(this->mutex);
 
-    // Move objects
-    while (!this->type.empty())
+    // Process queue of objects with pending move
+    while (! this->move_queue.empty())
     {
-        int model_type = this->type.front();
-        std::string name = this->move.front();
-        ignition::math::Pose3d pose = this->poses.front();
-
-        if (model_type == CUSTOM_LIGHT) {
-            physics::LightPtr light = this->world->LightByName(name);
-            if (light) light->SetWorldPose(pose);
+        MoveObject mv_obj = this->move_queue.front();
+        if (mv_obj.is_light) {
+            physics::LightPtr light = this->world->LightByName(mv_obj.name);
+            if (light) light->SetWorldPose(mv_obj.pose);
         } else {
-            physics::ModelPtr model = this->world->ModelByName(name);
-            if (model) model->SetWorldPose(pose);
+            physics::ModelPtr model = this->world->ModelByName(mv_obj.name);
+            if (model) model->SetWorldPose(mv_obj.pose);
         }
-        type.pop(); move.pop(); poses.pop();
-
+        this->move_queue.pop();
         moved = true;
     }
 
+    // TODO - report each object individually 
     // Report sucess in move
     if (moved) {
         msg.set_type(SUCCESS);
@@ -228,10 +225,8 @@ void WorldUtils::onRequest(WorldUtilsRequestPtr &_msg){
 
                 std::lock_guard<std::mutex> lock(this->mutex);
 
-                this->type.push(model_type);
-                this->move.push(name);
-                this->poses.push(pose);
-                
+                bool is_light = (model_type == CUSTOM_LIGHT);
+                this->move_queue.emplace(name, is_light, pose);
             }
         }
 

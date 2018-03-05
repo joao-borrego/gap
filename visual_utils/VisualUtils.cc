@@ -31,6 +31,9 @@ class VisualUtilsPrivate
     /// \brief Default pose
     public: ignition::math::Pose3d default_pose;
 
+    /// \brief Mutex
+    public: std::mutex mutex;
+
     /// \brief Flag to update pose
     public: bool update_pose {false};
     /// \brief Flag to update material
@@ -118,14 +121,20 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
 /////////////////////////////////////////////////
 void VisualUtils::Update()
 {
+    std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+
     // Update scale
     if (this->dataPtr->update_scale) {
-        this->dataPtr->visual->SetScale(this->dataPtr->new_scale);
+        if (this->dataPtr->visual->Scale() != this->dataPtr->new_scale) {
+            this->dataPtr->visual->SetScale(this->dataPtr->new_scale);
+        }
         this->dataPtr->update_scale = false;
     }
     // Update pose
     if (this->dataPtr->update_pose) {
-        this->dataPtr->visual->SetWorldPose(this->dataPtr->new_pose);
+        if (this->dataPtr->visual->WorldPose() != this->dataPtr->new_pose) {
+            this->dataPtr->visual->SetWorldPose(this->dataPtr->new_pose);
+        }
         this->dataPtr->update_pose = false;
     }
     // Update material
@@ -156,6 +165,8 @@ void VisualUtils::onRequest(VisualUtilsRequestPtr &_msg)
 
     if (_msg->type() == UPDATE)
     {
+        std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+
         if (index == -1) {
             // Ĩf visual is not targeted, set new pose to default pose
             this->dataPtr->new_pose = this->dataPtr->default_pose;
@@ -175,6 +186,8 @@ void VisualUtils::onRequest(VisualUtilsRequestPtr &_msg)
     }
     else if (_msg->type() == DEFAULT_POSE)
     {
+        std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+
         if (index != -1) {
             if (index < _msg->poses_size()) {
                 this->dataPtr->default_pose = gazebo::msgs::ConvertIgn(_msg->poses(index));

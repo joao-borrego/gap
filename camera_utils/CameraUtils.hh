@@ -8,6 +8,7 @@
 
 // Gazebo 
 #include "gazebo/common/Plugin.hh"
+#include <gazebo/msgs/msgs.hh>
 #include "gazebo/sensors/CameraSensor.hh"
 #include "gazebo/rendering/Camera.hh"
 #include "gazebo/util/system.hh"
@@ -31,6 +32,11 @@ namespace CameraUtils {
 /// Topic for replying to commands 
 #define RESPONSE_TOPIC  "~/gazebo-utils/camera_utils/response"
 
+
+/// \brief Request to move camera to given pose
+#define MOVE_REQUEST            camera_utils::msgs::CameraUtilsRequest::MOVE
+/// \brief Response acknowledging move camera request
+#define MOVE_RESPONSE           camera_utils::msgs::CameraUtilsResponse::MOVE
 /// Request camera capture
 #define CAPTURE_REQUEST     camera_utils::msgs::CameraUtilsRequest::CAPTURE
 /// Camera capture response
@@ -43,10 +49,7 @@ namespace CameraUtils {
 #define PROJECTION_REQUEST  camera_utils::msgs::CameraUtilsRequest::PROJECTION
 /// Point projection response
 #define PROJECTION_RESPONSE camera_utils::msgs::CameraUtilsResponse::PROJECTION
-/// Request camera info
-#define INFO_REQUEST        camera_utils::msgs::CameraUtilsRequest::INFO
-/// Camera info response
-#define INFO_RESPONSE       camera_utils::msgs::CameraUtilsResponse::INFO
+
 /// Request move camera
 #define MOVE_REQUEST        camera_utils::msgs::CameraUtilsRequest::MOVE
 
@@ -99,10 +102,16 @@ namespace gazebo{
             std::string output_dir;
             /// Saved frames counter 
             int saved_counter = 0;
+            /// TODO
+            std::vector<std::string> names;
+            /// TODO
+            std::vector<ignition::math::Vector3d> points;
             /// File name for next capture 
             std::string next_file_name;
             /// Internal flag for saving on next update 
             bool save_on_update = false;
+            /// TODO
+            bool project = false;
             /// TODO
             event::ConnectionPtr newFrameConnection;
 

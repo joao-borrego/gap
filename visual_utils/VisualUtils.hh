@@ -16,6 +16,9 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+// Mutex
+#include <mutex>
+
 // TODO - Change to decent RNG
 #include <time.h>
 #include <stdlib.h>

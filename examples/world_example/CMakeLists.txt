@@ -17,10 +17,11 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 include_directories(${PROJECT_BINARY_DIR}/msgs/WorldUtils)
 link_directories(${PROJECT_BINARY_DIR}/msgs/WorldUtils)
 
-# Gazebo world utils plugin
-add_library(WorldUtils SHARED WorldUtils.cc MoveObject.cc)
-target_link_libraries(WorldUtils
+# World example client
+add_executable (world_example world_example.cc)
+target_link_libraries(world_example
     world_utils_msgs
-    ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(WorldUtils
+    ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
+add_dependencies(
+    world_example
     world_utils_msgs)

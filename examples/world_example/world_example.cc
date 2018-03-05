@@ -1,4 +1,4 @@
-#include "spawner_client.hh"
+#include "world_example.hh"
 
 namespace fs = boost::filesystem;
 

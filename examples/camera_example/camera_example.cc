@@ -1,4 +1,4 @@
-#include "camera_client.hh"
+#include "camera_example.hh"
 
 using namespace camera_utils::msgs;
 

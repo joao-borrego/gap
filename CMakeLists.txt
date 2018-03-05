@@ -52,6 +52,7 @@ add_subdirectory(pattern_generation)
 add_subdirectory(examples/camera_example)
 # Visual tools example client
 add_subdirectory(examples/visual_example)
-
+# World tools example client
+add_subdirectory(examples/world_example)
 # Random scene generator
-add_subdirectory(scene_example)
+add_subdirectory(examples/scene_example)

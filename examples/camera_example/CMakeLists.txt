@@ -22,9 +22,9 @@ include_directories(${PROJECT_BINARY_DIR}/msgs/CameraUtils)
 link_directories(${PROJECT_BINARY_DIR}/msgs/CameraUtils)
 
 # Camera utils plugin example client
-add_executable (camera_client camera_client.cc)
-target_link_libraries(camera_client
+add_executable (camera_example camera_example.cc)
+target_link_libraries(camera_example
     camera_utils_msgs
     ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(camera_client
+add_dependencies(camera_example
     camera_utils_msgs)

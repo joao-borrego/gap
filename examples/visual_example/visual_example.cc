@@ -1,8 +1,8 @@
-/// \file visual_utils/VisualUtilsExample.cc
+/// \file examples/visual_example/visual_example.cc
 /// \brief Visual Utils plugin example client implementation
 /// \author João Borrego
 
-#include "VisualUtilsExample.hh"
+#include "visual_example.hh"
 
 using namespace visual_utils::msgs;
 

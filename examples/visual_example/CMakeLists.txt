@@ -21,10 +21,10 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 include_directories(${PROJECT_BINARY_DIR}/msgs/VisualUtils)
 link_directories(${PROJECT_BINARY_DIR}/msgs/VisualUtils)
 
-# Gazebo visual utils plugin
-add_library(VisualUtils SHARED VisualUtils.cc )
-target_link_libraries(VisualUtils
+# Visual utils plugin example client
+add_executable (visual_example visual_example.cc)
+target_link_libraries(visual_example
     visual_utils_msgs
-    ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(VisualUtils
+    ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
+add_dependencies(visual_example
     visual_utils_msgs)

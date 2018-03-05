@@ -1,9 +1,11 @@
 /// \file visual_utils/VisualUtils.hh
-/// \brief TODO
+/// \brief Visual Utils plugin headers
 ///
-/// TODO
+/// A custom gazebo plugin that provides an interface to programatically
+/// change the visual properties of an object.
 ///
-/// \author João Borrego
+/// \author João Borrego : jsbruglie
+/// \author Rui Figueiredo : ruipimentelfigueiredo
 
 // Gazebo
 #include <gazebo/common/Events.hh>
@@ -12,13 +14,11 @@
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/transport/Node.hh>
 
-// Boost
+// Boost - for convenient string split
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
-
 // Mutex
 #include <mutex>
-
 // TODO - Change to decent RNG
 #include <time.h>
 #include <stdlib.h>
@@ -85,15 +85,16 @@ namespace gazebo{
             rendering::VisualPtr _visual,
             sdf::ElementPtr _sdf);
 
-        /// \brief Update once per simulation iteration
+        /// \brief Update once per simulation iteration.
         public: void Update();
 
         /// \brief Callback function for handling incoming requests
         /// \param _msg  The message
-        public: void onRequest(VisualUtilsRequestPtr &_msg);
+        public: void onRequest(VisualUtilsRequestPtr & _msg);
 
-        /// TODO
-        public: void randomMaterialName(std::string &name);
+        /// \brief Randomly generates a new material name. 
+        /// \param name Output random material name
+        public: void randomMaterialName(std::string & name);
 
         /// \brief Private data pointer
         private: std::unique_ptr<VisualUtilsPrivate> dataPtr;

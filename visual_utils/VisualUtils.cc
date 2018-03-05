@@ -1,9 +1,11 @@
-/// \file visual_utils/VisualUtils.cc
-/// \brief TODO
+/// \file visual_utils/VisualUtils.hh
+/// \brief Visual Utils plugin implementation
 ///
-/// TODO
+/// A custom gazebo plugin that provides an interface to programatically
+/// change the visual properties of an object.
 ///
-/// \author João Borrego
+/// \author João Borrego : jsbruglie
+/// \author Rui Figueiredo : ruipimentelfigueiredo
 
 #include "VisualUtils.hh"
 

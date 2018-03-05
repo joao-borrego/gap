@@ -50,6 +50,8 @@ add_subdirectory(pattern_generation)
 
 # Camera tools example client
 add_subdirectory(examples/camera_example)
+# Visual tools example client
+add_subdirectory(examples/visual_example)
 
 # Random scene generator
 add_subdirectory(scene_example)

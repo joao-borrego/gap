@@ -4,7 +4,8 @@
 /// A custom gazebo plugin that provides an interface to programatically collect
 /// data from cameras at specific times.
 ///
-/// \author João Borrego
+/// \author João Borrego : jsbruglie
+/// \author Rui Figueiredo : ruipimentelfigueiredo
 
 // Gazebo 
 #include "gazebo/common/Plugin.hh"
@@ -12,19 +13,18 @@
 #include "gazebo/sensors/CameraSensor.hh"
 #include "gazebo/rendering/Camera.hh"
 #include "gazebo/util/system.hh"
-
 // Custom messages 
 #include "camera_utils_request.pb.h"
 #include "camera_utils_response.pb.h"
-
+// Strings
 #include <string>
 // To create directories 
 #include <boost/filesystem.hpp>
-
 // Malloc and memcpy
 #include <stdio.h>
 #include <string.h>
 
+// Macros used in CameraUtils class
 namespace CameraUtils {
 
 /// Topic monitored for incoming commands 
@@ -32,11 +32,10 @@ namespace CameraUtils {
 /// Topic for replying to commands 
 #define RESPONSE_TOPIC  "~/gazebo-utils/camera_utils/response"
 
-
-/// \brief Request to move camera to given pose
-#define MOVE_REQUEST            camera_utils::msgs::CameraUtilsRequest::MOVE
-/// \brief Response acknowledging move camera request
-#define MOVE_RESPONSE           camera_utils::msgs::CameraUtilsResponse::MOVE
+/// Request to move camera to given pose
+#define MOVE_REQUEST        camera_utils::msgs::CameraUtilsRequest::MOVE
+/// Response acknowledging move camera request
+#define MOVE_RESPONSE       camera_utils::msgs::CameraUtilsResponse::MOVE
 /// Request camera capture
 #define CAPTURE_REQUEST     camera_utils::msgs::CameraUtilsRequest::CAPTURE
 /// Camera capture response
@@ -49,9 +48,6 @@ namespace CameraUtils {
 #define PROJECTION_REQUEST  camera_utils::msgs::CameraUtilsRequest::PROJECTION
 /// Point projection response
 #define PROJECTION_RESPONSE camera_utils::msgs::CameraUtilsResponse::PROJECTION
-
-/// Request move camera
-#define MOVE_REQUEST        camera_utils::msgs::CameraUtilsRequest::MOVE
 
 // Default parameters
 
@@ -94,74 +90,64 @@ namespace gazebo{
     class CameraUtils : public SensorPlugin {
 
         // Private attributes 
-        private:
 
-            /// Class with private attributes 
-            std::unique_ptr<CameraUtilsPrivate> dataPtr;
-            /// Directory for saving output 
-            std::string output_dir;
-            /// Saved frames counter 
-            int saved_counter = 0;
-            /// TODO
-            std::vector<std::string> names;
-            /// TODO
-            std::vector<ignition::math::Vector3d> points;
-            /// File name for next capture 
-            std::string next_file_name;
-            /// Internal flag for saving on next update 
-            bool save_on_update = false;
-            /// TODO
-            bool project = false;
-            /// TODO
-            event::ConnectionPtr newFrameConnection;
+        /// Class with private attributes 
+        private: std::unique_ptr<CameraUtilsPrivate> dataPtr;
+        /// Directory for saving output 
+        private: std::string output_dir;
+        /// Saved frames counter 
+        private: int saved_counter = 0;
+        /// File name for next capture 
+        private: std::string next_file_name;
+        /// Internal flag for saving on next update 
+        private: bool save_on_update = false;
+        /// Connects to new frame rendered event
+        private: event::ConnectionPtr newFrameConnection;
 
         // Protected attributes 
-        protected:
 
-            /// Pointer to camera sensor 
-            sensors::CameraSensorPtr parentSensor;
-            /// Pointer to camera object 
-            rendering::CameraPtr camera;
-            /// Image width 
-            unsigned int width;
-            /// Image height 
-            unsigned int height;
-            /// Image depth 
-            unsigned int depth;
-            /// Image format 
-            std::string format;
-            /// Exported image extension 
-            std::string extension;
+        /// Pointer to camera sensor 
+        protected: sensors::CameraSensorPtr parentSensor;
+        /// Pointer to camera object 
+        protected: rendering::CameraPtr camera;
+        /// Image width 
+        protected: unsigned int width;
+        /// Image height 
+        protected: unsigned int height;
+        /// Image depth 
+        protected: unsigned int depth;
+        /// Image format 
+        protected: std::string format;
+        /// Exported image extension 
+        protected: std::string extension;
 
         // Public methods 
-        public:
 
-            /// \brief Constructs the object
-            CameraUtils();
+        /// \brief Constructs the object
+        public: CameraUtils();
 
-            /// \brief Destroys the object
-            virtual ~CameraUtils();
+        /// \brief Destroys the object
+        public: virtual ~CameraUtils();
 
-            /// \brief Loads the object
-            /// \param _sensor  The camera sensor to which the plugin is attached
-            /// \param _sdf     The SDF element with plugin parameters
-            virtual void Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf);
+        /// \brief Loads the object
+        /// \param _sensor  The camera sensor to which the plugin is attached
+        /// \param _sdf     The SDF element with plugin parameters
+        public: virtual void Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf);
 
-            /// \brief Callback function for handling frame updates
-            /// \param _image   Image data
-            /// \param _width   Image width
-            /// \param _height  Image height
-            /// \param _depth   Image depth
-            /// \param _format  Image format
-            void OnNewFrame(const unsigned char *_image,
-                unsigned int _width, unsigned int _height,
-                unsigned int _depth, const std::string &_format);
+        /// \brief Callback function for handling frame updates
+        /// \param _image   Image data
+        /// \param _width   Image width
+        /// \param _height  Image height
+        /// \param _depth   Image depth
+        /// \param _format  Image format
+        public: void OnNewFrame(const unsigned char *_image,
+            unsigned int _width, unsigned int _height,
+            unsigned int _depth, const std::string &_format);
         
         // Private methods 
-        private:
 
-            /// \brief Callback function for handling incoming requests
-            /// \param _msg  The message
-            void onRequest(CameraUtilsRequestPtr &_msg);
+        /// \brief Callback function for handling incoming requests
+        /// \param _msg  The message
+        private: void onRequest(CameraUtilsRequestPtr &_msg);
     };
 }

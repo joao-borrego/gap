@@ -18,8 +18,8 @@
 // Custom messages
 #include "visual_utils_request.pb.h"
 
-/// Topic monitored by the server for incoming commands
+/// \brief Topic monitored by the server for incoming commands
 #define VISUAL_UTILS_TOPIC "~/gazebo-utils/visual_utils"
 
-/// Request update
+/// \brief Request update
 #define UPDATE  visual_utils::msgs::VisualUtilsRequest::UPDATE

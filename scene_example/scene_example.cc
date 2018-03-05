@@ -36,15 +36,19 @@ int main(int argc, char **argv)
     // Command-line arguments
     unsigned int scenes {0};
     unsigned int start {0};
-    std::string media_dir;
     std::string imgs_dir;
     std::string dataset_dir;
     bool debug {false};
 
     // Parse command-line arguments
-    parseArgs(argc, argv, scenes, start, media_dir, imgs_dir, dataset_dir, debug);
+    parseArgs(argc, argv, scenes, start, imgs_dir, dataset_dir, debug);
     // Create output directories
     createDirectory(dataset_dir);
+    createDirectory(imgs_dir);
+    for (int i = 0; i < scenes; i+= 100) {
+        std::string imgs_subdir(imgs_dir + std::to_string(i / 100) + "00/");
+        createDirectory(imgs_subdir);
+    }
 
     // Setup communication
 

@@ -19,7 +19,6 @@
 /* Default arg values */
 #define ARG_SCENES_DEFAULT      10
 #define ARG_START_DEFAULT       0
-#define ARG_MEDIA_DIR_DEFAULT   "media"
 #define ARG_IMGS_DIR_DEFAULT    "imgs"
 #define ARG_DATASET_DIR_DEFAULT "dataset"
 #define ARG_DEBUG_DEFAULT       false 
@@ -34,7 +33,6 @@ void parseArgs(
     char** argv,
     unsigned int &scenes,
     unsigned int &start,
-    std::string &media_dir,
     std::string &imgs_dir,
     std::string &dataset_dir,
     bool &debug);

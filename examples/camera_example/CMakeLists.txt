@@ -21,10 +21,10 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 include_directories(${PROJECT_BINARY_DIR}/msgs/CameraUtils)
 link_directories(${PROJECT_BINARY_DIR}/msgs/CameraUtils)
 
-# Gazebo camera utils plugin
-add_library(CameraUtils SHARED CameraUtils.cc )
-target_link_libraries(CameraUtils
+# Camera utils plugin example client
+add_executable (camera_client camera_client.cc)
+target_link_libraries(camera_client
     camera_utils_msgs
-    ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(CameraUtils
+    ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
+add_dependencies(camera_client
     camera_utils_msgs)

@@ -4,7 +4,8 @@
 /// A custom gazebo plugin that provides an interface to programatically collect
 /// data from cameras at specific times.
 ///
-/// \author João Borrego
+/// \author João Borrego : jsbruglie
+/// \author Rui Figueiredo : ruipimentelfigueiredo
 
 #include "CameraUtils.hh"
 
@@ -14,20 +15,18 @@ namespace gazebo {
 /// \brief Class for private camera utils plugin data.
 class CameraUtilsPrivate
 {
-    /// \brief Gazebo transport node 
+    /// Gazebo transport node 
     public: transport::NodePtr node;
-    /// \brief Camera utils topic subscriber 
+    /// Camera utils topic subscriber 
     public: transport::SubscriberPtr sub;
-    /// \brief Camera utils topic publisher 
+    /// Camera utils topic publisher 
     public: transport::PublisherPtr pub;
 
-    /// \brief TODO Buffer of image raw data
-    public: std::vector<std::string> buffer;
-    /// \brief Mutex for safe data access
+    /// Mutex for safe data access
     public: std::mutex mutex;
 };
 
-/// Register this plugin with the simulator 
+// Register this plugin with the simulator 
 GZ_REGISTER_SENSOR_PLUGIN(CameraUtils)
 
 /////////////////////////////////////////////////

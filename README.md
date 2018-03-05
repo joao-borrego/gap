@@ -16,6 +16,10 @@ a uri reference or directly with an sdf string. Furthermore, it allows a model t
 - [Pattern generation tool], which can randomly generate a high number of different types of textures,
 that are ready to be rendered in Gazebo.
 
+### Examples
+
+Check out the [examples] to check out what you can achieve with these plugins.
+
 ### Dependencies
 
 The code has been tested in Gazebo 9.0.0 built from source and running on Ubuntu 16.04.
@@ -53,6 +57,7 @@ cd ~/workspace/gazebo-utils &&
 source setup.sh
 ```
 
+[examples]: examples
 [Camera Utils plugin]: camera_utils
 [Visual Utils plugin]: visual_utils
 [World Utils plugin]: world_utils

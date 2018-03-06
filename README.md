@@ -1,5 +1,8 @@
-# gazebo-utils
-Set of tools to interact with Gazebo simulator
+<p align="center"> 
+    <img src=.image/logo.png>
+</p>
+
+--------------------
 
 This project comprises a set of tools for Gazebo which provide an interface to interact
 programatically with the simulator.

@@ -11,15 +11,16 @@ endforeach()
 # Obtain set of proto messages definitions
 set (msgs
   # Custom messages
-  camera_info.proto
-  bounding_box_camera.proto
+  point_projection.proto
   camera_utils_request.proto
   camera_utils_response.proto
   # Message dependencies
   ${PROTOBUF_IMPORT_DIRS}/header.proto
   ${PROTOBUF_IMPORT_DIRS}/time.proto
-  ${PROTOBUF_IMPORT_DIRS}/vector3d.proto
   ${PROTOBUF_IMPORT_DIRS}/vector2d.proto
+  ${PROTOBUF_IMPORT_DIRS}/vector3d.proto
+  ${PROTOBUF_IMPORT_DIRS}/quaternion.proto
+  ${PROTOBUF_IMPORT_DIRS}/pose.proto
 )
 
 # Generate Protobuf sources

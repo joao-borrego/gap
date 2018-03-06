@@ -19,12 +19,12 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake
 	)
 
-# Cmake safeguards e.g. prevent in-source builds
+# CMake safeguards e.g. prevent in-source builds
 include(safeguards)
 
 # Check dependencies
 find_package(gazebo REQUIRED)
-find_package(Boost 1.40 COMPONENTS system REQUIRED)
+find_package(Boost COMPONENTS system REQUIRED)
 
 # Build project
 
@@ -34,14 +34,25 @@ add_subdirectory(msgs)
 
 # Plugins
 
-# World plugin
-add_subdirectory(world_utils)
 # Camera plugin
 add_subdirectory(camera_utils)
+# Visual plugin
+add_subdirectory(visual_utils)
+# World plugin
+add_subdirectory(world_utils)
+
+# Tools
+
 # Pattern generation tool
 add_subdirectory(pattern_generation)
 
 # Examples
 
-# Generate objects and capture picture
-add_subdirectory(capture_example)
+# Camera tools example client
+add_subdirectory(examples/camera_example)
+# Visual tools example client
+add_subdirectory(examples/visual_example)
+# World tools example client
+add_subdirectory(examples/world_example)
+# Random scene generator
+add_subdirectory(examples/scene_example)

@@ -1,6 +1,6 @@
 # 2.8.8 required to use PROTOBUF_IMPORT_DIRS
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
-FIND_PACKAGE( Boost 1.40 COMPONENTS system REQUIRED )
+FIND_PACKAGE( Boost COMPONENTS system REQUIRED )
 set (CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
 
 # Find packages
@@ -18,18 +18,9 @@ include_directories(${PROJECT_BINARY_DIR}/msgs/WorldUtils)
 link_directories(${PROJECT_BINARY_DIR}/msgs/WorldUtils)
 
 # Gazebo world utils plugin
-add_library(WorldUtils SHARED WorldUtils.cc)
+add_library(WorldUtils SHARED WorldUtils.cc MoveObject.cc)
 target_link_libraries(WorldUtils
     world_utils_msgs
     ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
 add_dependencies(WorldUtils
-    world_utils_msgs)
-
-# Spawner client
-add_executable (spawner_client spawner_client.cc)
-target_link_libraries(spawner_client
-    world_utils_msgs
-    ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(
-    spawner_client
     world_utils_msgs)

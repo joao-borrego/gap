@@ -2,7 +2,7 @@
 <sdf version="1.4">
   <world name="default">
 
-    <plugin name="object_spawner" filename="libWorldUtils.so"/>
+    <plugin name="world_tools" filename="libWorldUtils.so"/>
 
   </world>
 </sdf>

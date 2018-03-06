@@ -1,82 +1,112 @@
-/**
- * @file WorldUtils.cc
- * @brief World utils implementation
- *
- * @author João Borrego
- */
+/*!
+    \file world_utils/WorldUtils.cc
+    \brief World Utils plugin implementation
+
+    A custom gazebo plugin that provides an interface to programatically
+    interact with the World object.
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
 
 #include "WorldUtils.hh"
 
 namespace gazebo {
 
-    /* Register this plugin with the simulator */
-    GZ_REGISTER_WORLD_PLUGIN(WorldUtils)
+// Register this plugin with the simulator
+GZ_REGISTER_WORLD_PLUGIN(WorldUtils)
 
-    WorldUtils::WorldUtils() : WorldPlugin(){
-        std::cout << "[WorldUtils] Loaded world tools." << std::endl;
+WorldUtils::WorldUtils() : WorldPlugin(){
+    gzmsg << "[WorldUtils] Loaded world tools." << std::endl;
+}
+
+void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
+
+    // Plugin parameters
+    this->world = _world;
+
+    // Subscriber setup
+    this->node = transport::NodePtr(new transport::Node());
+    this->node->Init(this->world->Name());
+
+    // Setup publisher for the gazebo request topic
+    this->request_pub = this->node->Advertise<msgs::Request>("~/request");
+
+    // Subcribe to the request topic
+    this->sub = this->node->Subscribe(REQUEST_TOPIC, &WorldUtils::onRequest, this);
+    // Setup publisher for the response topic
+    this->pub = this->node->
+        Advertise<world_utils::msgs::WorldUtilsResponse>(RESPONSE_TOPIC);
+
+    // Setup regular expression used for texture replacement
+    this->script_reg = std::regex(REGEX_XML_SCRIPT);
+    // Setup regular expression used for pose replacement
+    this->pose_reg = std::regex(REGEX_XML_POSE);
+
+    // Connect to the world update signal
+    this->updateConnection = event::Events::ConnectPreRender(
+        std::bind(&WorldUtils::onUpdate, this));
+}
+
+/////////////////////////////////////////////////
+void WorldUtils::onUpdate()
+{
+    world_utils::msgs::WorldUtilsResponse msg;
+    bool moved = false;
+
+    std::lock_guard<std::mutex> lock(this->mutex);
+
+    // Process queue of objects with pending move
+    while (! this->move_queue.empty())
+    {
+        MoveObject mv_obj = this->move_queue.front();
+        if (mv_obj.is_light) {
+            physics::LightPtr light = this->world->LightByName(mv_obj.name);
+            if (light) light->SetWorldPose(mv_obj.pose);
+        } else {
+            physics::ModelPtr model = this->world->ModelByName(mv_obj.name);
+            if (model) model->SetWorldPose(mv_obj.pose);
+        }
+        this->move_queue.pop();
+        moved = true;
     }
 
-    void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
-
-        /* Plugin parameters */
-        this->world = _world;
-
-        /* Subscriber setup */
-        this->node = transport::NodePtr(new transport::Node());
-
-        #if GAZEBO_MAJOR_VERSION < 8
-        this->node->Init(this->world->GetName());
-        #else
-        this->node->Init(this->world->Name());
-        #endif
-
-        /* Setup publisher for the factory topic */
-        this->factory_pub = this->node->Advertise<msgs::Factory>("~/factory");
-        /* Setup publisher for the light factory topic */
-        this->factory_light_pub = this->node->Advertise<msgs::Light>("~/factory/light");
-        /* Setup publisher for the gazebo request topic */
-        this->request_pub = this->node->Advertise<msgs::Request>("~/request");
-
-        /* Subcribe to the request topic */
-        this->sub = this->node->Subscribe(REQUEST_TOPIC, &WorldUtils::onRequest, this);
-        /* Setup publisher for the response topic */
-        this->pub = this->node->Advertise<world_utils::msgs::WorldUtilsResponse>(RESPONSE_TOPIC);
-
-        /* Setup regular expression used for texture replacement */
-        this->script_reg = std::regex(REGEX_XML_SCRIPT);
-        /* Setup regular expression used for pose replacement */
-        this->pose_reg = std::regex(REGEX_XML_POSE);
+    // TODO - report each object individually
+    // Report sucess in move
+    if (moved) {
+        msg.set_type(SUCCESS);
+        this->pub->Publish(msg);
     }
+}
 
-    /* Private methods */
+/////////////////////////////////////////////////
+void WorldUtils::onRequest(WorldUtilsRequestPtr &_msg){
 
-    void WorldUtils::onRequest(WorldUtilsRequestPtr &_msg){
+    /// TODO - better structure
 
-        /* TODO - better structure */
+    int type;
+    int model_type;
+    std::string name;
+    ignition::math::Vector3d pos(0,0,0);
+    ignition::math::Quaterniond ori(0,0,0,0);
+    double mass;
+    std::string texture_uri;
+    std::string texture_name;
+    double radius;
+    double length;
+    ignition::math::Vector3d box_size(0,0,0);
 
-        int type;
-        int model_type;
-        std::string name;
-        ignition::math::Vector3d pos(0,0,0);
-        ignition::math::Quaterniond ori(0,0,0,0);
-        double mass;
-        std::string texture_uri;
-        std::string texture_name;
-        double radius;
-        double length;
-        ignition::math::Vector3d box_size(0,0,0);
+    std::string sdf_string;
 
-        std::string sdf_string;
-
-        type = (_msg->has_type())? (_msg->type()) : -1;
+    type = (_msg->has_type())? (_msg->type()) : -1;
 
     if (type == SPAWN){
-        
+
         for (int i = 0; i < _msg->object_size(); i++){
             model_type = (_msg->object(i).has_model_type())?
                 (_msg->object(i).model_type()) : -1;
 
-            /* Extract parameters from message */
+            /// Extract parameters from message
             if (_msg->object(i).has_pose()){
                 pos = msgs::ConvertIgn(_msg->object(i).pose().position());
                 ori = msgs::ConvertIgn(_msg->object(i).pose().orientation());
@@ -127,19 +157,19 @@ namespace gazebo {
                 }
             }
 
-            /* If a spawn message was requested */
+            /// If a spawn message was requested
             if (!sdf_string.empty()){
 
                 std::ostringstream model_str;
 
                 if (model_type != CUSTOM && model_type != CUSTOM_LIGHT) {
-                    /* Enclose in sdf xml tags */
+                    /// Enclose in sdf xml tags
                     model_str << "<sdf version='" << SDF_VERSION << "'>"
                     << sdf_string << "</sdf>";
 
                 } else {
 
-                    /* Regex to modify pose string in custom model */
+                    /// Regex to modify pose string in custom model
                     if (_msg->object(i).has_pose()){
 
                         ignition::math::Vector3d rpy = ori.Euler();
@@ -165,7 +195,7 @@ namespace gazebo {
 
                 if (_msg->object(i).has_texture_uri() && _msg->object(i).has_texture_name()){
 
-                    /* Change material script in string */
+                    /// Change material script in string
                     texture_uri = _msg->object(i).texture_uri();
                     texture_name = _msg->object(i).texture_name();
 
@@ -180,179 +210,165 @@ namespace gazebo {
                     new_model_str = model_str.str();
                 }
 
-                /* Send the model to the gazebo factory */
-                if (model_type == CUSTOM_LIGHT) {
-                    sdf::SDF sdf_light;
-                    sdf_light.SetFromString(new_model_str);
-                    msgs::Light msg = msgs::LightFromSDF(sdf_light.Root()->GetElement("light"));
-                    msg.set_name("plugin_light");
-                    this->factory_light_pub->Publish(msg,true);
-                } else {
-                    msgs::Factory msg;
-                    msg.set_sdf(new_model_str);
-                    this->factory_pub->Publish(msg,true);
-                }
-
+                // Insert model in World
+                sdf::SDF objectSDF;
+                objectSDF.SetFromString(new_model_str);
+                this->world->InsertModelSDF(objectSDF);
             }
         }
 
     } else if (type == MOVE) {
-        
-        for (int i = 0; i < _msg->object_size(); i++){
-            
-            if (_msg->object(i).has_name() && _msg->object(i).has_pose()){
+
+        for (int i = 0; i < _msg->object_size(); i++)
+        {
+            model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
+
+            if (_msg->object(i).has_name() && _msg->object(i).has_pose()) {
+                std::string name(_msg->object(i).name());
                 msgs::Pose m_pose = _msg->object(i).pose();
-                ignition::math::Pose3d pose = msgs::ConvertIgn(m_pose);
-                physics::ModelPtr model = this->world->GetModel(_msg->object(i).name());
-                model->SetWorldPose(pose);
+                ignition::math::Pose3d pose(msgs::ConvertIgn(m_pose));
+
+                std::lock_guard<std::mutex> lock(this->mutex);
+
+                bool is_light = (model_type == CUSTOM_LIGHT);
+                this->move_queue.emplace(name, is_light, pose);
             }
         }
 
-    } else if (type == REMOVE){
+    } else if (type == REMOVE) {
 
-        if (_msg->object_size() > 0){
+        if(_msg->object_size() > 0) {
 
-            for (int i = 0; i < _msg->object_size(); i++){
-                
+            for (int i = 0; i < _msg->object_size(); i++) {
+                model_type = (_msg->object(i).has_model_type())? (_msg->object(i).model_type()) : -1;
                 if (_msg->object(i).has_name()){
-                    // Clear specific objects
-                    clearMatching(_msg->object(i).name());
+                    // Clear specific object(s)
+                    clearMatching(_msg->object(i).name() , (model_type == CUSTOM_LIGHT));
+                } else {
+                    // Clear everything
+                    clearWorld();
                 }
             }
         } else {
             clearWorld();
         }
-    } 
-
-
-    else if (type == PHYSICS){
-
-            bool state = (_msg->has_state())?
-                _msg->state() : !this->world->GetEnablePhysicsEngine();
-            this->world->EnablePhysicsEngine(state);
-
-        } else if (type == PAUSE){
-
-            bool state = (_msg->has_state())?
-                _msg->state() : !this->world->IsPaused();;
-            this->world->SetPaused(state);
-
-        } else if (type == STATUS){
-
-            world_utils::msgs::WorldUtilsResponse msg;
-            
-            if (_msg->bounding_box_size() > 0){
-                for(int i = 0; i<_msg->bounding_box_size(); i++){
-                    physics::ModelPtr model =
-                        this->world->GetModel(_msg->bounding_box(i).name());
-                    if (model == NULL){
-                        // TODO - better error check
-                        return;
-                    }
-                    
-                    math::Box bb = model->GetBoundingBox();
-                    gazebo::msgs::Vector3d *bb_center_msg = new gazebo::msgs::Vector3d();
-                    gazebo::msgs::Vector3d *bb_size_msg = new gazebo::msgs::Vector3d();
-
-                    ignition::math::Vector3d bb_center = bb.GetCenter().Ign();
-                    ignition::math::Vector3d bb_size = bb.GetSize().Ign();
-
-                    bb_center_msg->set_x(bb_center.X());
-                    bb_center_msg->set_y(bb_center.Y());
-                    bb_center_msg->set_z(bb_center.Z());
-                    bb_size_msg->set_x(bb_size.X());
-                    bb_size_msg->set_y(bb_size.Y());
-                    bb_size_msg->set_z(bb_size.Z());
-
-                    world_utils::msgs::BoundingBox* bounding_box = msg.add_bounding_box();
-                    bounding_box->set_allocated_bb_center(bb_center_msg);
-                    bounding_box->set_allocated_bb_size(bb_size_msg);
-                    bounding_box->set_name(_msg->bounding_box(i).name());
-                }
-                
-                msg.set_type(PROPERTIES);
-                pub->Publish(msg);
-            
-            } else {
-                
-                int model_count = this->world->GetModelCount();
-                msg.set_type(INFO);
-                msg.set_object_count(model_count);
-                pub->Publish(msg,true);
-            }
-        }
-    
     }
 
-    void WorldUtils::clearWorld(){
+    else if (type == PHYSICS) {
 
-        this->world->Clear();
+        // Toggle world physics
+        bool state = (_msg->has_state())?
+            _msg->state() : !this->world->PhysicsEnabled();
+        this->world->SetPhysicsEnabled(state);
+
+    } else if (type == PAUSE) {
+
+        // Pause or unpause the world
+        bool state = (_msg->has_state())?
+            _msg->state() : !this->world->IsPaused();;
+        this->world->SetPaused(state);
+
+    } else if (type == STATUS) {
+
+        // Return total count of models and lights in the world
+        world_utils::msgs::WorldUtilsResponse msg;
+        int model_count = this->world->ModelCount();
+        int light_count = this->world->LightCount();
+        msg.set_type(INFO);
+        msg.set_object_count(model_count + light_count);
+        pub->Publish(msg,true);
     }
+}
 
-    void WorldUtils::clearMatching(const std::string &match){
+/////////////////////////////////////////////////
+void WorldUtils::clearWorld(){
 
-        int model_count = this->world->GetModelCount();
-        std::string model_name;
-        std::string match_str = match;
-        gazebo::msgs::Request *msg;
+    this->world->Clear();
+}
 
-        for (int idx = 0; idx < model_count; idx++){
-            physics::ModelPtr model = this->world->GetModel(idx);
-            model_name = model->GetName();
-            if (model_name.find(match_str) != std::string::npos){
-                msg = gazebo::msgs::CreateRequest("entity_delete", model_name);
+/////////////////////////////////////////////////
+void WorldUtils::clearMatching(const std::string &match, const bool is_light){
+
+    std::string entity_name;
+    std::string match_str = match;
+    gazebo::msgs::Request *msg;
+
+    if (is_light){
+
+        physics::Light_V lights = this->world->Lights();
+        for (auto &l : lights){
+            entity_name = l->GetName();
+            if (entity_name.find(match_str) != std::string::npos){
+                msg = gazebo::msgs::CreateRequest("entity_delete", entity_name);
                 request_pub->Publish(*msg, true);
             }
         }
-        delete msg;
+
+    } else {
+
+        physics::Model_V models = this->world->Models();
+        for (auto &m : models){
+            entity_name = m->GetName();
+            if (entity_name.find(match_str) != std::string::npos){
+                msg = gazebo::msgs::CreateRequest("entity_delete", entity_name);
+                request_pub->Publish(*msg, true);
+            }
+        }
     }
 
-    const std::string WorldUtils::genSphere(
-        const std::string &model_name,
-        const double mass,
-        const double radius,
-        const ignition::math::Vector3d position,
-        const ignition::math::Quaterniond orientation){
+    delete msg;
+}
 
-        msgs::Model model;
-        model.set_name(model_name);
-        msgs::Set(model.mutable_pose(),
-            ignition::math::Pose3d(position, orientation));
-        msgs::AddSphereLink(model, mass, radius);
+/////////////////////////////////////////////////
+const std::string WorldUtils::genSphere(
+    const std::string &model_name,
+    const double mass,
+    const double radius,
+    const ignition::math::Vector3d position,
+    const ignition::math::Quaterniond orientation){
 
-        return msgs::ModelToSDF(model)->ToString("");
-    }
+    msgs::Model model;
+    model.set_name(model_name);
+    msgs::Set(model.mutable_pose(),
+        ignition::math::Pose3d(position, orientation));
+    msgs::AddSphereLink(model, mass, radius);
 
-    const std::string WorldUtils::genCylinder(
-        const std::string &model_name,
-        const double mass,
-        const double radius,
-        const double length,
-        const ignition::math::Vector3d position,
-        const ignition::math::Quaterniond orientation){
+    return msgs::ModelToSDF(model)->ToString("");
+}
 
-        msgs::Model model;
-        model.set_name(model_name);
-        msgs::Set(model.mutable_pose(),
-            ignition::math::Pose3d(position, orientation));
-        msgs::AddCylinderLink(model, mass, radius, length);
+/////////////////////////////////////////////////
+const std::string WorldUtils::genCylinder(
+    const std::string &model_name,
+    const double mass,
+    const double radius,
+    const double length,
+    const ignition::math::Vector3d position,
+    const ignition::math::Quaterniond orientation){
 
-        return msgs::ModelToSDF(model)->ToString("");
-    };
+    msgs::Model model;
+    model.set_name(model_name);
+    msgs::Set(model.mutable_pose(),
+        ignition::math::Pose3d(position, orientation));
+    msgs::AddCylinderLink(model, mass, radius, length);
 
-    const std::string WorldUtils::genBox(
-        const std::string &model_name,
-        const double mass,
-        const ignition::math::Vector3d size,
-        const ignition::math::Vector3d position,
-        const ignition::math::Quaterniond orientation){
+    return msgs::ModelToSDF(model)->ToString("");
+};
 
-        msgs::Model model;
-        model.set_name(model_name);
-        msgs::Set(model.mutable_pose(),
-            ignition::math::Pose3d(position, orientation));
-        msgs::AddBoxLink(model, mass, size);
+/////////////////////////////////////////////////
+const std::string WorldUtils::genBox(
+    const std::string &model_name,
+    const double mass,
+    const ignition::math::Vector3d size,
+    const ignition::math::Vector3d position,
+    const ignition::math::Quaterniond orientation){
 
-        return msgs::ModelToSDF(model)->ToString("");
-    };
+    msgs::Model model;
+    model.set_name(model_name);
+    msgs::Set(model.mutable_pose(),
+        ignition::math::Pose3d(position, orientation));
+    msgs::AddBoxLink(model, mass, size);
+
+    return msgs::ModelToSDF(model)->ToString("");
+};
+
 }

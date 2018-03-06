@@ -1,5 +1,5 @@
 # 2.8.8 required to use PROTOBUF_IMPORT_DIRS
-cmake_minimum_required(VERSION 2.8z FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 
 find_package(gazebo REQUIRED)
 include_directories(${GAZEBO_INCLUDE_DIRS})
@@ -27,12 +27,4 @@ target_link_libraries(CameraUtils
     camera_utils_msgs
     ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
 add_dependencies(CameraUtils
-    camera_utils_msgs)
-
-# Camera utils plugin example client
-add_executable (camera_client camera_client.cc)
-target_link_libraries(camera_client
-    camera_utils_msgs
-    ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(camera_client
     camera_utils_msgs)

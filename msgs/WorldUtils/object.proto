@@ -2,7 +2,7 @@ package world_utils.msgs;
 
 import "pose.proto";
 import "vector3d.proto";
-import "bounding_box.proto";
+
 message Object
 {
 

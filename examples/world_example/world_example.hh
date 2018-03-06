@@ -1,63 +1,70 @@
-/* Gazebo */
+/*!
+    \file examples/world_example/world_example.hh
+    \brief World tools example client
+
+    An example client to interact with WorldlUtils plugin
+
+    \deprecated Since several features of WorldPlugin will be deprecated
+    this example client will also be modified.
+
+    \author João Borrego : jsbruglie
+    \author Rui Figueiredo : ruipimentelfigueiredo
+*/
+
+// Gazebo
+#include <gazebo/gazebo_client.hh>
 #include <gazebo/gazebo_config.h>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
 
-/* I/O streams */
+// I/O streams
 #include <iostream>
-/* File streams */
+// File streams
 #include <fstream>
-/* Regular expressions */
+// Regular expressions
 #include <regex>
-/* For iterating over the contents of a dir */
+// For iterating over the contents of a dir
 #include <boost/filesystem.hpp>
 
-/* Custom messages */
+// Custom messages
 #include "world_utils_request.pb.h"
 
-/**
- * Gazebo's API has changed between major releases. These changes are
- * accounted for with #if..#endif blocks in this file.
- */
-#if GAZEBO_MAJOR_VERSION < 6
-#include <gazebo/gazebo.hh>
-#else
-#include <gazebo/gazebo_client.hh>
-#endif
-
-/* @brief Command prompt */
+// @brief Command prompt
 #define PROMPT "> "
 
-/** Spawn entity */
+/// Spawn entity
 #define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
-/** Move entity */
+/// Move entity
 #define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
-/** Remove entity from the world */
+/// Remove entity from the world
 #define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
-/** Start or stop physcis simulation */
+/// Start or stop physcis simulation
 #define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
-/** Pause or resume simulation */
+/// Pause or resume simulation
 #define PAUSE           world_utils::msgs::WorldUtilsRequest::PAUSE
-/** Get entity or world information */
+/// Get entity or world information
 #define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
 
-/** Spawn sphere object */
+/// Spawn sphere object
 #define SPHERE          world_utils::msgs::Object::SPHERE
-/** Spawn cylinder object */
+/// Spawn cylinder object
 #define CYLINDER        world_utils::msgs::Object::CYLINDER
-/** Spawn box object */
+/// Spawn box object
 #define BOX             world_utils::msgs::Object::BOX
-/** Spawn custom object */
+/// Spawn custom object
 #define CUSTOM          world_utils::msgs::Object::CUSTOM
-/** Spawn custom light object */
+/// Spawn custom light object
 #define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
-/** Spawn a model included in gazebo model path */
+/// Spawn a model included in gazebo model path
 #define MODEL           world_utils::msgs::Object::MODEL
 
+/// Topic monitored by WorldUtils plugin for incoming requests
 #define WORLD_UTILS_TOPIC "~/gazebo-utils/world_utils"
-
+/// Directory with custom materials
 #define MEDIA_DIR "media/"
+/// Subdirectory with texture images
 #define TEXTURES_DIR MEDIA_DIR "materials/textures/"
+/// Subdirectory with material scripts
 #define SCRIPTS_DIR MEDIA_DIR "materials/scripts/"
-
+/// URI for custom material
 #define TEXTURE_URI "file://materials/scripts/plugin.material"

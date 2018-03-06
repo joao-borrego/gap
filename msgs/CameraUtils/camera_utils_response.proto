@@ -1,32 +1,35 @@
 package camera_utils.msgs;
 
-import "bounding_box_camera.proto";
-import "camera_info.proto";
+/// \ingroup camera_utils_msgs
+/// \interface CameraUtilsResponse
+/// \brief A response from Camera Utils plugin
+
+import "pose.proto";
+import "point_projection.proto";
 
 message CameraUtilsResponse
 {
-    /** Type of request */
-    enum Type{
-        /** Acquire frame and save it to disk */
-        CAPTURE         = 1;
-        /** Change output directory */
-        DIR             = 2;
-        /** From 3d to 2d camera point */
-        CAMERA_POINT    = 3;
-        /** Get camera info */
-        CAMERA_INFO     = 4;
+    /// \brief Type of request
+    enum Type
+    {
+        /// \brief Acquire frame and save it to disk 
+        CAPTURE     = 1;
+        /// \brief Change output directory 
+        DIR         = 2;
+        /// \brief Get camera info 
+        MOVE        = 3;
+        /// \brief From 3d to 2d camera point 
+        PROJECTION  = 4;
     }
 
-    /** Type of request */
-    optional Type               type            = 1;
-    /** Success */
-    optional bool               success         = 2;
-    /* @brief Model name */
-    optional string             name            = 3;
-    /* @brief Bounding box */
-    repeated BoundingBoxCamera  bounding_box    = 4;
-    /* @brief Camera Info */
-    optional CameraInfo         camera_info     = 5;
-
-
+    /// \brief Type of request 
+    optional Type             type          = 1;
+    /// \brief File path of captured frame
+    optional string           filename      = 2;
+    /// \brief Success 
+    optional bool             success       = 3;
+    /// \brief Current camera pose
+    optional gazebo.msgs.Pose pose          = 4;
+    /// \brief 3D to 2D point projection 
+    repeated PointProjection  projections   = 5;
 }

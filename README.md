@@ -23,6 +23,11 @@ that are ready to be rendered in Gazebo.
 
 Check out the [examples] and see what you can achieve with these plugins.
 
+### Documentation
+
+Take a look at the automatic [documentation] for file and class description.
+
+
 ### Dependencies
 
 The code has been tested in Gazebo 9.0.0 built from source and running on Ubuntu 16.04.
@@ -61,6 +66,7 @@ source setup.sh
 ```
 
 [examples]: examples
+[documentation]: http://web.tecnico.ulisboa.pt/joao.borrego/gap/
 [Camera Utils plugin]: camera_utils
 [Visual Utils plugin]: visual_utils
 [World Utils plugin]: world_utils

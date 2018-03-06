@@ -1,5 +1,5 @@
 /*!
-    \file examples/camera_example/camera_example.hh
+    \file examples/camera_example/camera_example.cc
     \brief Camera tools example client implementation
 
     An example client to interact with CameraUtils plugin

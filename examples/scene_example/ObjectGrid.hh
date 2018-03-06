@@ -28,7 +28,7 @@
 /// Spawn box object
 #define BOX       2
 
-/// \class Object in 2D grid
+/// \brief Object in 2D grid
 class Object
 {
     // Public attributes
@@ -78,7 +78,7 @@ class Object
 
 };
 
-/// \class Object 2D grid
+/// \brief Object 2D grid
 class ObjectGrid
 {
     // Public attributes

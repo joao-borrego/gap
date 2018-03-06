@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// Macros used in CameraUtils class
 namespace CameraUtils {
 
 /// Topic monitored for incoming commands

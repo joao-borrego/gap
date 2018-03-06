@@ -13,7 +13,7 @@
 
 #include <string>
 
-/// \class Object with a pending move operation
+/// \brief Object with a pending move operation
 class MoveObject
 {
     /// \brief Object name

@@ -1,5 +1,5 @@
 /*!
-    \file visual_utils/VisualUtils.hh
+    \file visual_utils/VisualUtils.cc
     \brief Visual Utils plugin implementation
 
     A custom gazebo plugin that provides an interface to programatically

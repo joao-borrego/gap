@@ -4,8 +4,7 @@
 
 --------------------
 
-This project comprises a set of tools for Gazebo which provide an interface to interact
-programatically with the simulator.
+This project comprises a set of tools for [Gazebo] which provide an interface to interact programatically with the simulator.
 These tools communicate directly with Gazebo server, not depending on any ROS modules.
 It includes:
 
@@ -13,11 +12,10 @@ It includes:
 
 - [Visual Utils plugin], to control the visual appearance of an object during simulation, including changing the Visual object's pose, material and scale.
 
-- [World Utils plugin], that allows you to spawn boxes, spheres and cylinders, as well as custom models either by
-a uri reference or directly with an sdf string. Furthermore, it allows a model to be rendered with custom textures.
+- [World Utils plugin], that allows you to spawn models either by a uri reference or directly with an sdf string.
+Furthermore, it allows a model to be rendered with custom textures.
 
-- [Pattern generation tool], which can randomly generate a high number of different types of textures,
-that are ready to be rendered in Gazebo.
+This project was originally conceived so we could develop a [scene generator] in Gazebo, employing domain randomisation in an attempt to bridge the reality gap between real life images and synthetically generated frames.
 
 ### Examples
 
@@ -39,7 +37,9 @@ to generate the tools' custom messages.
 sudo apt install protobuf-compiler
 ```
 
-OpenCV 2 is required for the pattern generation tool and a few debug options.
+OpenCV 2 is required for a debug tool in [scene_example].
+
+For custom texture generation, we have developed a [pattern generation tool], which can randomly generate a high number of 4 different types of textures which produces materials in a format Gazebo can recognise.
 
 ### Compilation
 
@@ -65,9 +65,12 @@ cd ~/workspace/gazebo-utils &&
 source setup.sh
 ```
 
-[examples]: examples
-[documentation]: http://web.tecnico.ulisboa.pt/joao.borrego/gap/
+[Gazebo]: http://gazebosim.org/
 [Camera Utils plugin]: camera_utils
 [Visual Utils plugin]: visual_utils
 [World Utils plugin]: world_utils
-[Pattern generation tool]: pattern_generation
+[examples]: examples
+[scene generator]: examples/scene_example
+[scene_example]: examples/scene_example
+[documentation]: http://web.tecnico.ulisboa.pt/joao.borrego/gap/
+[pattern generation tool]: https://github.com/ruipimentelfigueiredo/pattern-generation-lib

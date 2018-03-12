@@ -41,11 +41,6 @@ add_subdirectory(visual_utils)
 # World plugin
 add_subdirectory(world_utils)
 
-# Tools
-
-# Pattern generation tool
-add_subdirectory(pattern_generation)
-
 # Examples
 
 # Camera tools example client

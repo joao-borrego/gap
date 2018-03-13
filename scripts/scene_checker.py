@@ -146,7 +146,7 @@ class ImageViewer(tk.Frame):
         annotation = tree.getroot()
 
         # Draw label with cur / total scene indicator
-        label = str(self.cur) + "/" + str(self.scenes)
+        label = str(self.cur) + "/" + str(self.scenes - 1)
         self.canvas.create_text(40, 40, text=label, fill="black",
             font=('arial', '18'), anchor=tk.NW)
         # Draw help label

@@ -115,8 +115,10 @@ class ImageViewer(tk.Frame):
             height=self.parent.winfo_screenheight())
         self.canvas.pack()
 
-        # Bind spacebar to keypress event
-        self.parent.bind("<space>", self.onKeypress)
+        # Bind events
+        self.parent.bind("<Left>", self.onLeft)
+        self.parent.bind("<Right>", self.onRight)
+        self.parent.bind("<Return>", self.onQuit)
 
         # Update image
         self.onUpdate()
@@ -157,13 +159,19 @@ class ImageViewer(tk.Frame):
 
         annotation = tree.getroot()
 
+        # Commands
+        self.canvas.create_rectangle(40, 40, 300, 200,
+            fill="gray", stipple="gray50", width=0)
         # Draw label with cur / total scene indicator
-        label = str(self.cur) + "/" + str(self.scenes - 1)
-        self.canvas.create_text(40, 40, text=label, fill="black",
+        label = 'Scene ' + str(self.cur) + '/' + str(self.scenes - 1)
+        self.canvas.create_text(45, 45, text=label, fill="white",
             font=('arial', '18'), anchor=tk.NW)
         # Draw help label
-        label = "Press SPACEBAR to move on to next image."
-        self.canvas.create_text(40, 80, text=label, fill="black",
+        label = 'Commands\n' + \
+                'Left\tPrevious\n' + \
+                'Right\tNext\n' + \
+                'Return\tExit'
+        self.canvas.create_text(45, 80, text=label, fill="white",
             font=('arial', '18'), anchor=tk.NW)
 
         # Draw bounding boxes
@@ -171,7 +179,7 @@ class ImageViewer(tk.Frame):
             name = obj.find('name').text
             color = "red"
             if   (name == "sphere"):   color = "blue"
-            elif (name == "cylinder"): color = "#32cd32" # green
+            elif (name == "cylinder"): color = "white"
             
             for bnd_box in obj.findall('bndbox'):
                 x_min = int(bnd_box.find('xmin').text)
@@ -183,13 +191,32 @@ class ImageViewer(tk.Frame):
                 self.canvas.create_text(x_min, y_min-25, text=name, fill=color,
                     font=('arial', '16'), anchor=tk.NW)
 
-    def onKeypress(self, event):
+    def onLeft(self, event):
         '''
         Updates counter and calls update function.
         '''
+        if (self.cur == 0): return
+
+        self.cur = self.cur - 1
+        if (self.cur >= self.scenes): sys.exit(0) 
+        self.onUpdate()
+
+    def onRight(self, event):
+        '''
+        Updates counter and calls update function.
+        '''
+        if (self.cur == self.first + self.scenes - 1): return
+
         self.cur = self.cur + 1
         if (self.cur >= self.scenes): sys.exit(0) 
         self.onUpdate()
+
+    def onQuit(self, event):
+        '''
+        Quits program.
+        '''
+        self.parent.destroy()
+        sys.exit(0)
 
 def main(argv):
     '''

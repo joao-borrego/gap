@@ -15,7 +15,7 @@ It includes:
 - [World Utils plugin], that allows you to spawn models either by a uri reference or directly with an sdf string.
 Furthermore, it allows a model to be rendered with custom textures.
 
-This project was originally conceived so we could develop a [scene generator] in Gazebo, employing domain randomisation in an attempt to bridge the reality gap between real life images and synthetically generated frames.
+This project was originally conceived so we could develop a [scene generator] in Gazebo, employing domain randomisation in an attempt to bridge the **reality gap** between real life images and synthetically generated frames.
 
 ### Examples
 
@@ -64,6 +64,14 @@ We provide a simple script for this:
 cd ~/workspace/gazebo-utils &&
 source setup.sh
 ```
+
+### Reference
+
+A scientific article will soon be published and specified in this section for citation purposes.
+
+### Disclaimer
+
+This project is not directly affiliated with Gazebo.
 
 [Gazebo]: http://gazebosim.org/
 [Camera Utils plugin]: camera_utils

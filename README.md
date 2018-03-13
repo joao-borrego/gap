@@ -37,7 +37,7 @@ to generate the tools' custom messages.
 sudo apt install protobuf-compiler
 ```
 
-OpenCV 2 is required for a debug tool in [scene_example].
+Eigen 3 is required for [scene_example].
 
 For custom texture generation, we have developed a [pattern generation tool], which can randomly generate a high number of 4 different types of textures which produces materials in a format Gazebo can recognise.
 

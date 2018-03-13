@@ -50,8 +50,6 @@
 #define ARG_IMGS_DIR_DEFAULT    "imgs"
 /// Default dataset directory
 #define ARG_DATASET_DIR_DEFAULT "dataset"
-/// Default value of debug flag
-#define ARG_DEBUG_DEFAULT       false
 
 // Function headers
 
@@ -66,15 +64,13 @@ const std::string getUsage(const char* argv_0);
 /// \param start        Index of the first scene
 /// \param imgs_dir     Image output directory
 /// \param dataset_dir  Dataset annotations output directory
-/// \param debug        Debug flag
 void parseArgs(
     int argc,
     char** argv,
     unsigned int & scenes,
     unsigned int & start,
     std::string & imgs_dir,
-    std::string & dataset_dir,
-    bool & debug);
+    std::string & dataset_dir);
 
 /// \brief Creates the directory given its path
 /// \param path The path string

@@ -59,10 +59,9 @@ int main(int argc, char **argv)
     unsigned int start {0};
     std::string imgs_dir;
     std::string dataset_dir;
-    bool debug {false};
 
     // Parse command-line arguments
-    parseArgs(argc, argv, scenes, start, imgs_dir, dataset_dir, debug);
+    parseArgs(argc, argv, scenes, start, imgs_dir, dataset_dir);
     // Create output directories
     createDirectory(dataset_dir);
     createDirectory(imgs_dir);
@@ -197,11 +196,6 @@ int main(int argc, char **argv)
 
         // Save annotations to file
         storeAnnotations(dataset_dir, iteration);
-
-        // If debug, view image
-        if (debug) {
-            visualizeData(imgs_dir, iteration);
-        }
     }
 
     // Force save camera raw data buffer
@@ -527,45 +521,6 @@ void setPhysics(gazebo::transport::PublisherPtr pub, bool enable)
     msg.set_type(PHYSICS);
     msg.set_state(enable);
     pub->Publish(msg);
-}
-
-//////////////////////////////////////////////////
-void visualizeData(const std::string & image_dir, int iteration)
-{
-    std::string image_ext = ".png";
-    std::string image_name = std::to_string(iteration / 100) + "00/" + std::to_string(iteration);
-    std::string filename = image_dir + image_name + image_ext;
-
-    // Read image from file
-    cv::Mat image = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
-    // Check if image is valid
-    if (!image.data)
-    {
-       std::cerr <<  "Could not open '" << filename << "'" << std::endl;
-    }
-    else
-    {
-        cv::Scalar color;
-        cv::Scalar blue(255,0,0), red(0,255,0), green(0,0,255);
-        for (int i = 0; i < g_grid.objects.size(); i++)
-        {
-            Object obj = g_grid.objects[i];
-            if      (obj.type == SPHERE)    color = blue;
-            else if (obj.type == CYLINDER)  color = red;
-            else                            color = green;
-
-            cv::rectangle(image,
-                cv::Point(obj.bounding_box[0], obj.bounding_box[1]),
-                cv::Point(obj.bounding_box[2], obj.bounding_box[3]),
-                color,2,8,0);
-        }
-
-        // Create a window for display
-        cv::namedWindow("Display", cv::WINDOW_KEEPRATIO);
-        // Show image and wait for keystroke
-        cv::imshow("Display", image);
-        cv::waitKey(0);
-    }
 }
 
 //////////////////////////////////////////////////

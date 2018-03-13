@@ -31,8 +31,7 @@ const std::string getUsage(const char* argv_0)
         "options: -s <number of scenes to generate>\n"  +
         "         -n <index of the first scene>\n" +
         "         -i <image output directory>\n" +
-        "         -d <dataset output directory>\n" +
-        "         -D Debug mode\n";
+        "         -d <dataset output directory>\n";
 }
 
 //////////////////////////////////////////////////
@@ -42,14 +41,13 @@ void parseArgs(
     unsigned int & scenes,
     unsigned int & start,
     std::string & imgs_dir,
-    std::string & dataset_dir,
-    bool & debug)
+    std::string & dataset_dir)
 {
 
     int opt;
-    bool s, n, i, m, d, D;
+    bool s, n, i, m, d;
 
-    while ((opt = getopt(argc,argv,"s: n: i: d: D")) != EOF)
+    while ((opt = getopt(argc,argv,"s: n: i: d:")) != EOF)
     {
         switch (opt)
         {
@@ -61,8 +59,6 @@ void parseArgs(
                 i = true; imgs_dir = optarg;    break;
             case 'd':
                 d = true; dataset_dir = optarg; break;
-            case 'D':
-                D = true; debug = true;         break;
             case '?':
                 std::cerr << getUsage(argv[0]);
             default:
@@ -76,13 +72,11 @@ void parseArgs(
     if (!n) start   = ARG_START_DEFAULT;
     if (!i) imgs_dir    = ARG_IMGS_DIR_DEFAULT;
     if (!d) dataset_dir = ARG_DATASET_DIR_DEFAULT;
-    if (!D) debug       = ARG_DEBUG_DEFAULT;
 
     debugPrint("Parameters: " << std::endl <<
         "scenes: '"         << scenes <<
         "'; images dir: '"  << imgs_dir <<
-        "'; dataset dir: '" << dataset_dir <<
-        "'; debug: "        << debug << std::endl);
+        "'; dataset dir: '" << dataset_dir << std::endl);
 }
 
 //////////////////////////////////////////////////

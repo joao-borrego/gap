@@ -30,8 +30,13 @@ cd ~/workspace/gazebo-utils/ &&
 ./build/examples/scene_example/scene_example -s 200 -d ./train/SHAPES2018/dataset/ -i ./train/SHAPES2018/images/ 
 ```
 
-This should generate a dataset with 100 images, spread across two subdirectories 000 and 100.
+This should generate a dataset with 200 images, spread across two subdirectories 000 and 100.
 This is due to performance concerns.
 You can use `scene_example --help` to obtain an explanation of each command-line argument.
 
+### Debugging dataset output
+
+We provide a [debugging tool] written in Python 3, which relies on Tkinter to create the GUI, and shows the resulting dataset, one image at a time. 
+
 [plugin.material]: plugin.material
+[debugging tool]: https://github.com/jsbruglie/gazebo-utils/scripts/scene_checker.py

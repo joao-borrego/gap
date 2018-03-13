@@ -137,12 +137,24 @@ class ImageViewer(tk.Frame):
         self.canvas.delete("all")
 
         # Update scene image
-        image = tk.PhotoImage(file=img_file)
+        try:
+            image = tk.PhotoImage(file=img_file)
+        except:
+            print('Could not open ' + img_file + '. Exiting...')
+            self.parent.destroy()
+            sys.exit(2)
+
         self.canvas.image = image
         self.canvas.create_image(0, 0, image=image, anchor=tk.NW)
 
         # Open XML dataset file
-        tree = ET.parse(data_file)
+        try:
+            tree = ET.parse(data_file)
+        except:
+            print('Could not open ' + data_file + '. Exiting...')
+            self.parent.destroy()
+            sys.exit(2)
+
         annotation = tree.getroot()
 
         # Draw label with cur / total scene indicator

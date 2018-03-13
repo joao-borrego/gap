@@ -46,7 +46,7 @@ For custom texture generation, we have developed a [pattern generation tool], wh
 Clone the repository to your workspace directory and build from source.
 
 ```
-cd ~/workspace/gazebo-utils/ &&
+cd ~/workspace/gap/ &&
 mkdir build &&
 cd build &&
 cmake ../ &&
@@ -61,7 +61,7 @@ Make sure you properly initialise the required environment variables.
 We provide a simple script for this:
 
 ```
-cd ~/workspace/gazebo-utils &&
+cd ~/workspace/gap &&
 source setup.sh
 ```
 

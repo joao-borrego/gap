@@ -19,14 +19,14 @@ This step requires you to:
 Open up two terminals in the root directory of the repository.
 On terminal 1 run gazebo server:
 ```
-cd ~/workspace/gazebo-utils/ &&
+cd ~/workspace/gap/ &&
 source setup.sh &&
 gzserver worlds/spawner.world
 ```
 
 On terminal 2 run the example client:
 ```
-cd ~/workspace/gazebo-utils/ &&
+cd ~/workspace/gap/ &&
 ./build/examples/scene_example/scene_example -s 200 -d ./train/SHAPES2018/dataset/ -i ./train/SHAPES2018/images/ 
 ```
 
@@ -41,8 +41,8 @@ We provide a [debugging tool] written in Python 3, which relies on Tkinter to cr
 ### Example output
 
 <p align="center"> 
-    <img src=https://github.com/jsbruglie/gazebo-utils/blob/dev/.image/scene_example.png>
+    <img src=https://github.com/jsbruglie/gap/blob/dev/.image/scene_example.png>
 </p>
 
 [plugin.material]: plugin.material
-[debugging tool]: https://github.com/jsbruglie/gazebo-utils/blob/dev/scripts/scene_checker.py
+[debugging tool]: https://github.com/jsbruglie/gap/blob/dev/scripts/scene_checker.py

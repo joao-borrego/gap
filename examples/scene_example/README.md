@@ -38,5 +38,11 @@ You can use `scene_example --help` to obtain an explanation of each command-line
 
 We provide a [debugging tool] written in Python 3, which relies on Tkinter to create the GUI, and shows the resulting dataset, one image at a time. 
 
+### Example output
+
+<p align="center"> 
+    <img src=https://github.com/jsbruglie/gazebo-utils/blob/dev/.image/scene_example.png>
+</p>
+
 [plugin.material]: plugin.material
 [debugging tool]: https://github.com/jsbruglie/gazebo-utils/blob/dev/scripts/scene_checker.py

@@ -30,10 +30,6 @@
 
 // Gazebo
 #include <gazebo/gazebo_client.hh>
-// OpenCV 2
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include "opencv2/imgproc.hpp"
 // Eigen
 #include <Eigen/Dense>
 

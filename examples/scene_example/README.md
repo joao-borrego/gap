@@ -18,14 +18,14 @@ This step requires you to:
 
 Open up two terminals in the root directory of the repository.
 On terminal 1 run gazebo server:
-```
+``` bash
 cd ~/workspace/gap/ &&
 source setup.sh &&
 gzserver worlds/spawner.world
 ```
 
 On terminal 2 run the example client:
-```
+``` bash
 cd ~/workspace/gap/ &&
 ./build/examples/scene_example/scene_example -s 200 -d ./train/SHAPES2018/dataset/ -i ./train/SHAPES2018/images/ 
 ```
@@ -36,7 +36,12 @@ You can use `scene_example --help` to obtain an explanation of each command-line
 
 ### Debugging dataset output
 
-We provide a [debugging tool] written in Python 3, which relies on Tkinter to create the GUI, and shows the resulting dataset, one image at a time. 
+We provide a [debugging tool] written in Python 3, which relies on Tkinter and Pillow to create the GUI, and shows the resulting dataset, one image at a time.
+To install Tkinter and Pillow in Ubuntu systems run
+``` bash
+sudo apt install python3-tk &&
+sudo pip3 install Pillow
+```
 
 ### Example output
 

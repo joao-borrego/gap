@@ -60,14 +60,20 @@ int main(int argc, char **argv)
     std::string imgs_dir;
     std::string dataset_dir;
 
+    bool success {false};
+
     // Parse command-line arguments
     parseArgs(argc, argv, scenes, start, imgs_dir, dataset_dir);
     // Create output directories
-    createDirectory(dataset_dir);
-    createDirectory(imgs_dir);
-    for (int i = 0; i < scenes; i+= 100) {
+    success = createDirectory(dataset_dir);
+    success &= createDirectory(imgs_dir);
+    for (int i = start; i < scenes + start; i+= 100) {
         std::string imgs_subdir(imgs_dir + std::to_string(i / 100) + "00/");
-        createDirectory(imgs_subdir);
+        success &= createDirectory(imgs_subdir);
+    }
+    if (!success) {
+    	std::cerr << "Error creating directories! Exiting..." << std::endl;
+    	exit(EXIT_FAILURE);
     }
 
     // Setup communication
@@ -132,7 +138,7 @@ int main(int argc, char **argv)
     ignition::math::Pose3d light_pose;
 
     // Main loop
-    for (int iteration = 0; iteration < scenes; iteration++) {
+    for (int iteration = start; iteration < scenes + start; iteration++) {
 
         // Populate grid with random objects
         int num_objects = (getRandomInt(5, 10));
@@ -141,7 +147,7 @@ int main(int argc, char **argv)
         createNameSet();
 
         debugPrintTrace("Scene (" << iteration << "/"
-            << scenes - 1 << "): " << num_objects << " objects");
+            << scenes + start - 1 << "): " << num_objects << " objects");
 
         // Create message with desired 3D points to project in camera plane
         camera_utils::msgs::CameraUtilsRequest msg_points;

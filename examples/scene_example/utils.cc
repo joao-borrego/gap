@@ -83,11 +83,19 @@ void parseArgs(
 bool createDirectory(std::string & path)
 {
     boost::filesystem::path dir(path);
-    if (boost::filesystem::create_directory(dir)) {
-        debugPrintTrace("Created directory " << path);
-        return true;
+    try
+    {
+        if (boost::filesystem::create_directories(dir)) {
+            debugPrintTrace("Created directory " << path);
+        }
     }
-    return false;
+    catch (boost::filesystem::filesystem_error &e)
+    {
+        std::cerr << "Could not create directory " << path << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 //////////////////////////////////////////////////

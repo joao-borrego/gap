@@ -18,6 +18,7 @@
 
 # GUI
 import tkinter as tk
+from PIL import Image, ImageTk
 # Command line args
 import sys, getopt
 # XML parsing
@@ -26,12 +27,12 @@ import xml.etree.ElementTree as ET
 # Title
 APP_TITLE = "Scene dataset verification tool"
 # Usage
-USAGE = 'options: -i <image output directory>\n' +                      \
-        '         -d <dataset output directory>\n' +                    \
-        '         -s <number of scenes> [optional, default=1]\n' +      \
-        '         -n <index of the first scene> [optional, default=0]\n'
-# Image file extension
-EXT_IMG = '.png'
+USAGE = 'options: -i <image output directory>\n' +                         \
+        '         -d <dataset output directory>\n' +                       \
+        '         -s <number of scenes> [optional, default=1]\n' +         \
+        '         -n <index of the first scene> [optional, default=0]\n' + \
+        '         -e <image file extension> [optional, default=.png]'
+
 # Dataset file extension
 EXT_DATA = '.xml'
 
@@ -45,12 +46,13 @@ def parseArgs(argv):
     img_dir = ''
     first = 0
     scenes = 1
+    img_ext = '.png'
 
     usage = 'usage:   ' + argv[0] + ' [options]\n' + USAGE
 
     try:
         opts, args = getopt.getopt(argv[1:],
-            "hi:d:s:n:",["img_dir=","data_dir=","scenes=","first="])
+            "hi:d:s:n:e:",["img_dir=","data_dir=","scenes=","first=","img_ext"])
     except getopt.GetoptError:
         print (usage)
         sys.exit(2)
@@ -67,6 +69,8 @@ def parseArgs(argv):
             scenes = int(arg)
         elif opt in ("-n", "--first"):
             first = int(arg)
+        elif opt in ("-e", "--img_ext"):
+            img_ext = arg
     
     if not data_dir or not img_dir:
         print (usage)
@@ -76,15 +80,16 @@ def parseArgs(argv):
     print ('Dataset directory    ', data_dir)
     print ('Number of scenes     ', scenes)
     print ('Index of first scene ', first)
+    print ('Image file extension ', img_ext)
 
-    return [data_dir, img_dir, scenes, first]
+    return [data_dir, img_dir, scenes, first, img_ext]
 
 class ImageViewer(tk.Frame):
     '''
     Displays scene image with bounding box and additional info overlays.
     '''
 
-    def __init__(self, parent, data_dir, img_dir, scenes, first):
+    def __init__(self, parent, data_dir, img_dir, scenes, first, img_ext):
         '''
         Initializes attributes
         '''
@@ -95,6 +100,7 @@ class ImageViewer(tk.Frame):
         self.scenes = scenes
         self.first = first
         self.cur = first
+        self.img_ext = img_ext
 
         self.setupWidgets()
 
@@ -131,7 +137,7 @@ class ImageViewer(tk.Frame):
 
         # Filenames
         img_file = self.img_dir + '/' + str(int(self.cur / 100)) + \
-            '00/' + str(self.cur) + EXT_IMG
+            '00/' + str(self.cur) + self.img_ext
         data_file = self.data_dir + '/' + str(self.cur) + EXT_DATA
         print(img_file, data_file)
 
@@ -140,14 +146,15 @@ class ImageViewer(tk.Frame):
 
         # Update scene image
         try:
-            image = tk.PhotoImage(file=img_file)
+            image = Image.open(img_file) 
+            photo = ImageTk.PhotoImage(image)
         except:
-            print('Could not open ' + img_file + '. Exiting...')
+            print('Could not open ' + img_file + '.Exiting...')
             self.parent.destroy()
             sys.exit(2)
 
-        self.canvas.image = image
-        self.canvas.create_image(0, 0, image=image, anchor=tk.NW)
+        self.canvas.image = photo
+        self.canvas.create_image(0, 0, image=photo, anchor=tk.NW)
 
         # Open XML dataset file
         try:
@@ -163,7 +170,7 @@ class ImageViewer(tk.Frame):
         self.canvas.create_rectangle(40, 40, 300, 200,
             fill="gray", stipple="gray50", width=0)
         # Draw label with cur / total scene indicator
-        label = 'Scene ' + str(self.cur) + '/' + str(self.scenes - 1)
+        label = 'Scene ' + str(self.cur) + '/' + str(self.first + self.scenes - 1)
         self.canvas.create_text(45, 45, text=label, fill="white",
             font=('arial', '18'), anchor=tk.NW)
         # Draw help label
@@ -198,7 +205,7 @@ class ImageViewer(tk.Frame):
         if (self.cur == 0): return
 
         self.cur = self.cur - 1
-        if (self.cur >= self.scenes): sys.exit(0) 
+        if (self.cur >= self.first + self.scenes): sys.exit(0) 
         self.onUpdate()
 
     def onRight(self, event):
@@ -208,7 +215,7 @@ class ImageViewer(tk.Frame):
         if (self.cur == self.first + self.scenes - 1): return
 
         self.cur = self.cur + 1
-        if (self.cur >= self.scenes): sys.exit(0) 
+        if (self.cur >= self.first + self.scenes): sys.exit(0) 
         self.onUpdate()
 
     def onQuit(self, event):
@@ -225,12 +232,12 @@ def main(argv):
     '''
     
     # Obtain command-line arguments
-    [data_dir, img_dir, scenes, first] = parseArgs(argv)
+    [data_dir, img_dir, scenes, first, img_ext] = parseArgs(argv)
 
     # Open root window
     root = tk.Tk()
     # Create app object
-    app = ImageViewer(root, data_dir, img_dir, scenes, first)
+    app = ImageViewer(root, data_dir, img_dir, scenes, first, img_ext)
     # Main loop
     root.mainloop()
 

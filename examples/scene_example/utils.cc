@@ -87,6 +87,8 @@ bool createDirectory(std::string & path)
     {
         if (boost::filesystem::create_directories(dir)) {
             debugPrintTrace("Created directory " << path);
+        } else {
+            debugPrintTrace("Did not create directory (probably exists) " << path);    
         }
     }
     catch (boost::filesystem::filesystem_error &e)

@@ -63,7 +63,7 @@ class Object
     // Private attributes
 
     /// Sample 3D points on object surface
-    private: const double ANGLE_STEP_C = 45.0;
+    private: const double ANGLE_STEP_C = 30.0;
     /// Sample 3D points on object surface
     private: const double TOTAL_STEPS_C = 360.0 / ANGLE_STEP_C;
     /// Sample 3D points on object surface

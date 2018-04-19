@@ -28,7 +28,7 @@ Take a look at the automatic [documentation] for file and class description.
 
 ### Dependencies
 
-The code has been tested in Gazebo 9.0.0 built from source and running on Ubuntu 16.04.
+The code has been tested in Gazebo 9.0.0 from the official stable repository as well as built from source and running on Ubuntu 16.04.
 
 Gazebo internal message passing relies on Protobuf, which is why the compiler needs to be installed in order
 to generate the tools' custom messages.
@@ -67,7 +67,7 @@ source setup.sh
 
 ### Reference
 
-A scientific article will soon be published and specified in this section for citation purposes.
+A scientific [paper] will soon be published and specified in this section for citation purposes.
 
 ### Disclaimer
 
@@ -82,3 +82,4 @@ This project is not directly affiliated with Gazebo.
 [scene_example]: examples/scene_example
 [documentation]: http://web.tecnico.ulisboa.pt/joao.borrego/gap/
 [pattern generation tool]: https://github.com/ruipimentelfigueiredo/pattern-generation-lib
+[paper]: http://vislab.isr.ist.utl.pt/wp-content/uploads/2018/04/jborrego-icarsc2018.pdf

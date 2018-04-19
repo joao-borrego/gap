@@ -97,6 +97,11 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
     }
     this->dataPtr->visual = _visual;
 
+    // Visual settings
+    this->dataPtr->visual->SetShaderType("vertex");
+    this->dataPtr->visual->SetCastShadows(true);
+    this->dataPtr->visual->SetLighting(true);
+
     // Connect to the world update signal
     this->dataPtr->updateConnection = event::Events::ConnectPreRender(
         std::bind(&VisualUtils::Update, this));
@@ -169,7 +174,7 @@ void VisualUtils::Update()
     }
     // Update material
     if (this->dataPtr->update_material) {
-        this->dataPtr->visual->SetMaterial(this->dataPtr->new_material);
+        this->dataPtr->visual->SetMaterial(this->dataPtr->new_material,true,false);
         this->dataPtr->update_material = false;
         updated = true;
     }

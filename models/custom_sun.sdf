@@ -7,7 +7,7 @@
     <diffuse>0.8 0.8 0.8 1</diffuse>
     <specular>0.2 0.2 0.2 1</specular>
     <attenuation>
-      <range>1000</range>
+      <range>20</range>
       <constant>0.9</constant>
       <linear>0.01</linear>
       <!--

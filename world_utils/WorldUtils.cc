@@ -47,6 +47,8 @@ void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
 
     // Setup publisher for the gazebo request topic
     this->request_pub = this->node->Advertise<msgs::Request>("~/request");
+    // Setup publisher for the modify light request topic
+    this->light_pub = this->node->Advertise<msgs::Light>("~/light/modify");
 
     // Subcribe to the request topic
     this->sub = this->node->Subscribe(REQUEST_TOPIC, &WorldUtils::onRequest, this);
@@ -78,10 +80,25 @@ void WorldUtils::onUpdate()
         MoveObject mv_obj = this->move_queue.front();
         if (mv_obj.is_light) {
             physics::LightPtr light = this->world->LightByName(mv_obj.name);
-            if (light) light->SetWorldPose(mv_obj.pose);
+            if (light) {
+                
+                msgs::Light msg;
+                msg.set_name(mv_obj.name);
+                gazebo::msgs::Pose *pose_msg = new gazebo::msgs::Pose();
+                gazebo::msgs::Set(pose_msg, mv_obj.pose);
+                msg.set_allocated_pose(pose_msg);
+                this->light_pub->Publish(msg);
+
+                gzdbg << "Moving light " << light->GetName()
+                    << " to " << mv_obj.pose << std::endl;
+            }
         } else {
             physics::ModelPtr model = this->world->ModelByName(mv_obj.name);
-            if (model) model->SetWorldPose(mv_obj.pose);
+            if (model) {
+                model->SetWorldPose(mv_obj.pose);
+                gzdbg << "Moving model " << model->GetName()
+                    << " to " << mv_obj.pose << std::endl;
+            }
         }
         this->move_queue.pop();
         moved = true;
@@ -276,6 +293,9 @@ void WorldUtils::onRequest(WorldUtilsRequestPtr &_msg){
         bool state = (_msg->has_state())?
             _msg->state() : !this->world->PhysicsEnabled();
         this->world->SetPhysicsEnabled(state);
+
+        gzdbg << "[WorldUtils] Physics state "
+            << this->world->PhysicsEnabled() << std::endl;
 
     } else if (type == PAUSE) {
 

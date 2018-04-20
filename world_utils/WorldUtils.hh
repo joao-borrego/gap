@@ -147,6 +147,8 @@ namespace gazebo {
         private: transport::PublisherPtr request_pub;
         /// A subscriber to the gazebo response topic
         private: transport::SubscriberPtr response_sub;
+        /// A publisher to light modify topic
+        private: transport::PublisherPtr light_pub;
 
         // Regex patterns
 

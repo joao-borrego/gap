@@ -184,7 +184,7 @@ int main(int argc, char **argv)
         }
 
         // TODO - Synchronise
-        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(60));
 
         // Capture the scene and save it to a file
         captureScene(pub_camera, iteration);
@@ -315,12 +315,12 @@ ignition::math::Pose3d getRandomCameraPose()
         ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
 
     ignition::math::Quaternion<double> original_orientation(
-        getRandomDouble(0, M_PI / 5.0),
-        getRandomDouble(0, M_PI / 5.0),
-        getRandomDouble(0, M_PI / 5.0));
+        getRandomDouble(0, M_PI / 4.0),
+        getRandomDouble(0, M_PI / 4.0),
+        getRandomDouble(0, M_PI / 4.0));
 
     ignition::math::Pose3d new_pose;
-    ignition::math::Vector3d position(2, 2, 5);
+    ignition::math::Vector3d position(2, 2, 5.5);
 
     new_pose.Set(position,
         (correct_orientation * original_orientation).Inverse());
@@ -338,7 +338,7 @@ ignition::math::Pose3d getRandomLightPose()
         getRandomDouble(-M_PI / 5.0, M_PI / 5.0));
 
     ignition::math::Pose3d new_pose;
-    ignition::math::Vector3d position(2, 2, 6);
+    ignition::math::Vector3d position(2, 2, 5.4);
 
     new_pose.Set(position, (light_orientation).Inverse());
     new_pose = new_pose.RotatePositionAboutOrigin(light_orientation);

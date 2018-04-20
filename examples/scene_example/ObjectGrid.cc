@@ -202,21 +202,21 @@ void ObjectGrid::addRandomObject(int x, int y)
     if (type == SPHERE || type == CYLINDER)
     {
         // Radius
-        radius = getRandomDouble(0.1 * min, 0.45 * min);
+        radius = getRandomDouble(0.3 * min, 0.45 * min);
         parameters.push_back(radius);
 
         if (type == CYLINDER) {
             // Length
-            length = getRandomDouble(0.1 * min, 0.45 * min);
+            length = getRandomDouble(0.3 * min, 0.9 * min);
             parameters.push_back(length);
         }
     }
     else if (type == BOX)
     {
         // Box size in x,y,z
-        box_x = getRandomDouble(0.1 * cell_x, 0.8 * cell_x);
-        box_y = getRandomDouble(0.1 * cell_y, 0.8 * cell_y);
-        box_z = getRandomDouble(0.5 * cell_z, 0.8 * cell_z);
+        box_x = getRandomDouble(0.3 * cell_x, 0.8 * cell_x);
+        box_y = getRandomDouble(0.3 * cell_y, 0.8 * cell_y);
+        box_z = getRandomDouble(0.3 * cell_z, 0.8 * cell_z);
         parameters.push_back(box_x);
         parameters.push_back(box_y);
         parameters.push_back(box_z);

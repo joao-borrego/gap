@@ -35,6 +35,19 @@ USAGE = 'options: -i <image output directory>\n' +                         \
 
 # Dataset file extension
 EXT_DATA = '.xml'
+# Export directory
+EXPORT_DIR = 'export/'
+# Show help command
+SHOW_HELP = True
+
+# Sphere color
+SPHERE_COLOR = 'red'
+# Box color
+BOX_COLOR = 'blue'
+# Cylinder color
+CYLINDER_COLOR = '#36d129'
+# Text color
+TEXT_COLOR = 'white'
 
 def parseArgs(argv):
     '''
@@ -125,11 +138,11 @@ class ImageViewer(tk.Frame):
         self.parent.bind("<Left>", self.onLeft)
         self.parent.bind("<Right>", self.onRight)
         self.parent.bind("<Return>", self.onQuit)
+        self.parent.bind("<space>", self.onSave)
 
         # Update image
         self.onUpdate()
 
-    
     def onUpdate(self):
         '''
         Shows image and object bounding box overlays.
@@ -139,7 +152,7 @@ class ImageViewer(tk.Frame):
         img_file = self.img_dir + '/' + str(int(self.cur / 100)) + \
             '00/' + str(self.cur) + self.img_ext
         data_file = self.data_dir + '/' + str(self.cur) + EXT_DATA
-        print(img_file, data_file)
+        # print(img_file, data_file)
 
         # Clean canvas
         self.canvas.delete("all")
@@ -166,37 +179,48 @@ class ImageViewer(tk.Frame):
 
         annotation = tree.getroot()
 
-        # Commands
-        self.canvas.create_rectangle(40, 40, 300, 200,
-            fill="gray", stipple="gray50", width=0)
-        # Draw label with cur / total scene indicator
-        label = 'Scene ' + str(self.cur) + '/' + str(self.first + self.scenes - 1)
-        self.canvas.create_text(45, 45, text=label, fill="white",
-            font=('arial', '18'), anchor=tk.NW)
-        # Draw help label
-        label = 'Commands\n' + \
-                'Left\tPrevious\n' + \
-                'Right\tNext\n' + \
-                'Return\tExit'
-        self.canvas.create_text(45, 80, text=label, fill="white",
-            font=('arial', '18'), anchor=tk.NW)
+        if SHOW_HELP:
+            # Commands
+            self.canvas.create_rectangle(40, 40, 300, 230,
+                fill="gray", stipple="gray50", width=0)
+            # Draw label with cur / total scene indicator
+            label = 'Scene ' + str(self.cur) + '/' + str(self.first + self.scenes - 1)
+            self.canvas.create_text(45, 45, text=label, fill="white",
+                font=('arial', '18'), anchor=tk.NW)
+            # Draw help label
+            label = 'Commands\n'            + \
+                    'Left\tPrevious\n'      + \
+                    'Right\tNext\n'         + \
+                    'Spacebar\tExport\n'    + \
+                    'Return\tExit'
+            self.canvas.create_text(45, 80, text=label, fill="white",
+                font=('arial', '18'), anchor=tk.NW)
 
         # Draw bounding boxes
         for obj in annotation.findall('object'):
             name = obj.find('name').text
-            color = "red"
-            if   (name == "sphere"):   color = "blue"
-            elif (name == "cylinder"): color = "white"
+            color = BOX_COLOR
+            if   (name == "sphere"):   color = SPHERE_COLOR
+            elif (name == "cylinder"): color = CYLINDER_COLOR
             
             for bnd_box in obj.findall('bndbox'):
                 x_min = int(bnd_box.find('xmin').text)
                 y_min = int(bnd_box.find('ymin').text)
                 x_max = int(bnd_box.find('xmax').text)
                 y_max = int(bnd_box.find('ymax').text)
-                self.canvas.create_rectangle(x_min, y_min, x_max, y_max,
+                rect = self.canvas.create_rectangle(x_min, y_min, x_max, y_max,
                     outline=color, width=2)
-                self.canvas.create_text(x_min, y_min-25, text=name, fill=color,
-                    font=('arial', '16'), anchor=tk.NW)
+                text = self.canvas.create_text(x_min, y_min-25, text=name,
+                    fill=TEXT_COLOR, font=('arial', '16'), anchor=tk.NW)
+                background = self.canvas.create_rectangle(self.canvas.bbox(text),
+                    outline=color, fill=color)
+                self.canvas.tag_lower(background, text)
+
+    def onSave(self, event):
+        
+        export_name = "export/" + str(self.cur) + ".ps"
+        self.canvas.postscript(file=export_name)
+        print('Exported ' + export_name)
 
     def onLeft(self, event):
         '''

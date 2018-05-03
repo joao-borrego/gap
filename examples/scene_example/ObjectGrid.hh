@@ -58,7 +58,7 @@ class Object
     /// Object surface 3D points
     public: std::vector<Eigen::Vector4f> points;
     /// Object 2D bounding box
-    public: std::vector<double> bounding_box;
+    public: std::vector<int> bounding_box;
 
     // Private attributes
 

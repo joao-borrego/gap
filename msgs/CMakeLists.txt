@@ -44,5 +44,5 @@ target_link_libraries(gap_msgs ${PROTOBUF_LIBRARY})
 # Install library
 install(TARGETS gap_msgs
   DESTINATION "${msgs_lib_dest}")
-install(FILES
-  ${PROTO_HDRS} DESTINATION "${msgs_include_dest}")
+install(FILES ${PROTO_HDRS}
+  DESTINATION "${msgs_include_dest}")

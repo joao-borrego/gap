@@ -26,7 +26,7 @@
 
 #include "visual_example.hh"
 
-using namespace visual_utils::msgs;
+using namespace gap::msgs;
 
 int main(int argc, char **argv)
 {

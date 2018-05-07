@@ -89,21 +89,21 @@ int main(int argc, char **argv)
 
     // Publish to the CameraUtils topic
     gazebo::transport::PublisherPtr pub_camera =
-        node->Advertise<camera_utils::msgs::CameraUtilsRequest>(CAMERA_UTILS_TOPIC);
+        node->Advertise<gap::msgs::CameraUtilsRequest>(CAMERA_UTILS_TOPIC);
     // Subscribe to the CameraUtils reply topic and link callback function
     gazebo::transport::SubscriberPtr sub_camera =
         node->Subscribe(CAMERA_UTILS_RESPONSE_TOPIC, onCameraUtilsResponse);
 
     // Publish to the VisualUtils topic
     gazebo::transport::PublisherPtr pub_visual =
-        node->Advertise<visual_utils::msgs::VisualUtilsRequest>(VISUAL_UTILS_TOPIC);
+        node->Advertise<gap::msgs::VisualUtilsRequest>(VISUAL_UTILS_TOPIC);
     // Subscribe to the VisualUtils reply topic and link callback function
     gazebo::transport::SubscriberPtr sub_visual =
         node->Subscribe(VISUAL_UTILS_RESPONSE_TOPIC, onVisualUtilsResponse);
 
     // Publish to the WorldUtils request topic
     gazebo::transport::PublisherPtr pub_world =
-        node->Advertise<world_utils::msgs::WorldUtilsRequest>(WORLD_UTILS_TOPIC);
+        node->Advertise<gap::msgs::WorldUtilsRequest>(WORLD_UTILS_TOPIC);
     // Subscribe to the WorldUtils reply topic and link callback function
     gazebo::transport::SubscriberPtr sub_world =
         node->Subscribe(WORLD_UTILS_RESPONSE_TOPIC, onWorldUtilsResponse);
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
     debugPrintTrace("Disable physics engine");
 
     // Spawn required objects
-    world_utils::msgs::WorldUtilsRequest msg_spawn;
+    gap::msgs::WorldUtilsRequest msg_spawn;
     msg_spawn.set_type(SPAWN);
     addModelFromFile(msg_spawn, "models/custom_sun.sdf");
     addModelFromFile(msg_spawn, "models/custom_ground.sdf");
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
             << scenes + start - 1 << "): " << num_objects << " objects");
 
         // Create message with desired 3D points to project in camera plane
-        camera_utils::msgs::CameraUtilsRequest msg_points;
+        gap::msgs::CameraUtilsRequest msg_points;
         msg_points.set_type(PROJECTION_REQUEST);
         addProjections(msg_points);
 
@@ -159,14 +159,14 @@ int main(int argc, char **argv)
         light_pose = getRandomLightPose();
 
         // Request move camera
-        world_utils::msgs::WorldUtilsRequest msg_move;
+        gap::msgs::WorldUtilsRequest msg_move;
         msg_move.set_type(WORLD_MOVE);
         //addMoveObject(msg_move, "custom_camera", false, g_camera_pose);
         addMoveObject(msg_move, "custom_sun", true, light_pose);
         pub_world->Publish(msg_move);
 
         // Update scene
-        visual_utils::msgs::VisualUtilsRequest msg_visual;
+        gap::msgs::VisualUtilsRequest msg_visual;
         msg_visual.set_type(UPDATE);
         updateObjects(msg_visual);
         pub_visual->Publish(msg_visual);
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 
 //////////////////////////////////////////////////
 void addModelFromFile(
-    world_utils::msgs::WorldUtilsRequest & msg,
+    gap::msgs::WorldUtilsRequest & msg,
     const std::string & file)
 {
     // Read file to SDF string
@@ -227,13 +227,13 @@ void addModelFromFile(
     };
 
     // Add object to request message
-    world_utils::msgs::Object *object = msg.add_object();
+    gap::msgs::Object *object = msg.add_object();
     object->set_model_type(CUSTOM);
     object->set_sdf(model_sdf);
 }
 
 //////////////////////////////////////////////////
-void addDynamicModels(world_utils::msgs::WorldUtilsRequest & msg)
+void addDynamicModels(gap::msgs::WorldUtilsRequest & msg)
 {
     const std::vector<std::string> types = {"sphere", "cylinder","box"};
 
@@ -258,7 +258,7 @@ void addDynamicModels(world_utils::msgs::WorldUtilsRequest & msg)
             sdf = std::regex_replace(sdf, g_regex_model, model);
 
             // Add object to request message
-            world_utils::msgs::Object *object = msg.add_object();
+            gap::msgs::Object *object = msg.add_object();
             object->set_model_type(CUSTOM);
             object->set_sdf(sdf);
         }
@@ -266,7 +266,7 @@ void addDynamicModels(world_utils::msgs::WorldUtilsRequest & msg)
 }
 
 //////////////////////////////////////////////////
-void updateObjects(visual_utils::msgs::VisualUtilsRequest & msg)
+void updateObjects(gap::msgs::VisualUtilsRequest & msg)
 {
     int total = g_grid.objects.size();
 
@@ -292,12 +292,12 @@ void updateObjects(visual_utils::msgs::VisualUtilsRequest & msg)
 
 //////////////////////////////////////////////////
 void addMoveObject(
-    world_utils::msgs::WorldUtilsRequest & msg,
+    gap::msgs::WorldUtilsRequest & msg,
     const std::string & name,
     const bool is_light,
     const ignition::math::Pose3d & pose){
 
-    world_utils::msgs::Object *object = msg.add_object();
+    gap::msgs::Object *object = msg.add_object();
     object->set_name(name);
     if (is_light) {
         object->set_model_type(CUSTOM_LIGHT);
@@ -364,12 +364,12 @@ void createNameSet()
 }
 
 //////////////////////////////////////////////////
-void addProjections(camera_utils::msgs::CameraUtilsRequest & msg)
+void addProjections(gap::msgs::CameraUtilsRequest & msg)
 {
     int num_obj = g_grid.objects.size();
     for (int i = 0; i < num_obj; i++)
     {
-        camera_utils::msgs::PointProjection *proj = msg.add_projections();
+        gap::msgs::PointProjection *proj = msg.add_projections();
 
         int num_points = g_grid.objects[i].points.size();
         for (int j = 0; j < num_points; j++)
@@ -386,7 +386,7 @@ void addProjections(camera_utils::msgs::CameraUtilsRequest & msg)
 //////////////////////////////////////////////////
 void moveCamera(gazebo::transport::PublisherPtr pub)
 {
-    camera_utils::msgs::CameraUtilsRequest msg;
+    gap::msgs::CameraUtilsRequest msg;
     msg.set_type(MOVE_REQUEST);
 
     gazebo::msgs::Pose *pose_msg = new gazebo::msgs::Pose();
@@ -399,7 +399,7 @@ void moveCamera(gazebo::transport::PublisherPtr pub)
 //////////////////////////////////////////////////
 void captureScene(gazebo::transport::PublisherPtr pub, int iteration)
 {
-    camera_utils::msgs::CameraUtilsRequest msg;
+    gap::msgs::CameraUtilsRequest msg;
     msg.set_type(CAPTURE_REQUEST);
     msg.set_file_name(std::to_string(iteration / 100) + "00/" + std::to_string(iteration));
     pub->Publish(msg, false);
@@ -523,7 +523,7 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
 //////////////////////////////////////////////////
 void setPhysics(gazebo::transport::PublisherPtr pub, bool enable)
 {
-    world_utils::msgs::WorldUtilsRequest msg;
+    gap::msgs::WorldUtilsRequest msg;
     msg.set_type(PHYSICS);
     msg.set_state(enable);
     pub->Publish(msg);

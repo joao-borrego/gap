@@ -55,46 +55,46 @@
 namespace WorldUtils {
 
 /// Topic monitored for incoming commands
-#define REQUEST_TOPIC "~/gazebo-utils/world_utils"
+#define REQUEST_TOPIC "~/gap/world_utils"
 /// Topic for publishing replies
-#define RESPONSE_TOPIC "~/gazebo-utils/world_utils/response"
+#define RESPONSE_TOPIC "~/gap/world_utils/response"
 
 // Ease of use macros
 
 // Request
 
 /// Spawn entity
-#define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
+#define SPAWN           gap::msgs::WorldUtilsRequest::SPAWN
 /// Move entity
-#define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
+#define MOVE            gap::msgs::WorldUtilsRequest::MOVE
 /// Remove entity from the world
-#define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
+#define REMOVE          gap::msgs::WorldUtilsRequest::REMOVE
 /// Start or stop physcis simulation
-#define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
+#define PHYSICS         gap::msgs::WorldUtilsRequest::PHYSICS
 /// Pause or resume simulation
-#define PAUSE           world_utils::msgs::WorldUtilsRequest::PAUSE
+#define PAUSE           gap::msgs::WorldUtilsRequest::PAUSE
 /// Get entity or world information
-#define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
+#define STATUS          gap::msgs::WorldUtilsRequest::STATUS
 
 /// Spawn sphere object
-#define SPHERE          world_utils::msgs::Object::SPHERE
+#define SPHERE          gap::msgs::Object::SPHERE
 /// Spawn cylinder object
-#define CYLINDER        world_utils::msgs::Object::CYLINDER
+#define CYLINDER        gap::msgs::Object::CYLINDER
 /// Spawn box object
-#define BOX             world_utils::msgs::Object::BOX
+#define BOX             gap::msgs::Object::BOX
 /// Spawn custom object
-#define CUSTOM          world_utils::msgs::Object::CUSTOM
+#define CUSTOM          gap::msgs::Object::CUSTOM
 /// Spawn custom light object
-#define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
+#define CUSTOM_LIGHT    gap::msgs::Object::CUSTOM_LIGHT
 /// Spawn a model included in gazebo model path
-#define MODEL           world_utils::msgs::Object::MODEL
+#define MODEL           gap::msgs::Object::MODEL
 
 // Response
 
 /// \brief Provide world state information
-#define INFO            world_utils::msgs::WorldUtilsResponse::INFO
+#define INFO            gap::msgs::WorldUtilsResponse::INFO
 /// \brief TODO
-#define SUCCESS         world_utils::msgs::WorldUtilsResponse::SUCCESS
+#define SUCCESS         gap::msgs::WorldUtilsResponse::SUCCESS
 
 // Regex patterns
 
@@ -108,10 +108,10 @@ namespace WorldUtils {
 namespace gazebo {
 
     /// Shared pointer declaration for request message type
-    typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsRequest>
+    typedef const boost::shared_ptr<const gap::msgs::WorldUtilsRequest>
         WorldUtilsRequestPtr;
     /// Shared pointer declaration for response message type
-    typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
+    typedef const boost::shared_ptr<const gap::msgs::WorldUtilsResponse>
         WorldUtilsResponsePtr;
 
     /// \brief A custom gazebo plugin that provides an interface to

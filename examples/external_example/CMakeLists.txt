@@ -26,11 +26,11 @@ include_directories(${GAZEBO_INCLUDE_DIRS} ${SDF_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 # Include and link GAP libraries
-include_directories(${GAP_INCLUDE_DIRS}/msgs/CameraUtils)
-link_directories(${GAP_INCLUDE_DIRS}/msgs/CameraUtils)
+include_directories(${GAP_INCLUDE_DIRS}/msgs)
+link_directories(${GAP_INCLUDE_DIRS}/msgs)
 
 # External example client
 add_executable (external_example external_example.cc)
 target_link_libraries(external_example
-    camera_utils_msgs
+    gap_msgs
     ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})

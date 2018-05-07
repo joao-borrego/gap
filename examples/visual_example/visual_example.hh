@@ -40,7 +40,7 @@
 #include "visual_utils_request.pb.h"
 
 /// Topic monitored by the server for incoming commands
-#define VISUAL_UTILS_TOPIC "~/gazebo-utils/visual_utils"
+#define VISUAL_UTILS_TOPIC "~/gap/visual_utils"
 
 /// Request update
-#define UPDATE  visual_utils::msgs::VisualUtilsRequest::UPDATE
+#define UPDATE  gap::msgs::VisualUtilsRequest::UPDATE

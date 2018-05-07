@@ -54,7 +54,7 @@ void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
     this->sub = this->node->Subscribe(REQUEST_TOPIC, &WorldUtils::onRequest, this);
     // Setup publisher for the response topic
     this->pub = this->node->
-        Advertise<world_utils::msgs::WorldUtilsResponse>(RESPONSE_TOPIC);
+        Advertise<gap::msgs::WorldUtilsResponse>(RESPONSE_TOPIC);
 
     // Setup regular expression used for texture replacement
     this->script_reg = std::regex(REGEX_XML_SCRIPT);
@@ -69,7 +69,7 @@ void WorldUtils::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf){
 /////////////////////////////////////////////////
 void WorldUtils::onUpdate()
 {
-    world_utils::msgs::WorldUtilsResponse msg;
+    gap::msgs::WorldUtilsResponse msg;
     bool moved = false;
 
     std::lock_guard<std::mutex> lock(this->mutex);
@@ -307,7 +307,7 @@ void WorldUtils::onRequest(WorldUtilsRequestPtr &_msg){
     } else if (type == STATUS) {
 
         // Return total count of models and lights in the world
-        world_utils::msgs::WorldUtilsResponse msg;
+        gap::msgs::WorldUtilsResponse msg;
         int model_count = this->world->ModelCount();
         int light_count = this->world->LightCount();
         msg.set_type(INFO);

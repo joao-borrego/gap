@@ -113,7 +113,7 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
         &VisualUtils::onRequest, this);
     // Setup publisher for the response topic
     this->dataPtr->pub = this->dataPtr->node->
-        Advertise<visual_utils::msgs::VisualUtilsResponse>(RESPONSE_TOPIC);
+        Advertise<gap::msgs::VisualUtilsResponse>(RESPONSE_TOPIC);
 
     // Plugin parameters
 
@@ -153,7 +153,7 @@ void VisualUtils::Update()
 {
     std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
 
-    visual_utils::msgs::VisualUtilsResponse msg;
+    gap::msgs::VisualUtilsResponse msg;
     bool updated = false;
 
     // Update scale

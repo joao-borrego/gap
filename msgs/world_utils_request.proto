@@ -1,6 +1,6 @@
-package world_utils.msgs;
+package gap.msgs;
 
-/// \ingroup world_utils_msgs
+/// \ingroup gap_msgs
 /// \interface WorldUtilsRequest
 /// \brief A request for World Utils plugin
 

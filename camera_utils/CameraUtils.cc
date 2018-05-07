@@ -104,7 +104,7 @@ void CameraUtils::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf)
         &CameraUtils::onRequest, this);
     // Setup publisher for the reply topic 
     this->dataPtr->pub = this->dataPtr->node->
-        Advertise<camera_utils::msgs::CameraUtilsResponse>(RESPONSE_TOPIC);
+        Advertise<gap::msgs::CameraUtilsResponse>(RESPONSE_TOPIC);
 
     // Create output directory 
     boost::filesystem::path dir(output_dir);
@@ -144,7 +144,7 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
     }
     else if (_msg->type() == PROJECTION_REQUEST)
     {
-        camera_utils::msgs::CameraUtilsResponse msg;
+        gap::msgs::CameraUtilsResponse msg;
         msg.set_type(PROJECTION_RESPONSE);
 
         ignition::math::Pose3d pose(this->camera->WorldPose());
@@ -155,7 +155,7 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
         // For each PointProjection message 
         for (int i = 0; i < _msg->projections_size(); i++) {
             
-            camera_utils::msgs::PointProjection* proj = msg.add_projections();
+            gap::msgs::PointProjection* proj = msg.add_projections();
             if (_msg->projections(i).has_name())
                 proj->set_name(_msg->projections(i).name());
             
@@ -173,7 +173,7 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
     }
     else if (_msg->type() == MOVE_REQUEST)
     {
-    	camera_utils::msgs::CameraUtilsResponse msg;
+    	gap::msgs::CameraUtilsResponse msg;
         msg.set_type(MOVE_RESPONSE);
 
         ignition::math::Pose3d pose = msgs::ConvertIgn(_msg->pose());
@@ -199,7 +199,7 @@ void CameraUtils::OnNewFrame(
             gzwarn << "[CameraUtils] could not save frame as " << next_file_name << std::endl;
         }
 
-        camera_utils::msgs::CameraUtilsResponse msg;
+        gap::msgs::CameraUtilsResponse msg;
         msg.set_success(success);
         msg.set_type(CAPTURE_RESPONSE);
         msg.set_filename(next_file_name);

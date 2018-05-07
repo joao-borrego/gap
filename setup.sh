@@ -21,4 +21,4 @@ export GAZEBO_MEDIA_PATH=${GAZEBO_MEDIA_PATH}:`pwd`/media
 # Export location of custom models
 export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:`pwd`/models
 
-echo "gazebo-utils was successfully initialised."
+echo "GAP was successfully initialised."

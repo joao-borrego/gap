@@ -37,7 +37,7 @@
 #include "camera_utils_request.pb.h"
 
 /// Request to capture a frame and save it to disk
-#define CAPTURE camera_utils::msgs::CameraUtilsRequest::CAPTURE
+#define CAPTURE gap::msgs::CameraUtilsRequest::CAPTURE
 
 /// Topic monitored by the server for incoming commands
-#define CAMERA_UTILS_TOPIC "~/gazebo-utils/camera_utils"
+#define CAMERA_UTILS_TOPIC "~/gap/camera_utils"

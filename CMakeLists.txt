@@ -7,8 +7,8 @@ string (TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 string (TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
 
 # Project version
-set (GAP_MAJOR_VERSION 0)
-set (GAP_MINOR_VERSION 2)
+set (GAP_MAJOR_VERSION 1)
+set (GAP_MINOR_VERSION 0)
 set (GAP_PATCH_VERSION 0)
 set (GAP_VERSION
 	${GAP_MAJOR_VERSION}.${GAP_MINOR_VERSION})
@@ -26,6 +26,11 @@ include(safeguards)
 # Check dependencies
 find_package(gazebo REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
+
+# Setup directories for library installation
+
+set (msgs_include_dest "include/gap-${GAP_VERSION}")
+set (msgs_lib_dest "lib/gap-${GAP_VERSION}")
 
 # Build project
 
@@ -52,3 +57,4 @@ add_subdirectory(examples/visual_example)
 add_subdirectory(examples/world_example)
 # Random scene generator
 add_subdirectory(examples/scene_example)
+

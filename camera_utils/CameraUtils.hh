@@ -45,26 +45,26 @@
 namespace CameraUtils {
 
 /// Topic monitored for incoming commands
-#define REQUEST_TOPIC   "~/gazebo-utils/camera_utils"
+#define REQUEST_TOPIC   "~/gap/camera_utils"
 /// Topic for replying to commands
-#define RESPONSE_TOPIC  "~/gazebo-utils/camera_utils/response"
+#define RESPONSE_TOPIC  "~/gap/camera_utils/response"
 
 /// Request to move camera to given pose
-#define MOVE_REQUEST        camera_utils::msgs::CameraUtilsRequest::MOVE
+#define MOVE_REQUEST        gap::msgs::CameraUtilsRequest::MOVE
 /// Response acknowledging move camera request
-#define MOVE_RESPONSE       camera_utils::msgs::CameraUtilsResponse::MOVE
+#define MOVE_RESPONSE       gap::msgs::CameraUtilsResponse::MOVE
 /// Request camera capture
-#define CAPTURE_REQUEST     camera_utils::msgs::CameraUtilsRequest::CAPTURE
+#define CAPTURE_REQUEST     gap::msgs::CameraUtilsRequest::CAPTURE
 /// Camera capture response
-#define CAPTURE_RESPONSE    camera_utils::msgs::CameraUtilsResponse::CAPTURE
+#define CAPTURE_RESPONSE    gap::msgs::CameraUtilsResponse::CAPTURE
 /// Request change image storage directory
-#define DIR_REQUEST         camera_utils::msgs::CameraUtilsRequest::DIR
+#define DIR_REQUEST         gap::msgs::CameraUtilsRequest::DIR
 /// Change image storage directory response
-#define DIR_RESPONSE        camera_utils::msgs::CameraUtilsResponse::DIR
+#define DIR_RESPONSE        gap::msgs::CameraUtilsResponse::DIR
 /// Request 3D to 2D point projection
-#define PROJECTION_REQUEST  camera_utils::msgs::CameraUtilsRequest::PROJECTION
+#define PROJECTION_REQUEST  gap::msgs::CameraUtilsRequest::PROJECTION
 /// Point projection response
-#define PROJECTION_RESPONSE camera_utils::msgs::CameraUtilsResponse::PROJECTION
+#define PROJECTION_RESPONSE gap::msgs::CameraUtilsResponse::PROJECTION
 
 // Default parameters
 
@@ -78,10 +78,10 @@ namespace CameraUtils {
 namespace gazebo{
 
     /// Shared pointer declaration for request message type
-    typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsRequest>
+    typedef const boost::shared_ptr<const gap::msgs::CameraUtilsRequest>
         CameraUtilsRequestPtr;
     /// Shared pointer declaration for response message type
-    typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
+    typedef const boost::shared_ptr<const gap::msgs::CameraUtilsResponse>
         CameraUtilsReplyPtr;
 
     // Forward declaration of private data class

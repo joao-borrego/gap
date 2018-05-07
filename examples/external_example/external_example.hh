@@ -35,4 +35,4 @@
 #include "camera_utils_request.pb.h"
 
 /// Topic monitored by the server for incoming commands
-#define CAMERA_UTILS_TOPIC "~/gazebo-utils/camera_utils"
+#define CAMERA_UTILS_TOPIC "~/gap/camera_utils"

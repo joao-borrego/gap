@@ -41,6 +41,8 @@ add_library(gap_msgs SHARED ${PROTO_SRCS})
 # Link Protobuf library
 target_link_libraries(gap_msgs ${PROTOBUF_LIBRARY})
 
-# TODO: Install library
-# install(TARGETS gap_msgs DESTINATION "${msgs_lib_dest}")
-# install(FILES PROTO_HDRS DESTINATION "${msgs_include_dest}")
+# Install library
+install(TARGETS gap_msgs
+  DESTINATION "${msgs_lib_dest}")
+install(FILES
+  ${PROTO_HDRS} DESTINATION "${msgs_include_dest}")

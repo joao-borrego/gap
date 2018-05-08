@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.0)
 # Project name
 project(gap VERSION 1.0.0)
 message (STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION}")
+string (TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
+string (TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
 
 # Additional cmake modules
 set(CMAKE_MODULE_PATH
@@ -22,11 +24,13 @@ find_package(Protobuf REQUIRED)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
+
 # Setup directories for library installation
 
-set (project_major "${PROJECT_NAME}-${PROJECT_VERSION_MAJOR}")
-set (msgs_include_dest "include/${project_major}")
-set (msgs_lib_dest "lib/${project_major}")
+set (project_major_minor
+    "${PROJECT_NAME_LOWER}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
+set (msgs_include_dest "include/${project_major_minor}")
+set (msgs_lib_dest "lib/${project_major_minor}")
 
 # Add uninstall command
 add_custom_target(uninstall
@@ -41,6 +45,20 @@ add_subdirectory(msgs)
 add_subdirectory(plugins)
 # Examples
 add_subdirectory(examples)
-
 # Documentation
 add_subdirectory(doc)
+
+# Configuration file
+
+set(PKG_NAME ${PROJECT_NAME_UPPER})
+set(cmake_conf_file "cmake/gap-config.cmake")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${cmake_conf_file}.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/${cmake_conf_file}" @ONLY)
+
+# Create package
+
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/${cmake_conf_file}
+    DESTINATION
+        ${msgs_lib_dest}/
+    COMPONENT cmake)

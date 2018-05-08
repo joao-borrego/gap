@@ -20,13 +20,10 @@ find_package(gazebo REQUIRED)
 find_package(Protobuf REQUIRED)
 
 # Setup directories
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
-
 # Setup directories for library installation
-
 set (project_major_minor
     "${PROJECT_NAME_LOWER}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 set (msgs_include_dest "include/${project_major_minor}")
@@ -49,16 +46,12 @@ add_subdirectory(examples)
 add_subdirectory(doc)
 
 # Configuration file
-
 set(PKG_NAME ${PROJECT_NAME_UPPER})
 set(cmake_conf_file "cmake/gap-config.cmake")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${cmake_conf_file}.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${cmake_conf_file}" @ONLY)
 
 # Create package
-
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/${cmake_conf_file}
-    DESTINATION
-        ${msgs_lib_dest}/
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${cmake_conf_file}
+    DESTINATION ${msgs_lib_dest}/
     COMPONENT cmake)

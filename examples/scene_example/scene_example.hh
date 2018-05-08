@@ -69,10 +69,15 @@
 
 // Macros
 
+// Do not raise documentation error 
+//! @cond DoNotRaiseWarning
+
 /// Matches name field in <model name=""> XML tag
 #define REGEX_XML_MODEL "<model name=(\"([^\"]|\"\")*\")>"
 /// Matches string enclosed in <uid> XML tags
 #define REGEX_XML_UID   "<uid>[\\s\\S]*?<\\/uid>"
+
+//! @endcond
 
 //////////////////////////////////////////////////
 
@@ -81,68 +86,66 @@
 // Camera utils
 
 /// Request to move camera to given pose
-#define MOVE_REQUEST            camera_utils::msgs::CameraUtilsRequest::MOVE
+#define MOVE_REQUEST            gap::msgs::CameraUtilsRequest::MOVE
 /// Response acknowledging move camera request
-#define MOVE_RESPONSE           camera_utils::msgs::CameraUtilsResponse::MOVE
+#define MOVE_RESPONSE           gap::msgs::CameraUtilsResponse::MOVE
 /// Request to capture a frame and save it to disk
-#define CAPTURE_REQUEST         camera_utils::msgs::CameraUtilsRequest::CAPTURE
+#define CAPTURE_REQUEST         gap::msgs::CameraUtilsRequest::CAPTURE
 /// Response acknowledging captured frame
-#define CAPTURE_RESPONSE        camera_utils::msgs::CameraUtilsResponse::CAPTURE
+#define CAPTURE_RESPONSE        gap::msgs::CameraUtilsResponse::CAPTURE
 /// Request 3D to 2D point projection
-#define PROJECTION_REQUEST      camera_utils::msgs::CameraUtilsRequest::PROJECTION
+#define PROJECTION_REQUEST      gap::msgs::CameraUtilsRequest::PROJECTION
 /// Response 3D to 2D point projection
-#define PROJECTION_RESPONSE     camera_utils::msgs::CameraUtilsResponse::PROJECTION
+#define PROJECTION_RESPONSE     gap::msgs::CameraUtilsResponse::PROJECTION
 
 // Visual utils
 
 /// Request update
-#define UPDATE      visual_utils::msgs::VisualUtilsRequest::UPDATE
+#define UPDATE      gap::msgs::VisualUtilsRequest::UPDATE
 /// Visual updated response
-#define UPDATED     visual_utils::msgs::VisualUtilsResponse::UPDATED
+#define UPDATED     gap::msgs::VisualUtilsResponse::UPDATED
 
 // World utils
 
 /// Spawn entity
-#define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
+#define SPAWN           gap::msgs::WorldUtilsRequest::SPAWN
 /// Move entity
-#define WORLD_MOVE      world_utils::msgs::WorldUtilsRequest::MOVE
+#define WORLD_MOVE      gap::msgs::WorldUtilsRequest::MOVE
 /// Start or stop physcis simulation
-#define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
-/// \breief TODO
-#define SUCCESS         world_utils::msgs::WorldUtilsResponse::SUCCESS
+#define PHYSICS         gap::msgs::WorldUtilsRequest::PHYSICS
 
 /// Spawn custom object
-#define CUSTOM          world_utils::msgs::Object::CUSTOM
+#define CUSTOM          gap::msgs::Object::CUSTOM
 /// Spawn custom light object
-#define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
+#define CUSTOM_LIGHT    gap::msgs::Object::CUSTOM_LIGHT
 
 //////////////////////////////////////////////////
 
 // API Topics
 
 /// Topic monitored by CameraUtils plugin for incoming requests
-#define CAMERA_UTILS_TOPIC          "~/gazebo-utils/camera_utils"
+#define CAMERA_UTILS_TOPIC          "~/gap/camera_utils"
 /// Topic for receiving replies from CameraUtils plugin
-#define CAMERA_UTILS_RESPONSE_TOPIC "~/gazebo-utils/camera_utils/response"
+#define CAMERA_UTILS_RESPONSE_TOPIC "~/gap/camera_utils/response"
 /// Topic monitored by VisualUtils plugin for incoming requests
-#define VISUAL_UTILS_TOPIC          "~/gazebo-utils/visual_utils"
+#define VISUAL_UTILS_TOPIC          "~/gap/visual_utils"
 /// Topic for receiving replies from VisualUtils plugin
-#define VISUAL_UTILS_RESPONSE_TOPIC "~/gazebo-utils/visual_utils/response"
+#define VISUAL_UTILS_RESPONSE_TOPIC "~/gap/visual_utils/response"
 /// Topic monitored by WorldUtils plugin for incoming requests
-#define WORLD_UTILS_TOPIC           "~/gazebo-utils/world_utils"
+#define WORLD_UTILS_TOPIC           "~/gap/world_utils"
 /// Topic for receiving replies from WorldUtils plugin
-#define WORLD_UTILS_RESPONSE_TOPIC  "~/gazebo-utils/world_utils/response"
+#define WORLD_UTILS_RESPONSE_TOPIC  "~/gap/world_utils/response"
 
 // Message pointer typedefs
 
 /// Pointer to CameraUtils response message
-typedef const boost::shared_ptr<const camera_utils::msgs::CameraUtilsResponse>
+typedef const boost::shared_ptr<const gap::msgs::CameraUtilsResponse>
     CameraUtilsResponsePtr;
 /// Pointer to VisualUtils request message
-typedef const boost::shared_ptr<const visual_utils::msgs::VisualUtilsResponse>
+typedef const boost::shared_ptr<const gap::msgs::VisualUtilsResponse>
     VisualUtilsResponsePtr;
 /// Pointer to WorldUtils request message
-typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
+typedef const boost::shared_ptr<const gap::msgs::WorldUtilsResponse>
     WorldUtilsResponsePtr;
 
 //////////////////////////////////////////////////
@@ -153,22 +156,23 @@ typedef const boost::shared_ptr<const world_utils::msgs::WorldUtilsResponse>
 /// \param msg  WorldUtils request message
 /// \param file SDF file with model
 void addModelFromFile(
-    world_utils::msgs::WorldUtilsRequest & msg,
+    gap::msgs::WorldUtilsRequest & msg,
     const std::string & file);
 
 /// \brief Add objects in global grid to WorldUtils spawn request
 /// \param msg  WorldUtils request message
-void addDynamicModels(world_utils::msgs::WorldUtilsRequest & msg);
+void addDynamicModels(gap::msgs::WorldUtilsRequest & msg);
 
 /// \brief Add objects in global grid to VisualUtils update request
-void updateObjects(visual_utils::msgs::VisualUtilsRequest & msg);
+void updateObjects(gap::msgs::VisualUtilsRequest & msg);
 
 /// \brief Add move object command to WorldUtils request
+/// \param msg      WordlUtils request
 /// \param name     Object name
 /// \param is_light Whether object is a light
 /// \param pose     New object pose
 void addMoveObject(
-    world_utils::msgs::WorldUtilsRequest & msg,
+    gap::msgs::WorldUtilsRequest & msg,
     const std::string & name,
     const bool is_light,
     const ignition::math::Pose3d & pose);
@@ -205,7 +209,7 @@ bool waitForProjections();
 void createNameSet();
 
 /// \brief Add 3D points to projection request
-void addProjections(camera_utils::msgs::CameraUtilsRequest & msg);
+void addProjections(gap::msgs::CameraUtilsRequest & msg);
 
 /// \brief Move camera to global camera pose
 void moveCamera(gazebo::transport::PublisherPtr pub);

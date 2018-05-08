@@ -18,13 +18,13 @@ include_directories(${GAZEBO_INCLUDE_DIRS} ${SDF_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 # Include custom messages
-include_directories(${PROJECT_BINARY_DIR}/msgs/VisualUtils)
-link_directories(${PROJECT_BINARY_DIR}/msgs/VisualUtils)
+include_directories(${PROJECT_BINARY_DIR}/msgs)
+link_directories(${PROJECT_BINARY_DIR}/msgs)
 
-# Gazebo visual utils plugin
-add_library(VisualUtils SHARED VisualUtils.cc )
-target_link_libraries(VisualUtils
-    visual_utils_msgs
+# Gazebo camera utils plugin
+add_library(CameraUtils SHARED CameraUtils.cc )
+target_link_libraries(CameraUtils
+    gap_msgs
     ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(VisualUtils
-    visual_utils_msgs)
+add_dependencies(CameraUtils
+    gap_msgs)

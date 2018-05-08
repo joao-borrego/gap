@@ -4,11 +4,11 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "GAP"
-PROJECT_NUMBER         =
-PROJECT_BRIEF          = "Gazebo Awesome Plugins"
-PROJECT_LOGO           = 
-OUTPUT_DIRECTORY       = ./docs/
+PROJECT_NAME           = GAP
+PROJECT_NUMBER         = @PROJECT_VERSION_FULL@
+PROJECT_BRIEF          = Gazebo Awesome Plugins
+PROJECT_LOGO           =
+OUTPUT_DIRECTORY       = doxygen
 CREATE_SUBDIRS         = NO
 ALLOW_UNICODE_NAMES    = NO
 OUTPUT_LANGUAGE        = English
@@ -85,7 +85,7 @@ SHOW_USED_FILES        = YES
 SHOW_FILES             = YES
 SHOW_NAMESPACES        = NO
 FILE_VERSION_FILTER    =
-LAYOUT_FILE            =
+LAYOUT_FILE            = "@CMAKE_SOURCE_DIR@/doc/layout.xml"
 CITE_BIB_FILES         =
 #---------------------------------------------------------------------------
 # Configuration options related to warning and progress messages
@@ -101,14 +101,16 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = .
+INPUT                  = @CMAKE_SOURCE_DIR@/plugins \
+                         @CMAKE_SOURCE_DIR@/msgs \
+                         @CMAKE_SOURCE_DIR@/examples
 INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = *.cc *.hh *.h 
+FILE_PATTERNS          = *.cc *.hh *.h
 RECURSIVE              = YES
-EXCLUDE                = ./pattern_generation/
+EXCLUDE                =
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = *pb.cc *.pb.h
-EXCLUDE_SYMBOLS        = 
+EXCLUDE_SYMBOLS        =
 EXAMPLE_PATH           =
 EXAMPLE_PATTERNS       =
 EXAMPLE_RECURSIVE      = NO
@@ -144,11 +146,11 @@ IGNORE_PREFIX          = NO
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
-HTML_HEADER            = ./docs/header.html
-HTML_FOOTER            = ./docs/footer.html
-HTML_STYLESHEET        = ./docs/doxygen.css
-HTML_EXTRA_STYLESHEET  = ./docs/style.css
-HTML_EXTRA_FILES       = ./docs/logo.png
+HTML_HEADER            = "@CMAKE_SOURCE_DIR@/doc/header.html"
+HTML_FOOTER            = "@CMAKE_SOURCE_DIR@/doc/footer.html"
+HTML_STYLESHEET        = "@CMAKE_SOURCE_DIR@/doc/doxygen.css"
+HTML_EXTRA_STYLESHEET  = "@CMAKE_SOURCE_DIR@/doc/style.css"
+HTML_EXTRA_FILES       = "@CMAKE_SOURCE_DIR@/doc/logo.png"
 HTML_COLORSTYLE_HUE    = 220
 HTML_COLORSTYLE_SAT    = 100
 HTML_COLORSTYLE_GAMMA  = 80
@@ -156,7 +158,7 @@ HTML_TIMESTAMP         = NO
 HTML_DYNAMIC_SECTIONS  = YES
 HTML_INDEX_NUM_ENTRIES = 100
 GENERATE_DOCSET        = NO
-DOCSET_FEEDNAME        = "Gazebo Utils Documentation"
+DOCSET_FEEDNAME        = "GAP API Documentation"
 DOCSET_BUNDLE_ID       = org.doxygen.Project
 DOCSET_PUBLISHER_ID    = org.doxygen.Publisher
 DOCSET_PUBLISHER_NAME  = Publisher

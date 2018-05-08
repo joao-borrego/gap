@@ -18,13 +18,13 @@ include_directories(${GAZEBO_INCLUDE_DIRS} ${SDF_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 # Include custom messages
-include_directories(${PROJECT_BINARY_DIR}/msgs/VisualUtils)
-link_directories(${PROJECT_BINARY_DIR}/msgs/VisualUtils)
+include_directories(${PROJECT_BINARY_DIR}/msgs)
+link_directories(${PROJECT_BINARY_DIR}/msgs)
 
 # Visual utils plugin example client
 add_executable (visual_example visual_example.cc)
 target_link_libraries(visual_example
-    visual_utils_msgs
+    gap_msgs
     ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${SDF_LIBRARIES})
 add_dependencies(visual_example
-    visual_utils_msgs)
+    gap_msgs)

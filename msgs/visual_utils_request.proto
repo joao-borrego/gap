@@ -1,6 +1,6 @@
-package visual_utils.msgs;
+package gap.msgs;
 
-/// \ingroup visual_utils_msgs
+/// \ingroup gap_msgs
 /// \interface VisualUtilsRequest
 /// \brief A request for Visual Utils plugin
 

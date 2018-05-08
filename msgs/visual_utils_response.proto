@@ -1,11 +1,8 @@
-package visual_utils.msgs;
+package gap.msgs;
 
-/// \ingroup visual_utils_msgs
+/// \ingroup gap_msgs
 /// \interface VisualUtilsResponse
 /// \brief A response from Visual Utils plugin
-
-import "pose.proto";
-import "vector3d.proto";
 
 message VisualUtilsResponse
 {

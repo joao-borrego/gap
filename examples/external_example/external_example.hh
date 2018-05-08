@@ -14,33 +14,25 @@
  *  limitations under the License.
  */
 
-/*! 
-    \file examples/visual_example/visual_example.hh
-    \brief Visual tools example client
+/*!
+    \file examples/external_example/external_example.hh
+    \brief External client example
 
-    An example client to interact with VisualUtils plugin
-    
+    An example client that uses the provided tools as an external library.
+    It is meant to show how to compile your code in your own workspace.
+
     \author João Borrego : jsbruglie
     \author Rui Figueiredo : ruipimentelfigueiredo
 */
 
 // Gazebo
+#include <gazebo/gazebo_client.hh>
 #include <gazebo/gazebo_config.h>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
-#include <gazebo/gazebo_client.hh>
-
-// I/O streams
-#include <iostream>
-// For sleeps
-#include <chrono>
-#include <thread>
 
 // Custom messages
-#include "visual_utils_request.pb.h"
+#include "camera_utils_request.pb.h"
 
 /// Topic monitored by the server for incoming commands
-#define VISUAL_UTILS_TOPIC "~/gap/visual_utils"
-
-/// Request update
-#define UPDATE  gap::msgs::VisualUtilsRequest::UPDATE
+#define CAMERA_UTILS_TOPIC "~/gap/camera_utils"

@@ -1,6 +1,6 @@
-package camera_utils.msgs;
+package gap.msgs;
 
-/// \ingroup camera_utils_msgs
+/// \ingroup gap_msgs
 /// \interface CameraUtilsResponse
 /// \brief A response from Camera Utils plugin
 

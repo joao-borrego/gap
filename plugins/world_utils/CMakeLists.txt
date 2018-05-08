@@ -12,19 +12,18 @@ if (PKG_CONFIG_FOUND)
   pkg_check_modules(GAZEBO gazebo)
   pkg_check_modules(SDF sdformat)
 endif()
-
 # Include and link Gazebo and SDF libraries
 include_directories(${GAZEBO_INCLUDE_DIRS} ${SDF_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 # Include custom messages
-include_directories(${PROJECT_BINARY_DIR}/msgs/CameraUtils)
-link_directories(${PROJECT_BINARY_DIR}/msgs/CameraUtils)
+include_directories(${PROJECT_BINARY_DIR}/msgs)
+link_directories(${PROJECT_BINARY_DIR}/msgs)
 
-# Gazebo camera utils plugin
-add_library(CameraUtils SHARED CameraUtils.cc )
-target_link_libraries(CameraUtils
-    camera_utils_msgs
+# Gazebo world utils plugin
+add_library(WorldUtils SHARED WorldUtils.cc MoveObject.cc)
+target_link_libraries(WorldUtils
+    gap_msgs
     ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
-add_dependencies(CameraUtils
-    camera_utils_msgs)
+add_dependencies(WorldUtils
+    gap_msgs)

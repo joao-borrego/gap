@@ -48,17 +48,17 @@
 namespace VisualUtils {
 
 /// Topic monitored for incoming commands
-#define REQUEST_TOPIC   "~/gazebo-utils/visual_utils"
+#define REQUEST_TOPIC   "~/gap/visual_utils"
 /// Topic for publishing replies
-#define RESPONSE_TOPIC  "~/gazebo-utils/visual_utils/response"
+#define RESPONSE_TOPIC  "~/gap/visual_utils/response"
 
 /// Request update
-#define UPDATE          visual_utils::msgs::VisualUtilsRequest::UPDATE
+#define UPDATE          gap::msgs::VisualUtilsRequest::UPDATE
 /// Set default pose
-#define DEFAULT_POSE    visual_utils::msgs::VisualUtilsRequest::DEFAULT_POSE
+#define DEFAULT_POSE    gap::msgs::VisualUtilsRequest::DEFAULT_POSE
 
 /// Visual updated response
-#define UPDATED         visual_utils::msgs::VisualUtilsResponse::UPDATED
+#define UPDATED         gap::msgs::VisualUtilsResponse::UPDATED
 
 // Default parameters
 
@@ -70,10 +70,10 @@ namespace VisualUtils {
 namespace gazebo{
 
     /// Shared pointer declaration for request message type
-    typedef const boost::shared_ptr<const visual_utils::msgs::VisualUtilsRequest>
+    typedef const boost::shared_ptr<const gap::msgs::VisualUtilsRequest>
         VisualUtilsRequestPtr;
     /// Shared pointer declaration for response message type
-    typedef const boost::shared_ptr<const visual_utils::msgs::VisualUtilsResponse>
+    typedef const boost::shared_ptr<const gap::msgs::VisualUtilsResponse>
         VisualUtilsResponsePtr;
 
     // Forward declaration of private data class
@@ -82,7 +82,7 @@ namespace gazebo{
     /// \brief A custom gazebo plugin that provides an interface to programatically
     /// alter visuals during simulation.
     ///
-    /// Materials are assumed to be loaded and name <pattern><index>
+    /// Materials are assumed to be loaded and name [pattern][index]
     /// See the example usage below:
     ///
     /// \code{.xml}

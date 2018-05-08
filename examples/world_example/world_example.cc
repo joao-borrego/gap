@@ -81,7 +81,7 @@ int main(int _argc, char **_argv)
 
     // Publish to the object spawner topic
     gazebo::transport::PublisherPtr pub =
-        node->Advertise<world_utils::msgs::WorldUtilsRequest>(WORLD_UTILS_TOPIC);
+        node->Advertise<gap::msgs::WorldUtilsRequest>(WORLD_UTILS_TOPIC);
 
     // Wait for a subscriber to connect to this publisher
     pub->WaitForConnection();
@@ -98,13 +98,13 @@ int main(int _argc, char **_argv)
         std::stringstream input_stream(line);
 
         // Create a custom message (placeholder message)
-        world_utils::msgs::WorldUtilsRequest msg;
+        gap::msgs::WorldUtilsRequest msg;
 
         // Fill the contents of the message
         msg.set_type(SPAWN);
 
         int model_aux = rand() % 3;
-        world_utils::msgs::Object* object = msg.add_object();
+        gap::msgs::Object* object = msg.add_object();
         if(model_aux == 0){
             object->set_model_type(CYLINDER);
         }

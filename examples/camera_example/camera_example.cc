@@ -26,7 +26,7 @@
 
 #include "camera_example.hh"
 
-using namespace camera_utils::msgs;
+using namespace gap::msgs;
 
 int main(int _argc, char **_argv)
 {

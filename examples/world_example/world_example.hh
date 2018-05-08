@@ -49,33 +49,33 @@
 #define PROMPT "> "
 
 /// Spawn entity
-#define SPAWN           world_utils::msgs::WorldUtilsRequest::SPAWN
+#define SPAWN           gap::msgs::WorldUtilsRequest::SPAWN
 /// Move entity
-#define MOVE            world_utils::msgs::WorldUtilsRequest::MOVE
+#define MOVE            gap::msgs::WorldUtilsRequest::MOVE
 /// Remove entity from the world
-#define REMOVE          world_utils::msgs::WorldUtilsRequest::REMOVE
+#define REMOVE          gap::msgs::WorldUtilsRequest::REMOVE
 /// Start or stop physcis simulation
-#define PHYSICS         world_utils::msgs::WorldUtilsRequest::PHYSICS
+#define PHYSICS         gap::msgs::WorldUtilsRequest::PHYSICS
 /// Pause or resume simulation
-#define PAUSE           world_utils::msgs::WorldUtilsRequest::PAUSE
+#define PAUSE           gap::msgs::WorldUtilsRequest::PAUSE
 /// Get entity or world information
-#define STATUS          world_utils::msgs::WorldUtilsRequest::STATUS
+#define STATUS          gap::msgs::WorldUtilsRequest::STATUS
 
 /// Spawn sphere object
-#define SPHERE          world_utils::msgs::Object::SPHERE
+#define SPHERE          gap::msgs::Object::SPHERE
 /// Spawn cylinder object
-#define CYLINDER        world_utils::msgs::Object::CYLINDER
+#define CYLINDER        gap::msgs::Object::CYLINDER
 /// Spawn box object
-#define BOX             world_utils::msgs::Object::BOX
+#define BOX             gap::msgs::Object::BOX
 /// Spawn custom object
-#define CUSTOM          world_utils::msgs::Object::CUSTOM
+#define CUSTOM          gap::msgs::Object::CUSTOM
 /// Spawn custom light object
-#define CUSTOM_LIGHT    world_utils::msgs::Object::CUSTOM_LIGHT
+#define CUSTOM_LIGHT    gap::msgs::Object::CUSTOM_LIGHT
 /// Spawn a model included in gazebo model path
-#define MODEL           world_utils::msgs::Object::MODEL
+#define MODEL           gap::msgs::Object::MODEL
 
 /// Topic monitored by WorldUtils plugin for incoming requests
-#define WORLD_UTILS_TOPIC "~/gazebo-utils/world_utils"
+#define WORLD_UTILS_TOPIC "~/gap/world_utils"
 /// Directory with custom materials
 #define MEDIA_DIR "media/"
 /// Subdirectory with texture images

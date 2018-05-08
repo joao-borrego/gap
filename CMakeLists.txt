@@ -1,53 +1,57 @@
-# 2.8.8 required to use PROTOBUF_IMPORT_DIRS
-cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0)
 
 # Project name
-project(GazeboUtils)
-
-# Project version
-set (GAZEBO_UTILS_MAJOR_VERSION 0)
-set (GAZEBO_UTILS_MINOR_VERSION 1)
-set (GAZEBO_UTILS_PATCH_VERSION 0)
-set (GAZEBO_UTILS_VERSION
-	${GAZEBO_UTILS_MAJOR_VERSION}.${GAZEBO_UTILS_MINOR_VERSION})
-set (GAZEBO_UTILS_FULL_VERSION
-	${GAZEBO_UTILS_MAJOR_VERSION}.${GAZEBO_UTILS_MINOR_VERSION}.${GAZEBO_UTILS_PATCH_VERSION})
+project(gap VERSION 1.0.0)
+message (STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION}")
+string (TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
+string (TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
 
 # Additional cmake modules
 set(CMAKE_MODULE_PATH
-	${CMAKE_MODULE_PATH}
-	${CMAKE_CURRENT_SOURCE_DIR}/cmake
-	)
+    ${CMAKE_MODULE_PATH}
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # CMake safeguards e.g. prevent in-source builds
 include(safeguards)
 
 # Check dependencies
-find_package(gazebo REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
+find_package(gazebo REQUIRED)
+find_package(Protobuf REQUIRED)
+
+# Setup directories
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
+
+# Setup directories for library installation
+set (project_major_minor
+    "${PROJECT_NAME_LOWER}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
+set (msgs_include_dest "include/${project_major_minor}")
+set (msgs_lib_dest "lib/${project_major_minor}")
+
+# Add uninstall command
+add_custom_target(uninstall
+    "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uninstall.cmake"
+)
 
 # Build project
 
 # Messages
-
 add_subdirectory(msgs)
-
 # Plugins
-
-# Camera plugin
-add_subdirectory(camera_utils)
-# Visual plugin
-add_subdirectory(visual_utils)
-# World plugin
-add_subdirectory(world_utils)
-
+add_subdirectory(plugins)
 # Examples
+add_subdirectory(examples)
+# Documentation
+add_subdirectory(doc)
 
-# Camera tools example client
-add_subdirectory(examples/camera_example)
-# Visual tools example client
-add_subdirectory(examples/visual_example)
-# World tools example client
-add_subdirectory(examples/world_example)
-# Random scene generator
-add_subdirectory(examples/scene_example)
+# Configuration file
+set(PKG_NAME ${PROJECT_NAME_UPPER})
+set(cmake_conf_file "cmake/gap-config.cmake")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${cmake_conf_file}.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/${cmake_conf_file}" @ONLY)
+
+# Create package
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${cmake_conf_file}
+    DESTINATION ${msgs_lib_dest}/
+    COMPONENT cmake)

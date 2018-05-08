@@ -33,7 +33,7 @@ The code has been tested in Gazebo 9.0.0 from the official stable repository as 
 Gazebo internal message passing relies on Protobuf, which is why the compiler needs to be installed in order
 to generate the tools' custom messages.
 
-```
+``` bash
 sudo apt install protobuf-compiler
 ```
 
@@ -45,7 +45,7 @@ For custom texture generation, we have developed a [pattern generation tool], wh
 
 Clone the repository to your workspace directory and build from source.
 
-```
+``` bash
 cd ~/workspace/gap/ &&
 mkdir build &&
 cd build &&
@@ -60,7 +60,7 @@ Alternatively you can build each plugin/tool individually in a similar fashion.
 Make sure you properly initialise the required environment variables.
 We provide a simple script for this:
 
-```
+``` bash
 cd ~/workspace/gap &&
 source setup.sh
 ```

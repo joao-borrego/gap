@@ -15,51 +15,41 @@
  */
 
 /*!
-    \file examples/visual_example/visual_example.cc
-    \brief Visual tools example client implementation
+    \file examples/external_example/external_example.cc
+    \brief External client example
 
-    An example client to interact with VisualUtils plugin
+    An example client that uses the provided tools as an external library.
+    It is meant to show how to compile your code in your own workspace.
 
     \author João Borrego : jsbruglie
     \author Rui Figueiredo : ruipimentelfigueiredo
 */
 
-#include "visual_example.hh"
+#include "external_example.hh"
 
 using namespace gap::msgs;
 
-int main(int argc, char **argv)
+int main(int _argc, char **_argv)
 {
-    // Setup communication
 
-    // Setup Gazebo client
-    gazebo::client::setup(argc, argv);
+    // Load gazebo as a client
+    gazebo::client::setup(_argc, _argv);
+
     // Create the communication node
     gazebo::transport::NodePtr node(new gazebo::transport::Node());
     node->Init();
-    // Publish to the visual plugin topic
+
+    // Publish to the object spawner topic
     gazebo::transport::PublisherPtr pub =
-        node->Advertise<VisualUtilsRequest>(VISUAL_UTILS_TOPIC);
+        node->Advertise<CameraUtilsRequest>(CAMERA_UTILS_TOPIC);
+
     // Wait for a subscriber to connect to this publisher
     pub->WaitForConnection();
 
-    // Main loop
-    for (int i = 0; i < 10; i++){
+    // Create a custom message to aqcuire a frame
+    CameraUtilsRequest msg;
 
-        // Create and send a custom message
-        VisualUtilsRequest msg;
-        msg.set_type(UPDATE);
-        // Define targets of request
-        msg.add_targets(std::string("box_1"));
-        msg.add_targets(std::string("sphere_1"));
-        msg.add_targets(std::string("cylinder_1"));
-        msg.add_targets(std::string("ground_1"));
-        pub->Publish(msg);
-    	// Wait 500 milliseconds
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-
-    // Clean up
+    // Shut down
     gazebo::client::shutdown();
     return 0;
 }

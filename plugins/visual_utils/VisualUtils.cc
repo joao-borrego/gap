@@ -29,8 +29,7 @@
 
 namespace gazebo {
 
-/// \class VisualUtils VisualUtils.hh
-/// \brief Private data for the VisualUtils class
+/// \brief Class for private visual utils plugin data.
 class VisualUtilsPrivate
 {
     /// Visual to which the plugin is attached

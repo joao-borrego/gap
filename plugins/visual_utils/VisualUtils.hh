@@ -82,7 +82,7 @@ namespace gazebo{
     /// \brief A custom gazebo plugin that provides an interface to programatically
     /// alter visuals during simulation.
     ///
-    /// Materials are assumed to be loaded and name <pattern><index>
+    /// Materials are assumed to be loaded and name [pattern][index]
     /// See the example usage below:
     ///
     /// \code{.xml}

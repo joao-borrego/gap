@@ -41,3 +41,6 @@ add_subdirectory(msgs)
 add_subdirectory(plugins)
 # Examples
 add_subdirectory(examples)
+
+# Documentation
+add_subdirectory(doc)

@@ -82,7 +82,7 @@ bool createDirectory(std::string & path);
 /// Value is sampled from uniform distribution
 ///
 /// \param min Interval lower bound
-/// \param min Interval upper bound
+/// \param max Interval upper bound
 /// \return Random integer
 int getRandomInt(int min, int max);
 
@@ -91,7 +91,7 @@ int getRandomInt(int min, int max);
 /// Value is sampled from uniform distribution
 ///
 /// \param min Interval lower bound
-/// \param min Interval upper bound
+/// \param max Interval upper bound
 /// \return Random double
 double getRandomDouble(double min, double max);
 

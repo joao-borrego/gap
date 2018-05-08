@@ -98,10 +98,15 @@ namespace WorldUtils {
 
 // Regex patterns
 
+// Do not raise documentation warning
+//! @cond DoNotRaiseWarning
+
 /// Matches string enclosed in <script> XML tags
 #define REGEX_XML_SCRIPT "<script>[\\s\\S]*?<\\/script>"
 /// Matches string enclosed in <pose> XML tags
 #define REGEX_XML_POSE   "<pose>[\\s\\S]*?<\\/pose>"
+
+//! @endcond
 
 }
 

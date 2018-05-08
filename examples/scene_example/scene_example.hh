@@ -69,10 +69,15 @@
 
 // Macros
 
+// Do not raise documentation error 
+//! @cond DoNotRaiseWarning
+
 /// Matches name field in <model name=""> XML tag
 #define REGEX_XML_MODEL "<model name=(\"([^\"]|\"\")*\")>"
 /// Matches string enclosed in <uid> XML tags
 #define REGEX_XML_UID   "<uid>[\\s\\S]*?<\\/uid>"
+
+//! @endcond
 
 //////////////////////////////////////////////////
 
@@ -108,8 +113,6 @@
 #define WORLD_MOVE      gap::msgs::WorldUtilsRequest::MOVE
 /// Start or stop physcis simulation
 #define PHYSICS         gap::msgs::WorldUtilsRequest::PHYSICS
-/// \breief TODO
-#define SUCCESS         gap::msgs::WorldUtilsResponse::SUCCESS
 
 /// Spawn custom object
 #define CUSTOM          gap::msgs::Object::CUSTOM
@@ -164,6 +167,7 @@ void addDynamicModels(gap::msgs::WorldUtilsRequest & msg);
 void updateObjects(gap::msgs::VisualUtilsRequest & msg);
 
 /// \brief Add move object command to WorldUtils request
+/// \param msg      WordlUtils request
 /// \param name     Object name
 /// \param is_light Whether object is a light
 /// \param pose     New object pose

@@ -146,6 +146,8 @@ ObjectGrid::ObjectGrid(
 void ObjectGrid::populate(int num_objects)
 {
     int cell_id, x, y;
+    int num_cells = x * y;
+    int insert = (num_objects > num_cells)? num_cells: num_objects;
 
     // Clear existing objects
     objects.clear();
@@ -154,7 +156,7 @@ void ObjectGrid::populate(int num_objects)
 
     // Shuffle grid cells, for random placement
     shuffleIntVector(cells);
-    for (int i = 0; i < num_objects; i++) {
+    for (int i = 0; i < insert; i++) {
         // Get random cell coordinates
         cell_id = cells[i];
         x = floor(cell_id / num_cells_x);

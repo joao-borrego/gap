@@ -146,8 +146,12 @@ ObjectGrid::ObjectGrid(
 void ObjectGrid::populate(int num_objects)
 {
     int cell_id, x, y;
-    int num_cells = x * y;
-    int insert = (num_objects > num_cells)? num_cells: num_objects;
+    int num_cells = num_cells_x * num_cells_y;
+
+    if (num_objects > num_cells) {
+        std::cerr << "Invalid number of objects inserted in grid\n";
+        exit(EXIT_FAILURE);
+    }
 
     // Clear existing objects
     objects.clear();
@@ -156,7 +160,7 @@ void ObjectGrid::populate(int num_objects)
 
     // Shuffle grid cells, for random placement
     shuffleIntVector(cells);
-    for (int i = 0; i < insert; i++) {
+    for (int i = 0; i < num_objects; i++) {
         // Get random cell coordinates
         cell_id = cells[i];
         x = floor(cell_id / num_cells_x);

@@ -28,9 +28,19 @@
 
 // Global variables
 
-// 2 x 2 object Grid
-// 10 x 10 x 1 cells
-ObjectGrid g_grid(2, 2, 10, 10, 1);
+// 4 x 4 object Grid
+// 1 x 1 x 1 cells
+ObjectGrid g_grid(4, 4, 4, 4, 1);
+// Minimum number of objects
+const int g_obj_min {5};
+// Maximum number of objects
+const int g_obj_max {10};
+// Change light position
+const bool g_move_light {true};
+// Light default position
+const ignition::math::Vector3d g_light_pos {2, 2, 5.5};
+// Camera default position
+const ignition::math::Vector3d g_camera_pos {2, 2, 5.5};
 
 // Variables that lock progress for synchronous scene generation
 bool g_moved {false};
@@ -43,12 +53,8 @@ bool g_visuals_ready {false};
 std::mutex g_visuals_ready_mutex;
 // Set of names of existing objects
 std::set<std::string> g_names;
-
 // Global camera pose
 ignition::math::Pose3d g_camera_pose;
-// Determines if light should be moved
-bool g_move_light {true};
-
 // Regex objects
 std::regex g_regex_uid(REGEX_XML_UID);
 std::regex g_regex_model(REGEX_XML_MODEL);
@@ -137,11 +143,11 @@ int main(int argc, char **argv)
     msg_options.set_type(OPTIONS);
     msg_options.set_output_dir(imgs_dir);
     msg_options.set_extension(".jpg");
-    pub_camera->Publish(msg_options, false);
+    pub_camera->Publish(msg_options);
 
     // Wait for a subscriber to connect to this publisher
     pub_visual->WaitForConnection();
-    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     debugPrintTrace("Done waiting for spawn");
 
     // Light poses
@@ -151,7 +157,7 @@ int main(int argc, char **argv)
     for (int iteration = start; iteration < scenes + start; iteration++) {
 
         // Populate grid with random objects
-        int num_objects = (getRandomInt(1, 4));
+        int num_objects = (getRandomInt(g_obj_min, g_obj_max));
         g_grid.populate(num_objects);
         // Create a set with the names of created objects
         createNameSet();
@@ -166,14 +172,16 @@ int main(int argc, char **argv)
 
         // Calculate new camera and light poses
         g_camera_pose = getRandomCameraPose();
-        light_pose = getRandomLightPose();
 
-        // Request move camera
-        gap::msgs::WorldUtilsRequest msg_move;
-        msg_move.set_type(WORLD_MOVE);
-        //addMoveObject(msg_move, "custom_camera", false, g_camera_pose);
-        addMoveObject(msg_move, "custom_sun", true, light_pose);
-        pub_world->Publish(msg_move);
+        // Request move light
+        if (g_move_light)
+        {
+            light_pose = getRandomLightPose();
+            gap::msgs::WorldUtilsRequest msg_move;
+            msg_move.set_type(WORLD_MOVE);
+            addMoveObject(msg_move, "custom_sun", true, light_pose);
+            pub_world->Publish(msg_move);
+        }
 
         // Update scene
         gap::msgs::VisualUtilsRequest msg_visual;
@@ -182,7 +190,6 @@ int main(int argc, char **argv)
         pub_visual->Publish(msg_visual);
 
         moveCamera(pub_camera);
-
         // Wait for camera to move to new position
         while (waitForMove()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -192,9 +199,6 @@ int main(int argc, char **argv)
         while (waitForVisuals()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-
-        // TODO - Synchronise
-        //std::this_thread::sleep_for(std::chrono::milliseconds(60));
 
         // Capture the scene and save it to a file
         captureScene(pub_camera, iteration);
@@ -249,7 +253,7 @@ void addDynamicModels(gap::msgs::WorldUtilsRequest & msg)
 
     for (int i = 0; i < types.size(); i++)
     {
-        for (int j = 1; j <= 10; j++)
+        for (int j = 1; j <= g_obj_max; j++)
         {
             // Read file to SDF string
             std::string file_name = "models/custom_" + types[i] + ".sdf";
@@ -330,7 +334,7 @@ ignition::math::Pose3d getRandomCameraPose()
         getRandomDouble(0, M_PI / 4.0));
 
     ignition::math::Pose3d new_pose;
-    ignition::math::Vector3d position(2.5, 2.5, 6.0);
+    ignition::math::Vector3d position(g_camera_pos);
 
     new_pose.Set(position,
         (correct_orientation * original_orientation).Inverse());
@@ -348,7 +352,7 @@ ignition::math::Pose3d getRandomLightPose()
         getRandomDouble(-M_PI / 5.0, M_PI / 5.0));
 
     ignition::math::Pose3d new_pose;
-    ignition::math::Vector3d position(2, 2, 5.4);
+    ignition::math::Vector3d position(g_light_pos);
 
     new_pose.Set(position, (light_orientation).Inverse());
     new_pose = new_pose.RotatePositionAboutOrigin(light_orientation);

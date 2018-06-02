@@ -44,12 +44,3 @@
 
 /// Request update
 #define UPDATE      gap::msgs::VisualUtilsRequest::UPDATE
-
-/*
-/// Set resource paths
-#define MATERIAL    gap::msgs::VisualUtilsRequest::MATERIAL
-/// TODO
-void setResourcePath(gazebo::transport::PublisherPtr pub,
-    const std::string & target,
-    const std::string & path);
-*/

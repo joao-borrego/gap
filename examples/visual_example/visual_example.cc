@@ -63,17 +63,3 @@ int main(int argc, char **argv)
     gazebo::client::shutdown();
     return 0;
 }
-
-/////////////////////////////////////////////////
-/*
-void setMaterial(gazebo::transport::PublisherPtr pub,
-    const std::string & target,
-    const std::string & path)
-{
-    VisualUtilsRequest msg;
-    msg.set_type(RESOURCE);
-    msg.add_targets(target);
-    msg.add_resources(path);
-    pub->Publish(msg);
-}
-*/

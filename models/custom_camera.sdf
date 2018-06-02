@@ -53,7 +53,6 @@
         <!-- gazebo-utils camera plugin -->
         <plugin name='camera_utils' filename='libCameraUtils.so'>
           <!-- Output directory -->
-          <!-- TODO - Change! -->
           <output_dir>train/SHAPES2018/images/</output_dir>
           <!-- Output image extension -->
           <extension>.png</extension>

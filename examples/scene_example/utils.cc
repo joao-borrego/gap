@@ -73,10 +73,10 @@ void parseArgs(
     if (!i) imgs_dir    = ARG_IMGS_DIR_DEFAULT;
     if (!d) dataset_dir = ARG_DATASET_DIR_DEFAULT;
 
-    debugPrint("Parameters: " << std::endl <<
-        "scenes: '"         << scenes <<
-        "'; images dir: '"  << imgs_dir <<
-        "'; dataset dir: '" << dataset_dir << std::endl);
+    debugPrint("Parameters:\n" <<
+        "   scenes:      '" << scenes << "'\n"
+        "   images dir:  '" << imgs_dir << "'\n"
+        "   dataset dir: '" << dataset_dir <<  "'\n");
 }
 
 //////////////////////////////////////////////////

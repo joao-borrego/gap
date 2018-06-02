@@ -9,27 +9,29 @@ import "point_projection.proto";
 
 message CameraUtilsRequest
 {
-    /// \brief Type of request 
+    /// Type of request 
     enum Type
     {
-        /// \brief Acquire frame and save it to disk 
+        /// Acquire frame and save it to disk 
         CAPTURE     = 1;
-        /// \brief Change output directory 
-        DIR         = 2;
-        /// \brief Move camera
+        /// Change output directory and/or file extension
+        OPTIONS     = 2;
+        /// Move camera
         MOVE        = 3;
-        /// \brief Project 3D point to 2D in camera plane
+        /// Project 3D point to 2D in camera plane
         PROJECTION  = 4;
     }
 
-    /// \brief Type of request 
+    /// Type of request 
     optional Type               type        = 1;
-    /// \brief File path of captured frame
+    /// File path of captured frame
     optional string             file_name   = 2;
-    /// \brief Path to the output folder 
+    /// Path to the output folder 
     optional string             output_dir  = 3;
-    /// \brief Expected camera pose
-    optional gazebo.msgs.Pose   pose        = 4;
-    /// \brief 3D to 2D point projection 
-    repeated PointProjection    projections = 5;
+    /// Output file extension 
+    optional string             extension   = 4;
+    /// Expected camera pose
+    optional gazebo.msgs.Pose   pose        = 5;
+    /// 3D to 2D point projection 
+    repeated PointProjection    projections = 6;
 }

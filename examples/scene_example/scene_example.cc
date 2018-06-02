@@ -131,6 +131,14 @@ int main(int argc, char **argv)
     pub_world->Publish(msg_spawn);
     debugPrintTrace("Spawning objects");
 
+    // Configure camera
+    pub_camera->WaitForConnection();
+    gap::msgs::CameraUtilsRequest msg_options;
+    msg_options.set_type(OPTIONS);
+    msg_options.set_output_dir(imgs_dir);
+    msg_options.set_extension(".jpg");
+    pub_camera->Publish(msg_options, false);
+
     // Wait for a subscriber to connect to this publisher
     pub_visual->WaitForConnection();
     std::this_thread::sleep_for(std::chrono::milliseconds(3000));

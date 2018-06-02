@@ -45,9 +45,17 @@ int main(int _argc, char **_argv)
     // Wait for a subscriber to connect to this publisher
     pub->WaitForConnection();
 
-    // Create a custom message to aqcuire a frame
+    // Create a custom message to change camera options
     CameraUtilsRequest msg;
+    msg.set_type(OPTIONS);
+    msg.set_output_dir("/tmp/");
+    msg.set_extension(".jpg");
+    // Send the message
+    pub->Publish(msg);
+
+    // Create a custom message to aqcuire a frame
     msg.set_type(CAPTURE);
+    msg.set_file_name("test");
     // Send the message
     pub->Publish(msg);
 

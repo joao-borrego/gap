@@ -89,15 +89,19 @@ void WorldUtils::onUpdate()
                 msg.set_allocated_pose(pose_msg);
                 this->light_pub->Publish(msg);
 
+                /*
                 gzdbg << "Moving light " << light->GetName()
                     << " to " << mv_obj.pose << std::endl;
+                */
             }
         } else {
             physics::ModelPtr model = this->world->ModelByName(mv_obj.name);
             if (model) {
                 model->SetWorldPose(mv_obj.pose);
+                /*
                 gzdbg << "Moving model " << model->GetName()
                     << " to " << mv_obj.pose << std::endl;
+                */
             }
         }
         this->move_queue.pop();

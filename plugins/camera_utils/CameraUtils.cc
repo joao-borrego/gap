@@ -136,7 +136,9 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
         this->next_file_name = output_dir + file_name;
         this->camera->SetCaptureDataOnce();
         this->save_on_update = true;
+        /*
         gzdbg << "Requested save frame as " << next_file_name << std::endl;
+        */
     }
     else if (_msg->type() == OPTIONS_REQUEST)
     {

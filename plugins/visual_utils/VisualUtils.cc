@@ -263,7 +263,9 @@ void VisualUtils::loadResources()
     }
 
     // Shuffle materials vector
-    auto rng = std::default_random_engine {};
+    unsigned int seed =
+        std::chrono::system_clock::now().time_since_epoch().count();
+    auto rng = std::mt19937 {seed};
     std::shuffle(std::begin(dataPtr->materials),
         std::end(dataPtr->materials), rng);
 
@@ -279,7 +281,9 @@ void VisualUtils::randomMaterialName(std::string &name)
     if (dataPtr->used_materials == dataPtr->materials.size())
     {
         // All materials have been used once. Reshuffle    
-        auto rng = std::default_random_engine {};
+        unsigned int seed =
+            std::chrono::system_clock::now().time_since_epoch().count();
+        auto rng = std::mt19937 {seed};
         std::shuffle(std::begin(dataPtr->materials),
             std::end(dataPtr->materials), rng);
         dataPtr->used_materials = 0;

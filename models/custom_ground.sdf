@@ -33,10 +33,7 @@
         <plugin name="visual_utils" filename="libVisualUtils.so">
           <uid>ground</uid>
           <patterns>
-            Plugin/flat_
-            Plugin/gradient_
-            Plugin/chess_
-            Plugin/perlin_
+            HDPlugin/
           </patterns>
         </plugin>
       </visual>

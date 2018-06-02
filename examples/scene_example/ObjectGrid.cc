@@ -181,7 +181,7 @@ void ObjectGrid::addRandomObject(int x, int y)
     double radius,length, box_x, box_y, box_z;
     std::vector<double> parameters;
     // Rotation
-    double pitch = 0.0, yaw = 0.0;
+    double roll = 0.0, pitch = 0.0, yaw = 0.0;
     // Pose
     double p_x, p_y, p_z;
     // Scale vector
@@ -199,6 +199,10 @@ void ObjectGrid::addRandomObject(int x, int y)
     if (type == CYLINDER) {
         horizontal = (getRandomDouble(0.0, 1.0) > 0.5);
         if (horizontal) pitch = M_PI * 0.5;
+    }
+    if (type == SPHERE) {
+        roll = M_PI * getRandomDouble(0.0, 1.0);
+        pitch = M_PI * getRandomDouble(0.0, 1.0);
     }
 
     // Auxiliar calculations
@@ -241,7 +245,7 @@ void ObjectGrid::addRandomObject(int x, int y)
     }
 
     // Apply offset to pose
-    ignition::math::Pose3d pose(p_x, p_y, p_z, 0, pitch, yaw);
+    ignition::math::Pose3d pose(p_x, p_y, p_z, roll, pitch, yaw);
 
     // Scale vector
     if (type == SPHERE) {

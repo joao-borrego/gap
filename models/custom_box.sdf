@@ -20,10 +20,7 @@
         <plugin name="visual_utils" filename="libVisualUtils.so">
           <uid>box_uid</uid>
           <patterns>
-            Plugin/flat_
-            Plugin/gradient_
-            Plugin/chess_
-            Plugin/perlin_
+            Plugin/
           </patterns>
         </plugin>
       </visual>

@@ -42,6 +42,7 @@
 // Shuffle vector
 #include <algorithm>
 #include <random>
+#include <chrono>
 
 // Custom messages
 #include "visual_utils_request.pb.h"

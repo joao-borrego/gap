@@ -11,9 +11,7 @@ export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build/lib
 # Resources
 
 # Export location of custom resources
-export GAZEBO_RESOURCE_PATH=${GAZEBO_RESOURCE_PATH}:`pwd`/media
-# Export location of custom media
-export GAZEBO_MEDIA_PATH=${GAZEBO_MEDIA_PATH}:`pwd`/media
+export GAZEBO_RESOURCE_PATH=${GAZEBO_RESOURCE_PATH}:/DATA
 # Export location of custom models
 export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:`pwd`/models
 

@@ -43,19 +43,19 @@ int main(int argc, char **argv)
     // Wait for a subscriber to connect to this publisher
     pub->WaitForConnection();
 
-    // Main loop
-    for (int i = 0; i < 10; i++){
+    std::vector<std::string> targets = {"box","sphere","cylinder","ground"};
 
+    // Main loop
+    for (int i = 0; i < 10; i++)
+    {
         // Create and send a custom message
         VisualUtilsRequest msg;
         msg.set_type(UPDATE);
         // Define targets of request
-        msg.add_targets(std::string("box_1"));
-        msg.add_targets(std::string("sphere_1"));
-        msg.add_targets(std::string("cylinder_1"));
-        msg.add_targets(std::string("ground_1"));
+        for (const auto & target : targets) {
+            msg.add_targets(target);
+        }
         pub->Publish(msg);
-    	// Wait 500 milliseconds
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
@@ -63,3 +63,17 @@ int main(int argc, char **argv)
     gazebo::client::shutdown();
     return 0;
 }
+
+/////////////////////////////////////////////////
+/*
+void setMaterial(gazebo::transport::PublisherPtr pub,
+    const std::string & target,
+    const std::string & path)
+{
+    VisualUtilsRequest msg;
+    msg.set_type(RESOURCE);
+    msg.add_targets(target);
+    msg.add_resources(path);
+    pub->Publish(msg);
+}
+*/

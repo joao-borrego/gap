@@ -10,10 +10,9 @@ See [external_example] for more details.
 Furthermore, we provide simples example client applications to interact with each plugin.
 - [camera_example], for acquiring frames using CameraUtils
 - [visual_example], for changing object visuals using VisualUtils
-- [world_example], for interacting with the world using WorldUtils 
+- world_example was deprecated as most of its object generation will no longer be supported. 
 
 [external_example]: external_example
 [scene generation]: scene_example
 [camera_example]: camera_example 
 [visual_example]: visual_example
-[world_example]: world_example

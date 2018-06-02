@@ -27,7 +27,6 @@
             Plugin/chess_
             Plugin/perlin_
           </patterns>
-          <variants>100</variants>
         </plugin>
       </visual>
     </link>

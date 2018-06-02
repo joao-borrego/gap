@@ -9,21 +9,21 @@ import "vector3d.proto";
 
 message VisualUtilsRequest
 {
-    /// \brief Type of request 
+    /// Type of request 
     enum Type
     {
-        /// \brief Update 
+        /// Update 
         UPDATE          = 1;
-        /// \brief Set default pose
+        /// Set default pose
         DEFAULT_POSE    = 2;
     }
 
-    /// \brief Type of request 
-    optional Type                   type    = 1;
-    /// \brief Targets of request
-    repeated string                 targets = 2;
-    /// \brief Set of poses
-    repeated gazebo.msgs.Pose       poses   = 3;
-    /// \brief Set of scale vectors
-    repeated gazebo.msgs.Vector3d   scale   = 4;
+    /// Type of request 
+    optional Type                   type        = 1;
+    /// Targets of request
+    repeated string                 targets     = 2;
+    /// Set of poses
+    repeated gazebo.msgs.Pose       poses       = 3;
+    /// Set of scale vectors
+    repeated gazebo.msgs.Vector3d   scale       = 4;
 }

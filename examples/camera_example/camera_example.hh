@@ -38,6 +38,8 @@
 
 /// Request to capture a frame and save it to disk
 #define CAPTURE gap::msgs::CameraUtilsRequest::CAPTURE
+/// Request to change camera plugin settings
+#define OPTIONS gap::msgs::CameraUtilsRequest::OPTIONS
 
 /// Topic monitored by the server for incoming commands
 #define CAMERA_UTILS_TOPIC "~/gap/camera_utils"

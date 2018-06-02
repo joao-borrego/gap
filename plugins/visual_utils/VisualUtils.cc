@@ -47,8 +47,11 @@ class VisualUtilsPrivate
     public: std::string name;
     /// Material name patterns
     public: std::vector<std::string> patterns;
-    /// Number of material type variants
-    public: int variants;
+    /// Available materials
+    public: std::vector<std::string> materials;
+    /// Internal counter for used materials
+    public: unsigned int used_materials {0};
+
     /// Default pose
     public: ignition::math::Pose3d default_pose;
 
@@ -81,9 +84,9 @@ VisualUtils::VisualUtils(): VisualPlugin(), dataPtr(new VisualUtilsPrivate)
 /////////////////////////////////////////////////
 VisualUtils::~VisualUtils()
 {
-    this->dataPtr->sub.reset();
-    this->dataPtr->node->Fini();
-    gzmsg << "[VisualUtils] Unloaded visual tools: " << this->dataPtr->name << std::endl;
+    dataPtr->sub.reset();
+    dataPtr->node->Fini();
+    gzmsg << "[VisualUtils] Unloaded visual tools: " << dataPtr->name << std::endl;
 }
 
 /////////////////////////////////////////////////
@@ -94,95 +97,89 @@ void VisualUtils::Load(rendering::VisualPtr _visual, sdf::ElementPtr _sdf)
         gzerr << "[VisualUtils] Invalid visual or SDF element." << std::endl;
         return;
     }
-    this->dataPtr->visual = _visual;
-
-    // Visual settings
-    this->dataPtr->visual->SetShaderType("vertex");
-    this->dataPtr->visual->SetCastShadows(true);
-    this->dataPtr->visual->SetLighting(true);
-
-    // Connect to the world update signal
-    this->dataPtr->updateConnection = event::Events::ConnectPreRender(
-        std::bind(&VisualUtils::Update, this));
-     // Setup transport node
-    this->dataPtr->node = transport::NodePtr(new transport::Node());
-    this->dataPtr->node->Init();
-    // Subcribe to the monitored requests topic
-    this->dataPtr->sub = this->dataPtr->node->Subscribe(REQUEST_TOPIC,
-        &VisualUtils::onRequest, this);
-    // Setup publisher for the response topic
-    this->dataPtr->pub = this->dataPtr->node->
-        Advertise<gap::msgs::VisualUtilsResponse>(RESPONSE_TOPIC);
+    dataPtr->visual = _visual;
 
     // Plugin parameters
 
     // Unique name
     if (_sdf->HasElement("uid")) {
-        this->dataPtr->name = _sdf->Get<std::string>("uid");
+        dataPtr->name = _sdf->Get<std::string>("uid");
     } else {
-        this->dataPtr->name = DEFAULT_NAME;
+        dataPtr->name = DEFAULT_NAME;
     }
 
     // Possible patterns for material names
     if (_sdf->HasElement("patterns")) {
         std::string patterns_arg(_sdf->Get<std::string>("patterns"));
-        boost::split(this->dataPtr->patterns, patterns_arg,
+        boost::split(dataPtr->patterns, patterns_arg,
             boost::is_any_of(" "), boost::token_compress_on);
     } else {
-        // TODO
+        gzerr << "[VisualUtils] No material name patterns provided.";
+        return;
     }
 
-    // Number of possible variants for each pattern
-    this->dataPtr->variants = 0;
-    if (_sdf->HasElement("variants")) {
-        this->dataPtr->variants = _sdf->Get<int>("variants");
-    }
+    // Visual settings
+    dataPtr->visual->SetShaderType("vertex");
+    dataPtr->visual->SetCastShadows(true);
+    dataPtr->visual->SetLighting(true);
+
+    // Connect to the world update signal
+    dataPtr->updateConnection = event::Events::ConnectPreRender(
+        std::bind(&VisualUtils::Update, this));
+     // Setup transport node
+    dataPtr->node = transport::NodePtr(new transport::Node());
+    dataPtr->node->Init();
+    // Subcribe to the monitored requests topic
+    dataPtr->sub = dataPtr->node->Subscribe(REQUEST_TOPIC,
+        &VisualUtils::onRequest, this);
+    // Setup publisher for the response topic
+    dataPtr->pub = dataPtr->node->
+        Advertise<gap::msgs::VisualUtilsResponse>(RESPONSE_TOPIC);
 
     // Default pose
-    this->dataPtr->default_pose = _visual->Pose();
+    dataPtr->default_pose = _visual->Pose();
+    // Load materials
+    loadResources();
 
-    // TODO - Change to decent RNG
-    srand(time(NULL));
-
-    gzmsg << "[VisualUtils] Loaded visual tools: " << this->dataPtr->name << std::endl;
+    gzmsg << "[VisualUtils] Loaded visual tools: " << dataPtr->name << std::endl;
 }
 
 /////////////////////////////////////////////////
 void VisualUtils::Update()
 {
-    std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+    std::lock_guard<std::mutex> lock(dataPtr->mutex);
 
     gap::msgs::VisualUtilsResponse msg;
     bool updated = false;
 
     // Update scale
-    if (this->dataPtr->update_scale) {
-        if (this->dataPtr->visual->Scale() != this->dataPtr->new_scale) {
-            this->dataPtr->visual->SetScale(this->dataPtr->new_scale);
+    if (dataPtr->update_scale) {
+        if (dataPtr->visual->Scale() != dataPtr->new_scale) {
+            dataPtr->visual->SetScale(dataPtr->new_scale);
         }
-        this->dataPtr->update_scale = false;
+        dataPtr->update_scale = false;
         updated = true;
     }
     // Update pose
-    if (this->dataPtr->update_pose) {
-        if (this->dataPtr->visual->WorldPose() != this->dataPtr->new_pose) {
-            this->dataPtr->visual->SetWorldPose(this->dataPtr->new_pose);
+    if (dataPtr->update_pose) {
+        if (dataPtr->visual->WorldPose() != dataPtr->new_pose) {
+            dataPtr->visual->SetWorldPose(dataPtr->new_pose);
         }
-        this->dataPtr->update_pose = false;
+        dataPtr->update_pose = false;
         updated = true;
     }
     // Update material
-    if (this->dataPtr->update_material) {
-        this->dataPtr->visual->SetMaterial(this->dataPtr->new_material,true,false);
-        this->dataPtr->update_material = false;
+    if (dataPtr->update_material) {
+        dataPtr->visual->SetMaterial(dataPtr->new_material,true,false);
+        dataPtr->update_material = false;
         updated = true;
     }
 
     // Notify subscribers to the response topic that visual was updated
     if (updated) {
         msg.set_type(UPDATED);
-        msg.set_origin(this->dataPtr->name);
-        this->dataPtr->pub->Publish(msg);
+        msg.set_origin(dataPtr->name);
+        dataPtr->pub->Publish(msg);
     }
 }
 
@@ -200,52 +197,97 @@ void VisualUtils::onRequest(VisualUtilsRequestPtr &_msg)
 
     // Check if current visual is targeted
     for (int i = 0; i < _msg->targets_size(); i++) {
-        if (this->dataPtr->name == _msg->targets(i)) {
+        if (dataPtr->name == _msg->targets(i)) {
             index = i; break;
         }
     }
 
     if (_msg->type() == UPDATE)
     {
-        std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+        std::lock_guard<std::mutex> lock(dataPtr->mutex);
 
         if (index == -1) {
             // Ĩf visual is not targeted, set new pose to default pose
-            this->dataPtr->new_pose = this->dataPtr->default_pose;
-            this->dataPtr->update_pose = true;
+            dataPtr->new_pose = dataPtr->default_pose;
+            dataPtr->update_pose = true;
         } else {
             if (index < _msg->poses_size()) {
-                this->dataPtr->new_pose = gazebo::msgs::ConvertIgn(_msg->poses(index));
-                this->dataPtr->update_pose = true;
+                dataPtr->new_pose = gazebo::msgs::ConvertIgn(_msg->poses(index));
+                dataPtr->update_pose = true;
             }
             if (index < _msg->scale_size()) {
-                this->dataPtr->new_scale = gazebo::msgs::ConvertIgn(_msg->scale(index));
-                this->dataPtr->update_scale = true;
+                dataPtr->new_scale = gazebo::msgs::ConvertIgn(_msg->scale(index));
+                dataPtr->update_scale = true;
             }
-            randomMaterialName(this->dataPtr->new_material);
-            this->dataPtr->update_material = true;
+            randomMaterialName(dataPtr->new_material);
+            dataPtr->update_material = true;
         }
     }
     else if (_msg->type() == DEFAULT_POSE)
     {
-        std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+        std::lock_guard<std::mutex> lock(dataPtr->mutex);
 
         if (index != -1) {
             if (index < _msg->poses_size()) {
-                this->dataPtr->default_pose = gazebo::msgs::ConvertIgn(_msg->poses(index));
+                dataPtr->default_pose = gazebo::msgs::ConvertIgn(
+                    _msg->poses(index));
             }
         }
     }
 }
 
 /////////////////////////////////////////////////
+void VisualUtils::loadResources()
+{
+    std::lock_guard<std::mutex> lock(dataPtr->mutex);
+
+    // Clear materials
+    dataPtr->materials.clear();
+    // Get list of OGRE resources
+    Ogre::ResourceManager::ResourceMapIterator resources = 
+        Ogre::MaterialManager::getSingleton().getResourceIterator();
+    // Add materials that match material patterns
+    std::string name;
+    for (auto & material : resources)
+    {
+        name = material.second->getName();
+        for (auto & pattern : dataPtr->patterns)
+        {
+            // Check if pattern matches prefix
+            auto res = std::mismatch(
+                pattern.begin(), pattern.end(), name.begin());
+            if (res.first == pattern.end()) {
+                dataPtr->materials.push_back(name);
+            }
+        }
+    }
+
+    // Shuffle materials vector
+    auto rng = std::default_random_engine {};
+    std::shuffle(std::begin(dataPtr->materials),
+        std::end(dataPtr->materials), rng);
+
+    /*
+    gzdbg << dataPtr->materials.size()
+        << " matching materials found." << std::endl;
+    */
+}
+
+/////////////////////////////////////////////////
 void VisualUtils::randomMaterialName(std::string &name)
 {
-    // TODO - Change to decent RNG
-    int r = rand() % this->dataPtr->patterns.size();
-    name = this->dataPtr->patterns.at(r);
-    r = rand() % this->dataPtr->variants;
-    name = name + std::to_string(r);
-}
+    if (dataPtr->used_materials == dataPtr->materials.size())
+    {
+        // All materials have been used once. Reshuffle    
+        auto rng = std::default_random_engine {};
+        std::shuffle(std::begin(dataPtr->materials),
+            std::end(dataPtr->materials), rng);
+        dataPtr->used_materials = 0;
+    }
+    else
+    {
+        name = dataPtr->materials.at(dataPtr->used_materials++);
+    }
+} 
 
 }

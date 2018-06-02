@@ -58,9 +58,7 @@ namespace CameraUtils {
 /// Camera capture response
 #define CAPTURE_RESPONSE    gap::msgs::CameraUtilsResponse::CAPTURE
 /// Request change image storage directory
-#define DIR_REQUEST         gap::msgs::CameraUtilsRequest::DIR
-/// Change image storage directory response
-#define DIR_RESPONSE        gap::msgs::CameraUtilsResponse::DIR
+#define OPTIONS_REQUEST     gap::msgs::CameraUtilsRequest::OPTIONS
 /// Request 3D to 2D point projection
 #define PROJECTION_REQUEST  gap::msgs::CameraUtilsRequest::PROJECTION
 /// Point projection response

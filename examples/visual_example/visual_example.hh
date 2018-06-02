@@ -43,4 +43,4 @@
 #define VISUAL_UTILS_TOPIC "~/gap/visual_utils"
 
 /// Request update
-#define UPDATE  gap::msgs::VisualUtilsRequest::UPDATE
+#define UPDATE      gap::msgs::VisualUtilsRequest::UPDATE

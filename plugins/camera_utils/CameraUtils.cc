@@ -138,9 +138,16 @@ void CameraUtils::onRequest(CameraUtilsRequestPtr &_msg)
         this->save_on_update = true;
         gzdbg << "Requested save frame as " << next_file_name << std::endl;
     }
-    else if (_msg->type() == DIR_REQUEST)
+    else if (_msg->type() == OPTIONS_REQUEST)
     {
-        // TODO
+        std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+
+        if (_msg->has_output_dir()) {
+            output_dir = _msg->output_dir();
+        }
+        if (_msg->has_extension()) {
+            extension = _msg->extension();
+        }
     }
     else if (_msg->type() == PROJECTION_REQUEST)
     {

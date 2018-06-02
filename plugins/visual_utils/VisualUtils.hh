@@ -28,7 +28,9 @@
 // Gazebo
 #include <gazebo/common/Events.hh>
 #include "gazebo/common/Plugin.hh"
+#include "gazebo/common/SystemPaths.hh"
 #include <gazebo/msgs/msgs.hh>
+#include "gazebo/rendering/RenderEngine.hh"
 #include <gazebo/rendering/Visual.hh>
 #include <gazebo/transport/Node.hh>
 
@@ -37,9 +39,9 @@
 #include <boost/algorithm/string/split.hpp>
 // Mutex
 #include <mutex>
-// TODO - Change to decent RNG
-#include <time.h>
-#include <stdlib.h>
+// Shuffle vector
+#include <algorithm>
+#include <random>
 
 // Custom messages
 #include "visual_utils_request.pb.h"
@@ -56,6 +58,8 @@ namespace VisualUtils {
 #define UPDATE          gap::msgs::VisualUtilsRequest::UPDATE
 /// Set default pose
 #define DEFAULT_POSE    gap::msgs::VisualUtilsRequest::DEFAULT_POSE
+/// TODO
+#define MATERIAL        gap::msgs::VisualUtilsRequest::MATERIAL_PREFIX
 
 /// Visual updated response
 #define UPDATED         gap::msgs::VisualUtilsResponse::UPDATED
@@ -119,11 +123,14 @@ namespace gazebo{
         /// \param _msg  The message
         public: void onRequest(VisualUtilsRequestPtr & _msg);
 
-        /// \brief Randomly generates a new material name.
-        /// \param name Output random material name
-        public: void randomMaterialName(std::string & name);
-
         /// \brief Private data pointer
         private: std::unique_ptr<VisualUtilsPrivate> dataPtr;
+
+        /// \brief Loads names of available materials.
+        private: void loadResources();
+
+        /// \brief Randomly generates a new material name.
+        /// \param name Output random material name
+        private: void randomMaterialName(std::string & name);
     };
 }

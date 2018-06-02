@@ -6,7 +6,7 @@
       <uri>model://sun</uri>
     </include>
     
-    <model name="box_1">
+    <model name="box">
       <pose>0 0 0 0 0 0</pose>
       <link name="link">
         <collision name="collision">
@@ -23,7 +23,7 @@
             </box>
           </geometry>
           <plugin name="visual_utils" filename="libVisualUtils.so">
-            <uid>box_1</uid>
+            <uid>box</uid>
             <patterns>
               Plugin/flat_
             </patterns>
@@ -33,7 +33,7 @@
       </link>
     </model>
 
-    <model name="sphere_1">
+    <model name="sphere">
       <pose>1 0 0 0 0 0</pose>
       <link name="link">
         <collision name="collision">
@@ -50,7 +50,7 @@
             </sphere>
           </geometry>
           <plugin name="visual_utils" filename="libVisualUtils.so">
-            <uid>sphere_1</uid>
+            <uid>sphere</uid>
             <patterns>
               Plugin/chess_
             </patterns>
@@ -60,7 +60,7 @@
       </link>
     </model>
 
-    <model name="cylinder_1">
+    <model name="cylinder">
       <pose>2 0 0 0 0 0</pose>
       <link name="link">
         <collision name="collision">
@@ -78,7 +78,7 @@
             </cylinder>
           </geometry>
           <plugin name="visual_utils" filename="libVisualUtils.so">
-            <uid>cylinder_1</uid>
+            <uid>cylinder</uid>
             <patterns>
               Plugin/perlin_
             </patterns>
@@ -112,7 +112,7 @@
             </plane>
           </geometry>
           <plugin name="visual_utils" filename="libVisualUtils.so">
-            <uid>ground_1</uid>
+            <uid>ground</uid>
             <patterns>
               Plugin/flat_
               Plugin/gradient_

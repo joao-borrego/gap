@@ -97,6 +97,8 @@
 #define PROJECTION_REQUEST      gap::msgs::CameraUtilsRequest::PROJECTION
 /// Response 3D to 2D point projection
 #define PROJECTION_RESPONSE     gap::msgs::CameraUtilsResponse::PROJECTION
+/// Request to change camera plugin settings
+#define OPTIONS                 gap::msgs::CameraUtilsRequest::OPTIONS
 
 // Visual utils
 

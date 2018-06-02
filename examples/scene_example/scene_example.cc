@@ -28,8 +28,9 @@
 
 // Global variables
 
-// 4 x 4 object Grid
-ObjectGrid g_grid(4, 4, 4, 4, 1);
+// 2 x 2 object Grid
+// 10 x 10 x 1 cells
+ObjectGrid g_grid(2, 2, 10, 10, 1);
 
 // Variables that lock progress for synchronous scene generation
 bool g_moved {false};
@@ -45,7 +46,8 @@ std::set<std::string> g_names;
 
 // Global camera pose
 ignition::math::Pose3d g_camera_pose;
-
+// Determines if light should be moved
+bool g_move_light {true};
 
 // Regex objects
 std::regex g_regex_uid(REGEX_XML_UID);
@@ -129,6 +131,14 @@ int main(int argc, char **argv)
     pub_world->Publish(msg_spawn);
     debugPrintTrace("Spawning objects");
 
+    // Configure camera
+    pub_camera->WaitForConnection();
+    gap::msgs::CameraUtilsRequest msg_options;
+    msg_options.set_type(OPTIONS);
+    msg_options.set_output_dir(imgs_dir);
+    msg_options.set_extension(".jpg");
+    pub_camera->Publish(msg_options, false);
+
     // Wait for a subscriber to connect to this publisher
     pub_visual->WaitForConnection();
     std::this_thread::sleep_for(std::chrono::milliseconds(3000));
@@ -141,7 +151,7 @@ int main(int argc, char **argv)
     for (int iteration = start; iteration < scenes + start; iteration++) {
 
         // Populate grid with random objects
-        int num_objects = (getRandomInt(5, 10));
+        int num_objects = (getRandomInt(1, 4));
         g_grid.populate(num_objects);
         // Create a set with the names of created objects
         createNameSet();
@@ -320,7 +330,7 @@ ignition::math::Pose3d getRandomCameraPose()
         getRandomDouble(0, M_PI / 4.0));
 
     ignition::math::Pose3d new_pose;
-    ignition::math::Vector3d position(2, 2, 5.5);
+    ignition::math::Vector3d position(2.5, 2.5, 6.0);
 
     new_pose.Set(position,
         (correct_orientation * original_orientation).Inverse());

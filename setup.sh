@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # Source gazebo environment
-source /usr/local/share/gazebo-9/setup.sh
+# Source installation
+source /usr/local/share/gazebo-9/setup.sh 2> /dev/null
+# deb installation
+source /usr/share/gazebo-9/setup.sh 2> /dev/null
 
 # Libraries
 

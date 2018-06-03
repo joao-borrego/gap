@@ -34,6 +34,8 @@
 #include <iostream>
 // File system
 #include <boost/filesystem.hpp>
+// Random
+#include <random>
 
 // Custom debug utilities
 #include "debug.hh"

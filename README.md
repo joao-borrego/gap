@@ -32,13 +32,12 @@ The code has been tested in Gazebo 9.0.0 from the official stable repository as 
 
 Gazebo internal message passing relies on Protobuf, which is why the compiler needs to be installed in order
 to generate the tools' custom messages.
+Eigen 3 is required for [scene_example].
 
 ``` bash
 sudo apt install protobuf-compiler
+sudo apt-get install libeigen3-dev
 ```
-
-Eigen 3 is required for [scene_example].
-
 For custom texture generation, we have developed a [pattern generation tool], which can randomly generate a high number of 4 different types of textures which produces materials in a format Gazebo can recognise.
 
 ### Compilation

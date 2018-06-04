@@ -40,7 +40,7 @@ const bool g_move_light {true};
 // Light default position
 const ignition::math::Vector3d g_light_pos {2, 2, 5.5};
 // Camera default position
-const ignition::math::Vector3d g_camera_pos {2, 2, 5.5};
+const ignition::math::Vector3d g_camera_pos {2, 2, 5};
 
 // Variables that lock progress for synchronous scene generation
 bool g_moved {false};

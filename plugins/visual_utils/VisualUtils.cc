@@ -170,7 +170,7 @@ void VisualUtils::Update()
     }
     // Update material
     if (dataPtr->update_material) {
-        dataPtr->visual->SetMaterial(dataPtr->new_material,true,false);
+        dataPtr->visual->SetMaterial(dataPtr->new_material,false,false);
         dataPtr->update_material = false;
         updated = true;
     }

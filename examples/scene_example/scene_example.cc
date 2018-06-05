@@ -30,17 +30,17 @@
 
 // 4 x 4 object Grid
 // 1 x 1 x 1 cells
-ObjectGrid g_grid(4, 4, 4, 4, 1);
+ObjectGrid g_grid(3, 3, 3, 3, 1);
 // Minimum number of objects
-const int g_obj_min {5};
+const int g_obj_min {2};
 // Maximum number of objects
-const int g_obj_max {10};
+const int g_obj_max {7};
 // Change light position
 const bool g_move_light {true};
 // Light default position
-const ignition::math::Vector3d g_light_pos {2, 2, 5.5};
+const ignition::math::Vector3d g_light_pos {1.5, 1.5, 5.5};
 // Camera default position
-const ignition::math::Vector3d g_camera_pos {2, 2, 5};
+const ignition::math::Vector3d g_camera_pos {1.5, 1.5, 3.2};
 
 // Variables that lock progress for synchronous scene generation
 bool g_moved {false};

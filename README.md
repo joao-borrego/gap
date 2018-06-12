@@ -34,7 +34,7 @@ Gazebo internal message passing relies on Protobuf, which is why the compiler ne
 to generate the tools' custom messages.
 Eigen 3 is required for [scene_example].
 
-``` bash
+```bash
 sudo apt install protobuf-compiler
 sudo apt install libeigen3-dev
 ```
@@ -44,7 +44,7 @@ For custom texture generation, we have developed a [pattern generation tool], wh
 
 Clone the repository to your workspace directory and build from source.
 
-``` bash
+```bash
 cd ~/workspace/gap/ &&
 mkdir build &&
 cd build &&
@@ -59,14 +59,29 @@ Alternatively you can build each plugin/tool individually in a similar fashion.
 Make sure you properly initialise the required environment variables.
 We provide a simple script for this:
 
-``` bash
+```bash
 cd ~/workspace/gap &&
 source setup.sh
 ```
 
 ### Reference
 
-A scientific [paper] will soon be published and specified in this section for citation purposes.
+These tools were developed to further our research regarding domain randomisation.
+We include the [paper] and its reference for citation purposes.
+
+```
+@inproceedings{borrego2018,
+  author = {J. Borrego and R. Figueiredo and A. Dehban and P. Moreno and A. Bernardino and J. Santos-Victor},
+  booktitle = {2018 IEEE International Conference on Autonomous Robot Systems and Competitions (ICARSC)},
+  title = {A generic visual perception domain randomisation framework for Gazebo},
+  year = {2018},
+  pages = {237-242},
+  keywords = {Machine learning;Neural networks;Object detection;Proposals;Robots;Task analysis;Training},
+  doi = {10.1109/ICARSC.2018.8374189},
+  month = {April}
+}
+
+```
 
 ### Disclaimer
 

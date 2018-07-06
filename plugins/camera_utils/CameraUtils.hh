@@ -111,11 +111,11 @@ namespace gazebo{
         /// Directory for saving output
         private: std::string output_dir;
         /// Saved frames counter
-        private: int saved_counter = 0;
+        private: int saved_counter {0};
         /// File name for next capture
         private: std::string next_file_name;
         /// Internal flag for saving on next update
-        private: bool save_on_update = false;
+        private: bool save_on_update {false};
         /// Connects to new frame rendered event
         private: event::ConnectionPtr newFrameConnection;
 

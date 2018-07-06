@@ -69,6 +69,13 @@
 
 // Macros
 
+// Fixed viewpoint
+#define FIXED_VIEW 0
+// Moving viewpoint, change in position
+#define MOVING_VIEW_POS 1
+// Moving viewpoint, change in position and rotation
+#define MOVING_VIEW_POS_ROT 2
+
 // Do not raise documentation error 
 //! @cond DoNotRaiseWarning
 

@@ -4,9 +4,9 @@
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *      
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@
 
 // Global variables
 
-// 4 x 4 object Grid
+// 3 x 3 object Grid
 // 1 x 1 x 1 cells
 ObjectGrid g_grid(3, 3, 3, 3, 1);
 // Minimum number of objects
@@ -41,6 +41,8 @@ const bool g_move_light {true};
 const ignition::math::Vector3d g_light_pos {1.5, 1.5, 5.5};
 // Camera default position
 const ignition::math::Vector3d g_camera_pos {1.5, 1.5, 3.2};
+// Viewpoint variation
+const int g_viewpoint {FIXED_VIEW};
 
 // Variables that lock progress for synchronous scene generation
 bool g_moved {false};
@@ -142,7 +144,7 @@ int main(int argc, char **argv)
     gap::msgs::CameraUtilsRequest msg_options;
     msg_options.set_type(OPTIONS);
     msg_options.set_output_dir(imgs_dir);
-    msg_options.set_extension(".jpg");
+    msg_options.set_extension(".png");
     pub_camera->Publish(msg_options);
 
     // Wait for a subscriber to connect to this publisher
@@ -194,17 +196,20 @@ int main(int argc, char **argv)
         while (waitForMove()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+        debugPrintTrace("Camera moved");
 
         // Wait for visuals to update
         while (waitForVisuals()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+        debugPrintTrace("Visuals moved");
 
         // Capture the scene and save it to a file
         captureScene(pub_camera, iteration);
         while (waitForCamera()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+        debugPrintTrace("Scene captured");
 
         // Request point projection
         pub_camera->Publish(msg_points);
@@ -213,6 +218,8 @@ int main(int argc, char **argv)
         while (waitForProjections()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+
+        debugPrintTrace("Projections received");
 
         // Save annotations to file
         storeAnnotations(dataset_dir, iteration);
@@ -325,21 +332,40 @@ void addMoveObject(
 //////////////////////////////////////////////////
 ignition::math::Pose3d getRandomCameraPose()
 {
-    static const ignition::math::Quaternion<double> correct_orientation(
-        ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
-
-    ignition::math::Quaternion<double> original_orientation(
-        getRandomDouble(0, M_PI / 4.0),
-        getRandomDouble(0, M_PI / 4.0),
-        getRandomDouble(0, M_PI / 4.0));
-
     ignition::math::Pose3d new_pose;
     ignition::math::Vector3d position(g_camera_pos);
+    ignition::math::Vector3d offset(0,0,0);
+    ignition::math::Quaternion<double> original_orientation(0,0,0);
+    ignition::math::Quaternion<double> correct_orientation(
+        ignition::math::Vector3d(0,1,0), - M_PI / 2.0);
 
-    new_pose.Set(position,
+    // Fixed viewpoint
+    if (g_viewpoint == FIXED_VIEW || g_viewpoint == MOVING_VIEW_POS)
+    {
+        ignition::math::Quaternion<double> aux(0, M_PI/4.0, 0);
+        original_orientation.Euler(aux.Euler());
+    }
+    // Random position (Small variation)
+    if (g_viewpoint == MOVING_VIEW_POS)
+    {
+        offset.Set(
+            getRandomDouble(-0.1, 0.1),
+            getRandomDouble(-0.1, 0.1),
+            getRandomDouble(-0.1, 0.1));
+    }
+    // Random orientation (Big variation)
+    if (g_viewpoint == MOVING_VIEW_POS_ROT)
+    {
+        ignition::math::Quaternion<double> aux(
+            getRandomDouble(0, M_PI / 4.0),
+            getRandomDouble(0, M_PI / 4.0),
+            getRandomDouble(0, M_PI / 4.0));
+        original_orientation.Euler(aux.Euler());
+    }
+
+    new_pose.Set(position + offset,
         (correct_orientation * original_orientation).Inverse());
     new_pose = new_pose.RotatePositionAboutOrigin(original_orientation);
-
     return new_pose;
 }
 
@@ -528,6 +554,8 @@ void onCameraUtilsResponse(CameraUtilsResponsePtr &_msg)
             g_grid.objects[i].bounding_box.push_back(x_max);
             g_grid.objects[i].bounding_box.push_back(y_max);
         }
+
+        debugPrintTrace("DONE");
 
         std::lock_guard<std::mutex> lock(g_points_ready_mutex);
         g_points_ready = true;

@@ -21,6 +21,10 @@ This project was originally conceived so we could develop a [scene generator] in
 
 Check out the [examples] and see what you can achieve with these plugins.
 
+<p align="center"> 
+    <img src=.image/demo.gif>
+</p>
+
 ### Documentation
 
 Take a look at the automatic [documentation] for file and class description.

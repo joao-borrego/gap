@@ -12,6 +12,10 @@ foreach(ITR ${GAZEBO_INCLUDE_DIRS})
   endif()
 endforeach()
 
+# Get list of every proto source
+# Results in overhead in compilation
+file(GLOB PROTOBUF_SOURCES ${PROTOBUF_IMPORT_DIRS}/*.proto)
+
 # Obtain set of proto messages definitions
 set (msgs
   # CameraUtils messages
@@ -25,13 +29,11 @@ set (msgs
   world_utils_request.proto
   world_utils_response.proto
   object.proto
+  # Domain Randomization Plugin messages
+  model_cmd.proto
+  dr_request.proto
   # Message dependencies
-  ${PROTOBUF_IMPORT_DIRS}/header.proto
-  ${PROTOBUF_IMPORT_DIRS}/time.proto
-  ${PROTOBUF_IMPORT_DIRS}/quaternion.proto
-  ${PROTOBUF_IMPORT_DIRS}/pose.proto
-  ${PROTOBUF_IMPORT_DIRS}/vector2d.proto
-  ${PROTOBUF_IMPORT_DIRS}/vector3d.proto
+  ${PROTOBUF_SOURCES}
 )
 
 # Generate Protobuf sources
@@ -40,6 +42,18 @@ PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
 add_library(gap_msgs SHARED ${PROTO_SRCS})
 # Link Protobuf library
 target_link_libraries(gap_msgs ${PROTOBUF_LIBRARY})
+
+# Obtain header include string
+set (headers_list)
+foreach(FIL ${msgs})
+  get_filename_component(FIL_WE ${FIL} NAME_WE)
+  set(headers_list ${headers_list} "\n\#include \"${FIL_WE}.pb.h\"")
+endforeach()
+string(REPLACE ";" "" message_headers "${headers_list}")
+
+# Configure header for message types
+configure_file (${PROJECT_SOURCE_DIR}/msgs/MessageTypes.hh.in
+  ${CMAKE_CURRENT_BINARY_DIR}/MessageTypes.hh )
 
 # Install library
 install(TARGETS gap_msgs

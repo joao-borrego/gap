@@ -18,7 +18,7 @@
     \file utils/gz_debug.hh
     \brief Gazebo debug utilities
 
-	\warning Should only be included in Gazebo plugins!
+    \warning Should only be included in Gazebo plugins!
 
     \author João Borrego : jsbruglie
 */

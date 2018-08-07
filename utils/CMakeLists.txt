@@ -21,3 +21,13 @@ link_directories(${PROJECT_BINARY_DIR}/msgs)
 # Header-only library for debug utilities
 add_library(gap_debug INTERFACE)
 target_include_directories(gap_debug INTERFACE . )
+
+# Shared library for domain randomization plugin interface
+add_library(dr_interface SHARED
+    DRInterface.cc)
+target_link_libraries(dr_interface
+    gap_debug
+    gap_msgs)
+add_dependencies(dr_interface
+    gap_debug
+    gap_msgs)

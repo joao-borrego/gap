@@ -8,6 +8,7 @@ include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
+
 include_directories(
   ${GAZEBO_INCLUDE_DIRS}
   ${SDF_INCLUDE_DIRS}
@@ -20,7 +21,7 @@ link_directories(
   ${PROJECT_BINARY_DIR}/msgs
 )
 
-# Camera utils plugin client
+# Scene example
 add_executable (scene_example
   scene_example.cc
   utils.cc

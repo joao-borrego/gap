@@ -103,6 +103,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 INPUT                  = @CMAKE_SOURCE_DIR@/plugins \
                          @CMAKE_SOURCE_DIR@/msgs \
+                         @CMAKE_SOURCE_DIR@/utils \
                          @CMAKE_SOURCE_DIR@/examples
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.cc *.hh *.h

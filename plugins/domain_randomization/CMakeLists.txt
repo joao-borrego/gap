@@ -21,14 +21,19 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 # Include custom messages
 include_directories(${PROJECT_BINARY_DIR}/msgs)
 link_directories(${PROJECT_BINARY_DIR}/msgs)
+# Include custom utilities
+include_directories(${PROJECT_BINARY_DIR}/utils)
+link_directories(${PROJECT_BINARY_DIR}/utils)
 
 # Gazebo visual utils plugin
 add_library(DRPlugin SHARED
 	DRPlugin.cc )
 target_link_libraries(DRPlugin
     gap_msgs
+    gap_debug
     ${GAZEBO_LIBRARIES} ${SDF_LIBRARIES})
 add_dependencies(DRPlugin
+	gap_debug
     gap_msgs)
 
 # Install library

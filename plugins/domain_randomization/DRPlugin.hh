@@ -35,16 +35,11 @@
 // Custom messages
 #include "dr_request.pb.h"
 #include "model_cmd.pb.h"
+// Custom gazebo debug utilities
+#include "gz_debug.hh"
 
 // Required fields workaround
 #include <limits>
-
-// TODO - Migrate
-#define NULL_CHECK(_expr, _msg) if (!_expr) \
-{                                           \
-    gzdbg << _msg << std::endl;             \
-    return;                                 \
-}
 
 namespace gazebo {
 

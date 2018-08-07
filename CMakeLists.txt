@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 # Project name
-project(gap VERSION 1.1.0)
+project(gap VERSION 1.2.0)
 message (STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION}")
 string (TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 string (TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
@@ -28,6 +28,10 @@ set (project_major_minor
     "${PROJECT_NAME_LOWER}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 set (msgs_include_dest "include/${project_major_minor}")
 set (msgs_lib_dest "lib/${project_major_minor}")
+
+# Setup directories for plugin installation
+set (plugins_include_dest "include/${project_major_minor}/plugins")
+set (plugins_lib_dest "lib/${project_major_minor}/plugins")
 
 # Add uninstall command
 add_custom_target(uninstall

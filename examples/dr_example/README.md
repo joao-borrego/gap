@@ -17,6 +17,7 @@ Other [documented] features **not** showcased (for now) include:
 1. Change individual collision surface properties;
 1. Change individual link inertia tensor;
 
+Every implemented feature has been mentioned or explored in recent literature, namely by OpenAI in their work on [dexterous manipulation].
 We provide an [Interface class] for interacting with the plugin. 
 
 ### Prerequisites
@@ -27,7 +28,7 @@ Finally we need Shadow's official [robot description package].
 The latter needs to be downloaded to the active catkin workspace.
 
 ```bash
-cd catkin_ws && git clone https://github.com/shadow-robot/sr_common.git
+cd catkin_ws/src && git clone https://github.com/shadow-robot/sr_common.git
 ```
 
 ### Running
@@ -59,3 +60,4 @@ rosrun gazebo_ros spawn_model -file models/shadowhand_motor.urdf -urdf -model sh
 [gazebo_ros_pkgs]: http://wiki.ros.org/gazebo_ros_pkgs
 [here]: http://gazebosim.org/tutorials?tut=ros_installing
 [robot description package]: https://github.com/shadow-robot/sr_common
+[dexterous manipulation]: https://blog.openai.com/learning-dexterity/

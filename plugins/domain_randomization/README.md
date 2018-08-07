@@ -1,6 +1,6 @@
 ## Domain Randomization plugin
 
-This multi-purpose Domain Randomization plugin, allows changing both physical and visual model properties, namely:
+This multi-purpose Domain Randomization plugin allows changing both physical and visual model properties, namely:
 
 1. Change gravity 3D vector;
 1. Scale spawned model;

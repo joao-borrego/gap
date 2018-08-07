@@ -31,3 +31,10 @@ target_link_libraries(dr_interface
 add_dependencies(dr_interface
     gap_debug
     gap_msgs)
+
+# Install library
+install(TARGETS dr_interface
+  DESTINATION "${utils_lib_dest}")
+install(FILES DRInterface.hh
+  DESTINATION "${utils_include_dest}")
+

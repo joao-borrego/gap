@@ -25,9 +25,14 @@ Check out [`tf-object-detection`](https://github.com/jsbruglie/tf-shape-detectio
 
 Check out the [examples] and see what you can achieve with these plugins.
 
-<p align="center"> 
-    <img src=.image/demo.gif>
-</p>
+<center>
+<table>
+  <tr>
+  <td width="35%"><img src=.image/shadowhand.gif height="400px" alt="shadowhand"></td>
+  <td width="55%"><img src=.image/demo.gif height="400px" alt="scene_example"></td>
+  </tr>
+  </table>
+</center>
 
 ### Documentation
 

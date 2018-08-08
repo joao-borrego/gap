@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 # Project name
-project(gap VERSION 1.1.0)
+project(gap VERSION 1.2.0)
 message (STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION}")
 string (TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 string (TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
@@ -23,11 +23,17 @@ find_package(Protobuf REQUIRED)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
-# Setup directories for library installation
+# [project]-[major].[minor] String
 set (project_major_minor
     "${PROJECT_NAME_LOWER}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
+# Setup directories for library installation
 set (msgs_include_dest "include/${project_major_minor}")
 set (msgs_lib_dest "lib/${project_major_minor}")
+# Setup directories for plugin installation
+set (plugins_lib_dest "lib/${project_major_minor}/plugins")
+# Setup directories for utils installation
+set (utils_include_dest "include/${project_major_minor}")
+set (utils_lib_dest "lib/${project_major_minor}")
 
 # Add uninstall command
 add_custom_target(uninstall
@@ -40,6 +46,8 @@ add_custom_target(uninstall
 add_subdirectory(msgs)
 # Plugins
 add_subdirectory(plugins)
+# Utilities
+add_subdirectory(utils)
 # Examples
 add_subdirectory(examples)
 # Documentation

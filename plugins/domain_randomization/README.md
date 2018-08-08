@@ -21,5 +21,5 @@ We provide an [Interface class] for interacting with the plugin, and an [example
 
 [Domain Randomization plugin]: plugins/domain_randomization
 [documented]: http://web.tecnico.ulisboa.pt/joao.borrego/gap/classDRInterface.html
-[Interface class]: /../../utils
-[example]: /../../examples/dr_example
+[Interface class]: /../../tree/dev/utils
+[example]: /../../tree/dev/examples/dr_example

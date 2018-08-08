@@ -7,5 +7,5 @@ Further details are provided in the automatic [documentation].
 
 <!-- Links -->
 
-[Domain Randomization plugin]: /../../plugins/domain_randomization
+[Domain Randomization plugin]: /../../tree/dev/plugins/domain_randomization
 [documentation]: http://web.tecnico.ulisboa.pt/joao.borrego/gap/classDRInterface.html

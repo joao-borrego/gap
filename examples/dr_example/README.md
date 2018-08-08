@@ -52,9 +52,9 @@ rosrun gazebo_ros spawn_model -file models/shadowhand_motor.urdf -urdf -model sh
 
 <!-- Links -->
 
-[Domain Randomization plugin]: /../../plugins/domain_randomization
+[Domain Randomization plugin]: tree/dev/plugins/domain_randomization
 [documented]: http://web.tecnico.ulisboa.pt/joao.borrego/gap/classDRInterface.html
-[Interface class]: /../../utils
+[Interface class]: /../../tree/dev/utils
 [Shadow's Dexterous Hand]: https://www.shadowrobot.com/products/dexterous-hand/
 [ROS]: http://www.ros.org/
 [gazebo_ros_pkgs]: http://wiki.ros.org/gazebo_ros_pkgs

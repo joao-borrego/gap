@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 # Project name
-project(gap VERSION 1.2.0)
+project(gap VERSION 1.3.0)
 message (STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION}")
 string (TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 string (TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
@@ -59,7 +59,13 @@ set(cmake_conf_file "cmake/gap-config.cmake")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${cmake_conf_file}.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${cmake_conf_file}" @ONLY)
 
+# Version control
+set(cmake_version_file "cmake/gap-config-version.cmake")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${cmake_version_file}.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/${cmake_version_file}" @ONLY)
+
 # Create package
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${cmake_conf_file}
+    ${CMAKE_CURRENT_BINARY_DIR}/${cmake_version_file}
     DESTINATION ${msgs_lib_dest}/
     COMPONENT cmake)

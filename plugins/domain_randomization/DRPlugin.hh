@@ -35,6 +35,7 @@
 // Custom messages
 #include "dr_request.pb.h"
 #include "model_cmd.pb.h"
+#include "dr_response.pb.h"
 // Custom gazebo debug utilities
 #include "gz_debug.hh"
 
@@ -50,6 +51,11 @@ namespace gazebo {
     /// Shared pointer declaration for request message type
     typedef const boost::shared_ptr<const gap::msgs::DRRequest>
         DRRequestPtr;
+    /// Declaration for response message type
+    typedef gap::msgs::DRResponse DRResponse;
+    /// Shared pointer declaration for response message type
+    typedef const boost::shared_ptr<const gap::msgs::DRResponse>
+        DRResponsePtr;
     /// Declaration for model command message type
     typedef gap::msgs::ModelCmd ModelCmdMsg;
     /// Shared pointer declaration for model command message type
@@ -70,16 +76,26 @@ namespace gazebo {
     /// See worlds/domain_randomization.world for a complete example.
     class DRPlugin : public WorldPlugin
     {
-        /// Topic for DRPlugin requests
+        /// Default topic for DRPlugin requests
         public: static const char REQUEST_TOPIC[];
-        /// Topic for DRPlugin responses
+        /// Default topic for DRPlugin responses
         public: static const char RESPONSE_TOPIC[];
         /// Position controller type
         public: static const int POSITION;
         /// Velocity controller type
         public: static const int VELOCITY;
 
+        /// SDF tag for topic for DRPlugin requests
+        public: static const char PARAM_REQ_TOPIC[];
+        /// SDF tag for topic for DRPlugin responses
+        public: static const char PARAM_RES_TOPIC[];
+
         // Private attributes
+
+        /// Topic for DRPlugin requests
+        private: std::string req_topic {REQUEST_TOPIC};
+        /// Topic for DRPlugin responses
+        private: std::string res_topic {RESPONSE_TOPIC};
 
         /// Class with private attributes
         private: std::unique_ptr<DRPluginPrivate> data_ptr;
@@ -107,6 +123,10 @@ namespace gazebo {
         /// \param _sdf   The sdf element pointer
         public: virtual void Load(
             physics::WorldPtr _world, sdf::ElementPtr _sdf);
+
+        /// \brief Loads the topic names from SDF
+        /// \param _sdf   The sdf element pointer
+        private: void loadTopicNames(sdf::ElementPtr _sdf);
 
         /// \brief Called on World Update event
         public: void onUpdate();

@@ -30,7 +30,7 @@ set (project_major_minor
 set (msgs_include_dest "include/${project_major_minor}")
 set (msgs_lib_dest "lib/${project_major_minor}")
 # Setup directories for plugin installation
-set (plugins_lib_dest "lib/${project_major_minor}/plugins")
+set (plugins_lib_dest "lib/${project_major_minor}")
 # Setup directories for utils installation
 set (utils_include_dest "include/${project_major_minor}")
 set (utils_lib_dest "lib/${project_major_minor}")

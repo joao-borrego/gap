@@ -2,7 +2,10 @@
 <sdf version="1.6">
   <world name="default">
 
-    <plugin name="domain_randomization_plugin" filename="libDRPlugin.so"/>
+    <plugin name="domain_randomization_plugin" filename="libDRPlugin.so">
+    	<request_topic>~/gap/dr</request_topic>
+    	<response_topic>~/gap/dr/response</response_topic>
+    </plugin>
 
     <include>
       <uri>model://ground_plane</uri>

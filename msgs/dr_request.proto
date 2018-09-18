@@ -17,4 +17,6 @@ message DRRequest
     repeated gazebo.msgs.Model     model      = 2;
     /// Model PID commands
     repeated ModelCmd              model_cmd  = 3;
+    /// Whether to report back
+    optional bool                  feedback   = 4;
 }

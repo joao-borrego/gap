@@ -32,6 +32,7 @@ set (msgs
   # Domain Randomization Plugin messages
   model_cmd.proto
   dr_request.proto
+  dr_response.proto
   # Message dependencies
   ${PROTOBUF_SOURCES}
 )

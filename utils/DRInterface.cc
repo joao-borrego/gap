@@ -24,21 +24,32 @@
 #include "DRInterface.hh"
 
 // Constants
-const char DRInterface::REQUEST_TOPIC[]  = "~/dr";
-const char DRInterface::RESPONSE_TOPIC[] = "~/dr/response";
+const char DRInterface::REQUEST_TOPIC[]  = "~/gap/dr";
+const char DRInterface::RESPONSE_TOPIC[] = "~/gap/dr/response";
 const char DRInterface::VISUAL_TOPIC[]   = "~/visual";
 const int  DRInterface::POSITION = 0;
 const int  DRInterface::VELOCITY = 1;
 
 //////////////////////////////////////////////////
-DRInterface::DRInterface()
+DRInterface::DRInterface(
+    const std::string & req_topic_,
+    const std::string & res_topic_) :
+        req_topic(req_topic_), res_topic(res_topic_)
 {
     node = gazebo::transport::NodePtr(new gazebo::transport::Node());
     node->Init();
-    pub = node->Advertise<DRRequest>(REQUEST_TOPIC);
+    pub = node->Advertise<DRRequest>(req_topic);
     pub->WaitForConnection();
     pub_visual = node->Advertise<gazebo::msgs::Visual>(VISUAL_TOPIC);
     pub_visual->WaitForConnection();
+    debugPrintTrace("DRInterface initialized." << std::endl <<
+        "   Requests topic: " << req_topic << std::endl << 
+        "   Response topic: " << res_topic << std::endl);
+}
+
+//////////////////////////////////////////////////
+DRInterface::DRInterface() : DRInterface(REQUEST_TOPIC, RESPONSE_TOPIC)
+{
 }
 
 //////////////////////////////////////////////////

@@ -80,7 +80,19 @@ class DRInterface
     /// Publisher to the visual topic
     private: gazebo::transport::PublisherPtr pub_visual;
 
+    /// Topic for DRPlugin requests
+    private: std::string req_topic {REQUEST_TOPIC};
+    /// Topic for DRPlugin responses
+    private: std::string res_topic {RESPONSE_TOPIC};
+
     /// \brief Constructor
+    /// \param req_topic Request topic
+    /// \param res_topic Response topic
+    public: DRInterface(
+        const std::string & req_topic_,
+        const std::string & res_topic_);
+
+    /// \brief Constructor with default arguments
     public: DRInterface();
 
     /// \brief Creates a domain randomization request

@@ -1,0 +1,16 @@
+syntax = "proto2";
+package gap.msgs;
+
+/// \ingroup gap_msgs
+/// \interface domain randomization response
+/// \brief Domain randomization plugin response
+
+import "physics.proto";
+import "model.proto";
+import "model_cmd.proto";
+
+message DRResponse
+{
+    /// Whether operation was successful
+    optional bool success = 1;
+}

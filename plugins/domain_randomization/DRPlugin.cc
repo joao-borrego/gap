@@ -28,10 +28,14 @@
 namespace gazebo {
 
 // Constants
-const char DRPlugin::REQUEST_TOPIC[]  = "~/dr";
-const char DRPlugin::RESPONSE_TOPIC[] = "~/dr/response";
+const char DRPlugin::REQUEST_TOPIC[]  = "~/gap/dr";
+const char DRPlugin::RESPONSE_TOPIC[] = "~/gap/dr/response";
 const int  DRPlugin::POSITION = 0;
 const int  DRPlugin::VELOCITY = 1;
+
+// SDF Parameter tags
+const char DRPlugin::PARAM_REQ_TOPIC[] = "request_topic";
+const char DRPlugin::PARAM_RES_TOPIC[] = "response_topic"; 
 
 /// \brief Class for private Domain Randomization plugin data.
 class DRPluginPrivate
@@ -70,6 +74,9 @@ void DRPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
     this->world = _world;
     this->physics_engine = world->Physics();
 
+    // Read topic names from SDF
+    loadTopicNames(_sdf);
+
     // Connect to world update event
     this->update_connection = event::Events::ConnectWorldUpdateBegin(
         std::bind(&DRPlugin::onUpdate, this));
@@ -77,10 +84,27 @@ void DRPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
     this->data_ptr->node = transport::NodePtr(new transport::Node());
     this->data_ptr->node->Init();
     // Subcribe to the monitored requests topic
-    this->data_ptr->sub = this->data_ptr->node->Subscribe(REQUEST_TOPIC,
+    this->data_ptr->sub = this->data_ptr->node->Subscribe(req_topic,
         &DRPlugin::onRequest, this);
-
+    // Publish to the response topic
+    this->data_ptr->pub = this->data_ptr->node->
+        Advertise<DRResponse>(res_topic);
     gzmsg << "[DRPlugin] Loaded plugin." << std::endl;
+}
+
+/////////////////////////////////////////////////
+void DRPlugin::loadTopicNames(sdf::ElementPtr _sdf)
+{
+    if (_sdf->HasElement(PARAM_REQ_TOPIC))
+    {
+        req_topic = _sdf->Get<std::string>(PARAM_REQ_TOPIC);
+        gzdbg << "Request topic: " << req_topic << std::endl;
+    }
+    if (_sdf->HasElement(PARAM_RES_TOPIC))
+    {
+        res_topic = _sdf->Get<std::string>(PARAM_RES_TOPIC);   
+        gzdbg << "Response topic: " << res_topic << std::endl;
+    }
 }
 
 /////////////////////////////////////////////////
@@ -102,6 +126,12 @@ void DRPlugin::onUpdate()
     for (const auto & model_cmd : msg->model_cmd())
     {
         processModelCmd(model_cmd);
+    }
+    if (msg->has_feedback())
+    {
+        DRResponse response;
+        response.set_success(true);
+        data_ptr->pub->Publish(response);
     }
     // Clear processed request
     msg.reset();

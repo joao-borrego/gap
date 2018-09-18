@@ -98,7 +98,7 @@ void DRPlugin::loadTopicNames(sdf::ElementPtr _sdf)
     if (_sdf->HasElement(PARAM_REQ_TOPIC))
     {
         req_topic = _sdf->Get<std::string>(PARAM_REQ_TOPIC);
-        gzdbg << "Request topic: " << req_topic << std::endl;
+        gzdbg << "Requests topic: " << req_topic << std::endl;
     }
     if (_sdf->HasElement(PARAM_RES_TOPIC))
     {
@@ -110,11 +110,24 @@ void DRPlugin::loadTopicNames(sdf::ElementPtr _sdf)
 /////////////////////////////////////////////////
 void DRPlugin::onUpdate()
 {
-    std::lock_guard<std::mutex> lock(data_ptr->mutex);
+    // Provide client with feedback
+    // Has 1-Cycle delay; could not get it to work in same cycle
+    if (feedback_pending)
+    {
+        DRResponse response;
+        response.set_success(true);
+        data_ptr->pub->Publish(response, true);
+        feedback_pending = false;
+        gzdbg << "Provided feedback to client." << std::endl;
+    }
 
     // If no requests are pending
     if (!msg) { return; }
     // Process stored message
+    if (msg->has_feedback())
+    {
+        feedback_pending = true;
+    }
     if (msg->has_physics())
     {
         processPhysics(msg->physics());
@@ -127,14 +140,8 @@ void DRPlugin::onUpdate()
     {
         processModelCmd(model_cmd);
     }
-    if (msg->has_feedback())
-    {
-        DRResponse response;
-        response.set_success(true);
-        data_ptr->pub->Publish(response);
-    }
     // Clear processed request
-    msg.reset();
+    msg.reset();    
 }
 
 /////////////////////////////////////////////////

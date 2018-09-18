@@ -70,7 +70,10 @@ namespace gazebo {
     /// See the example usage below:
     ///
     /// \code{.xml}
-    ///    <plugin name="domain_randomization_plugin" filename="libDRPlugin.so"/>
+    ///    <plugin name="domain_randomization_plugin" filename="libDRPlugin.so">
+    ///       <request_topic>~/gap/dr</request_topic>
+    ///       <response_topic>~/gap/dr/response</response_topic>
+    ///    </plugin>
     /// \endcode
     ///
     /// See worlds/domain_randomization.world for a complete example.
@@ -109,6 +112,9 @@ namespace gazebo {
 
         /// Pending request
         private: boost::shared_ptr<DRRequest const> msg;
+        /// Pending feedback
+        private: bool feedback_pending;
+
 
         // Public methods
 

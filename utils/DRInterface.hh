@@ -34,9 +34,14 @@
 #include <gazebo/physics/ode/ODESurfaceParams.hh>
 #include <gazebo/physics/dart/DARTSurfaceParams.hh>
 
+// Sleep
+#include <chrono>
+#include <thread>
+
 // Custom messages
 #include "dr_request.pb.h"
 #include "model_cmd.pb.h"
+#include "dr_response.pb.h"
 
 // Debug streams
 #include "debug.hh"
@@ -48,6 +53,12 @@
 typedef gap::msgs::DRRequest DRRequest;
 /// Declaration for model command message type
 typedef gap::msgs::ModelCmd ModelCmdMsg;
+    
+/// Declaration for response message type
+typedef gap::msgs::DRResponse DRResponse;
+/// Shared pointer declaration for response message type
+typedef const boost::shared_ptr<const gap::msgs::DRResponse>
+    DRResponsePtr;
 
 /*
 typedef boost::shared_ptr <gazebo::physics::BulletSurfaceParams>
@@ -75,8 +86,10 @@ class DRInterface
 
     /// Node used for transport
     private: gazebo::transport::NodePtr node;
-    /// Publisher to the request topic
+    /// Publisher to the DRPlugin request topic
     private: gazebo::transport::PublisherPtr pub;
+    /// Subscriber to the DRPlugin response topic
+    private: gazebo::transport::SubscriberPtr sub;
     /// Publisher to the visual topic
     private: gazebo::transport::PublisherPtr pub_visual;
 
@@ -84,6 +97,11 @@ class DRInterface
     private: std::string req_topic {REQUEST_TOPIC};
     /// Topic for DRPlugin responses
     private: std::string res_topic {RESPONSE_TOPIC};
+
+    /// Global timeout flag
+    private: bool wait_done {false};
+    /// Mutex for global timeout flag
+    private: std::mutex wait_done_mutex;
 
     /// \brief Constructor
     /// \param req_topic Request topic
@@ -95,17 +113,26 @@ class DRInterface
     /// \brief Constructor with default arguments
     public: DRInterface();
 
+    /// \brief Returns whether to keep waiting for trigger
+    /// \param mutex   Mutex that protects trigger variable
+    /// \param trigger Trigger boolean variable
+    /// \return True as long as trigger is false, false otherwise
+    private: static bool waitingTrigger(std::mutex & mutex, bool & trigger);
+
     /// \brief Creates a domain randomization request
     /// \return Empty request
     public: DRRequest createRequest();
 
     /// \brief Publishes request
-    /// \param Domain randomization request
-    public: void publish(const DRRequest & msg);
+    /// \param msg Domain randomization request
+    /// \param blocking Whether to wait for response
+    public: void publish(DRRequest & msg, bool blocking=false);
 
     /// \brief Publishes visual request
-    /// \param Visual message request
-    public: void publish(const gazebo::msgs::Visual & msg);   
+    /// \param msg Visual message request
+    /// \param blocking Whether to wait for response
+    /// \warning Blocking calls not yet implemented for visual messages!
+    public: void publish(gazebo::msgs::Visual & msg, bool blocking=false);   
 
     // Features
 
@@ -221,6 +248,10 @@ class DRInterface
         const ignition::math::Color & diffuse,
         const ignition::math::Color & emissive,
         const ignition::math::Color & specular);
+
+    /// \brief Callback on DRPlugin response
+    /// \param _msg Response message
+    public: void onResponse(DRResponsePtr & _msg);
 };
 
 #endif

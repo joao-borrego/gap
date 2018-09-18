@@ -38,10 +38,13 @@ DRInterface::DRInterface(
 {
     node = gazebo::transport::NodePtr(new gazebo::transport::Node());
     node->Init();
+
     pub = node->Advertise<DRRequest>(req_topic);
     pub->WaitForConnection();
     pub_visual = node->Advertise<gazebo::msgs::Visual>(VISUAL_TOPIC);
     pub_visual->WaitForConnection();
+    sub = node->Subscribe(res_topic, &DRInterface::onResponse, this);
+
     debugPrintTrace("DRInterface initialized." << std::endl <<
         "   Requests topic: " << req_topic << std::endl << 
         "   Response topic: " << res_topic << std::endl);
@@ -60,14 +63,36 @@ DRRequest DRInterface::createRequest()
 }
 
 //////////////////////////////////////////////////
-void DRInterface::publish(const DRRequest & msg)
+void DRInterface::publish(DRRequest & msg, bool blocking)
 {
+    if (blocking)
+    {
+        msg.set_feedback(true);
+    }
     pub->Publish(msg);
+    if (blocking)
+    {
+        while (waitingTrigger(wait_done_mutex, wait_done)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+    }
 }
 
 //////////////////////////////////////////////////
-void DRInterface::publish(const gazebo::msgs::Visual & msg)
+bool DRInterface::waitingTrigger(std::mutex & mutex, bool & trigger)
 {
+    std::lock_guard<std::mutex> lock(mutex);
+    if (trigger) {
+        trigger = false;
+        return false;
+    }
+    return true;
+}
+
+//////////////////////////////////////////////////
+void DRInterface::publish(gazebo::msgs::Visual & msg, bool blocking)
+{
+    if (blocking){ /*TODO - Unused */ }
     pub_visual->Publish(msg);
 }
 
@@ -248,4 +273,15 @@ void DRInterface::addColors(gazebo::msgs::Visual & msg,
     gazebo::msgs::Set(diffuse_msg, diffuse);
     gazebo::msgs::Set(emissive_msg, emissive);
     gazebo::msgs::Set(specular_msg, specular);
+}
+
+/////////////////////////////////////////////////
+void DRInterface::onResponse(DRResponsePtr & _msg)
+{
+    if (_msg->has_success())
+    {
+        std::lock_guard<std::mutex> lock(wait_done_mutex);
+        wait_done = true;
+        debugPrintTrace("Received response!");
+    }
 }

@@ -49,7 +49,8 @@ int main(int _argc, char **_argv)
     interface.addJoint(msg, model, joint, -0.01, 0.7, 10, 10, inf, 200); 
     // Update PID controller
     interface.addModelCmd(msg, model, joint_scoped, pid_type, 100, inf, inf);
-    interface.publish(msg);
+    // Blocking publish call 
+    interface.publish(msg, true);
     
     // Update link colors
     for (int i = 0; i < 20; i++)

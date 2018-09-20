@@ -34,9 +34,10 @@
 #include <gazebo/physics/ode/ODESurfaceParams.hh>
 #include <gazebo/physics/dart/DARTSurfaceParams.hh>
 
-// Sleep
-#include <chrono>
 #include <thread>
+#include <condition_variable>
+#include <mutex>
+#include <chrono>
 
 // Custom messages
 #include "dr_request.pb.h"
@@ -98,10 +99,10 @@ class DRInterface
     /// Topic for DRPlugin responses
     private: std::string res_topic {RESPONSE_TOPIC};
 
-    /// Global timeout flag
-    private: bool wait_done {false};
-    /// Mutex for global timeout flag
-    private: std::mutex wait_done_mutex;
+    /// Mutex for exclusive threaded access
+    private: std::mutex mutex;
+    /// Condition variable for exclusive threaded access
+    private: std::condition_variable cond_var;
 
     /// \brief Constructor
     /// \param req_topic Request topic
@@ -113,11 +114,8 @@ class DRInterface
     /// \brief Constructor with default arguments
     public: DRInterface();
 
-    /// \brief Returns whether to keep waiting for trigger
-    /// \param mutex   Mutex that protects trigger variable
-    /// \param trigger Trigger boolean variable
-    /// \return True as long as trigger is false, false otherwise
-    private: static bool waitingTrigger(std::mutex & mutex, bool & trigger);
+    /// \brief Desctructor
+    public: ~DRInterface();
 
     /// \brief Creates a domain randomization request
     /// \return Empty request
@@ -199,7 +197,7 @@ class DRInterface
     /// \param limit_upper New joint upper limit
     /// \param limit_effort New joint effort limit
     /// \param limit_velocity New joint velocity limit
-    /// \param limit_lower New joint damping coefficient (TODO)
+    /// \param limit_lower New joint damping coefficient
     /// \param limit_lower New joint static friction
     public: void addJoint(DRRequest & msg,
         const std::string & model,

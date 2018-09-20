@@ -116,10 +116,14 @@ void DRPlugin::onUpdate()
     {
         DRResponse response;
         response.set_success(true);
+        data_ptr->pub->WaitForConnection();
         data_ptr->pub->Publish(response, true);
         feedback_pending = false;
-        gzdbg << "Provided feedback to client." << std::endl;
+        gzdbg << common::Time::GetWallTimeAsISOString() <<
+            " - Provided feedback to client." << std::endl;
     }
+
+    std::lock_guard<std::mutex> lock(data_ptr->mutex);
 
     // If no requests are pending
     if (!msg) { return; }
@@ -140,8 +144,7 @@ void DRPlugin::onUpdate()
     {
         processModelCmd(model_cmd);
     }
-    // Clear processed request
-    msg.reset();    
+    msg.reset();
 }
 
 /////////////////////////////////////////////////

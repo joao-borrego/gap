@@ -267,6 +267,7 @@ void DRPlugin::processLink(
     }
     for (const auto & collision_msg : msg.collision())
     {
+        gzdbg << "Collision received!" << std::endl;
         if (collision_msg.has_surface())
         {
             collision = link->GetCollision(collision_msg.name());
@@ -313,6 +314,8 @@ void DRPlugin::processSurface(
     surface = collision->GetSurface();
     NULL_CHECK(surface, "Invalid surface");
     surface->ProcessMsg(msg);
+
+    gzdbg << "Processed surface " << collision->GetName() << std::endl;
 }
 
 /////////////////////////////////////////////////

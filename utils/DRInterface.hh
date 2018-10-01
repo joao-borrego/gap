@@ -105,8 +105,8 @@ class DRInterface
     private: std::condition_variable cond_var;
 
     /// \brief Constructor
-    /// \param req_topic Request topic
-    /// \param res_topic Response topic
+    /// \param req_topic_ Request topic
+    /// \param res_topic_ Response topic
     public: DRInterface(
         const std::string & req_topic_,
         const std::string & res_topic_);
@@ -179,12 +179,12 @@ class DRInterface
     /// \param model The target model
     /// \param link The target link name
     /// \param collision The target collision name
-    /// \param surface The new surface parameters
+    /// \param surface_ptr Pointer to the new surface parameters
     public: void addSurface(DRRequest & msg,
         const std::string & model,
         const std::string & link,
         const std::string & collision,
-        const gazebo::msgs::Surface & surface);
+        gazebo::msgs::Surface *surface_ptr);
 
     /// \brief Updates joint
     /// 
@@ -197,8 +197,8 @@ class DRInterface
     /// \param limit_upper New joint upper limit
     /// \param limit_effort New joint effort limit
     /// \param limit_velocity New joint velocity limit
-    /// \param limit_lower New joint damping coefficient
-    /// \param limit_lower New joint static friction
+    /// \param damping New joint damping coefficient
+    /// \param friction New joint static friction
     public: void addJoint(DRRequest & msg,
         const std::string & model,
         const std::string & joint,
@@ -234,7 +234,7 @@ class DRInterface
     ///
     /// \param msg Output visual message request
     /// \param visual The target visual name
-    /// \param visual The target visual's parent name
+    /// \param parent The target visual's parent name
     /// \param ambient The ambient color
     /// \param diffuse The diffuse color
     /// \param emissive The emissive color

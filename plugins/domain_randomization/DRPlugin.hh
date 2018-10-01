@@ -194,7 +194,7 @@ namespace gazebo {
         /// \brief Updates PID controller
         /// \param type PID controller type (POSITION or VELOCITY)
         /// \param controller Joint controller pointer
-        /// \param joint Target joint name
+        /// \param joint Target joint scoped name, e.g. <model>::<joint>
         /// \param msg PID message pointer
         private: void processPID(
             int type,

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 # Project name
-project(gap VERSION 1.3.0)
+project(gap VERSION 1.4.0)
 message (STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION}")
 string (TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 string (TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)

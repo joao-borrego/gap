@@ -35,7 +35,7 @@ You can check the provided sample external client for a complete example.
 ```bash
 gazebo --version
 ```
-- Gazebo instance can not load `libgap_msgs.so`. It is likely that Gazebo has no way to find this library when instancing a plugin. To fix this you can simply use the environment variable `LD_LIBRARY_PATH`. For `gap-1.2`:
+- Gazebo instance can not load `libgap_msgs.so`. It is likely that Gazebo has no way to find this library when instancing a plugin. To fix this you can simply use the environment variable `LD_LIBRARY_PATH`. For `gap-1.4`:
 ```bash
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/gap-1.3
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/gap-1.4
 ```

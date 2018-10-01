@@ -42,7 +42,7 @@ DRInterface::DRInterface(
     pub = node->Advertise<DRRequest>(req_topic);
     pub->WaitForConnection();
     pub_visual = node->Advertise<gazebo::msgs::Visual>(VISUAL_TOPIC);
-    pub_visual->WaitForConnection();
+    // pub_visual->WaitForConnection();
     sub = node->Subscribe(res_topic, &DRInterface::onResponse, this);
 
     debugPrintTrace("DRInterface initialized." << std::endl <<
@@ -165,21 +165,20 @@ void DRInterface::addSurface(DRRequest & msg,
     const std::string & model,
     const std::string & link,
     const std::string & collision,
-    const gazebo::msgs::Surface & surface)
+    gazebo::msgs::Surface *surface_ptr)
 {
     gazebo::msgs::Model *model_msg;
     gazebo::msgs::Link *link_msg;
     gazebo::msgs::Collision *collision_msg;
-    gazebo::msgs::Surface *surface_msg;
 
     model_msg = msg.add_model();
     model_msg->set_name(model);
     link_msg = model_msg->add_link();
     link_msg->set_name(link);
     collision_msg = link_msg->add_collision();
+    collision_msg->set_id(0);
     collision_msg->set_name(collision);
-    surface_msg = collision_msg->mutable_surface();
-    *surface_msg = surface;
+    collision_msg->set_allocated_surface(surface_ptr);
 }
 
 //////////////////////////////////////////////////

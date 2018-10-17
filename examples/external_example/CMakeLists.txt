@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.0)
 # as an external library, when project is installed
 
 # Link our custom message library
-find_package(gap REQUIRED VERSION 1.3)
+find_package(gap REQUIRED VERSION 1.5)
 include_directories(${GAP_INCLUDE_DIRS})
 link_directories(${GAP_LIBRARY_DIRS})
 list(APPEND CMAKE_CXX_FLAGS "${GAP_CXX_FLAGS}")

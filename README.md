@@ -41,7 +41,7 @@ Take a look at the automatic [documentation] for file and class description.
 
 ### Dependencies
 
-The code has been tested in Gazebo 9.0.0 from the official stable repository as well as built from source and running on Ubuntu 16.04 and 18.04.
+The code has been tested in Gazebo 9.0.0 from the official stable repository as well as built from source 9.4.1 and running on Ubuntu 16.04.5 and 18.04.
 
 Gazebo internal message passing relies on Protobuf, which is why the compiler needs to be installed in order
 to generate the tools' custom messages.

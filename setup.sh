@@ -10,8 +10,8 @@ source /usr/share/gazebo-9/setup.sh 2> /dev/null
 
 # Export location of gazebo plugins - local
 export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:`pwd`/build/lib
-# Export location of gazebo plugins - installed
-#export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:/usr/local/lib/gap-1.3/plugins/
+# Export location of gazebo plugins - installed (v1.5)
+#export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:/usr/local/lib/gap-1.5/plugins/
 
 # Resources
 
